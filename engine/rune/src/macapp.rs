@@ -68,6 +68,10 @@ pub fn make(src: &str, name: &str, size: (u32, u32), out: &Path, fonts: &[raea_r
     );
     std::fs::write(contents.join("Info.plist"), plist).map_err(|e| e.to_string())?;
 
+    // off the Mac the same folder runs as is (`bundled` finds its script), and codesign is the Mac's, as for a web app
+    if !cfg!(target_os = "macos") {
+        return Ok(vec!["not signed: codesign is the Mac's".into()]);
+    }
     run(Command::new("codesign").args(["--force", "--deep", "--sign", "-"]).arg(out))?;
     Ok(vec!["signed ad hoc: it opens on the Mac that made it".into()])
 }

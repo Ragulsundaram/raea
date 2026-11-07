@@ -69,7 +69,7 @@ export const KINDS: Record<string, { status: Status; three: string; note?: strin
   Compute: { status: "engine", three: "a WGSL compute pass runs in Bevy" },
   BevyComponent: { status: "engine", three: "a Bevy component (a gizmo's is drawn as lines)" },
   BevyResource: { status: "engine", three: "a Bevy resource" },
-  Entities: { status: "drawn", three: "a mesh per Mesh entity of World.scene() (its shape, a standard surface of its colour, roughness and metalness, world space), as the engine reads it" },
+  Entities: { status: "engine", three: "an ECS world's entities, read from the engine's tables (World.scene() needs them); <Scene world> draws a world's rows as parts the host draws" },
 };
 
 /** the geometry kinds, each a primitive three.js has too */

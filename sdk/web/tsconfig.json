@@ -1,1 +1,0 @@
-{ "extends": "../tsconfig.base.json", "compilerOptions": { "types": ["bun"], "skipLibCheck": true }, "include": ["src", "test", "tools"] }

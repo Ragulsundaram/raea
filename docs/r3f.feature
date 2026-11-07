@@ -48,16 +48,13 @@ Feature: React Three Fiber both ways: an R3F scene drawn by raea, a raea composi
     Scenario: R3F4. Scene3d, the three.js host, for any three.js app
       Then sdk/r3f/src/three draws a raea page into a three.js scene without React Three Fiber (sdk/playable's host
         is built on it): Scene3d.sync(page, seconds), fit(width, height), apply(renderer)
-      And three/kinds.ts has a row for every kind raea's SDK renders (58): 27 drawn, 11 near, 4 settings, 9 effects
-        and 7 that are Bevy's own (a WESL shader or frame pass, a compute pass, a Bevy component or resource,
-        volumetric fog and fog volumes)
-      And an ECS world (<Entities>) is drawn: its meshes and their transforms come from raea/ecs's own store in
-        JavaScript (sdk/app's scene(), the engine's composition of a child under its parent), each mesh's shape by
-        three's geometry or core/shape's wasm
-      And the 7 that are Bevy's own aren't three.js's to draw: WESL and WGSL run on Bevy's renderer, components and
-        resources are Bevy's data, and the fogs are raymarched through Bevy's shadow maps and depth. A page that needs
-        them uses raea-web, raea's engine itself in the browser on WebGPU (R3F10); Scene3d names each one it leaves out
-        (a warning, and its row)
+      And three/kinds.ts has a row for every kind raea's SDK renders (58): 26 drawn, 11 near, 4 settings, 9 effects
+        and 8 that are Bevy's own (a WESL shader or frame pass, a compute pass, a Bevy component or resource, an ECS
+        world read from the engine's tables, volumetric fog and fog volumes)
+      And the 8 that are Bevy's own aren't three.js's to draw: WESL and WGSL run on Bevy's renderer, components,
+        resources and ECS worlds are Bevy's data, and the fogs are raymarched through Bevy's shadow maps and depth. A
+        page that needs them uses raea-web, raea's engine itself in the browser on WebGPU (docs/web-export.md, which
+        says what stays native); Scene3d names each one it leaves out (a warning, and its row)
       And a Model with `at` is a copy of the model at each placement, as raea's engine draws it
       And raea's default tone mapping, TonyMcMapface, is drawn with Bevy's own LUT (sdk/playable's tony.bin) in a
         pass in place of three's output pass; ACES, AgX, Reinhard and none are three's own
@@ -68,14 +65,6 @@ Feature: React Three Fiber both ways: an R3F scene drawn by raea, a raea composi
       Then engine/shape-web compiles core/shape to wasm (tools/shape-wasm.sh, 2.6 MB) and loadShapes() brings it in:
         the solid's own triangles, the same as raea's engine meshes
       And until it loads, a solid waits (it isn't drawn as something else)
-      And the public repository's releases carry the module, so an app needn't build Rust: tools/release-web.sh builds
-        raea_shape_web.js and raea_shape_web_bg.wasm (and raea-web's raea_web.js and raea_web_bg.wasm, with SHA256SUMS)
-        from a commit and attaches them to its GitHub release: every engine release (tag vVERSION; 0.1.0-canary.1 and
-        canary.2 were given their own shape code's module on 11-06, without raea-web, which came after them), and a
-        pre-release web-SHA for a public commit between them (SHA the public commit's short hash), at
-        https://github.com/shinyobjectz/raea/releases/download/TAG/raea_shape_web.js. GitHub serves them as
-        downloads (no CORS), so an app serves the two files itself and calls loadShapes("/raea_shape_web.js"), or
-        imports the glue and passes the module: loadShapes(await import("./raea_shape_web.js"))
 
     @done
     Scenario: R3F6. Frame effects
@@ -92,8 +81,7 @@ Feature: React Three Fiber both ways: an R3F scene drawn by raea, a raea composi
         three/kinds.ts, draws every kind three.js draws and fails on a warning, and fails on an effect row the
         composer doesn't draw
       And it walks three's exports and fails on an Object3D or Material class missing from input/kinds.ts
-      And it fails on a kind three/kinds.ts calls "engine" that has no raea-web parity case (R3F10)
-      And `bun test` in sdk/r3f runs these with the input, round-trip and source-export tests (27 tests)
+      And `bun test` in sdk/r3f runs these with the input, round-trip and source-export tests (26 tests)
       And a ShadowMaterial is raea's <Mesh shadow="catch">: a surface that shows only the shadows falling on it, in
         its material's colour and opacity (systems/material shadow_catch.rs in the engine, three's ShadowMaterial in
         Scene3d)
@@ -118,7 +106,6 @@ Feature: React Three Fiber both ways: an R3F scene drawn by raea, a raea composi
         | out-grade   | <Grade> saturation, contrast, vignette                               | 0.9748 |
         | out-lens    | <LensDistortion k1={0.15}>                                           | 0.9933 |
         | out-catch   | <Mesh shadow="catch">, three's ShadowMaterial                        | 0.9972 |
-        | out-entities| <Entities>: a raea/ecs world, a ship and its gun turned by a system  | 0.9971 |
         | src-basic   | out-basic exported as R3F source, drawn by a plain <Canvas>          | 0.9957 |
         | src-tony    | out-tony exported (Tony through raea-effects.ts)                     | 0.9960 |
         | src-lights  | out-lights exported as R3F source (Text3D as its triangles)          | 0.9628 |
@@ -126,7 +113,6 @@ Feature: React Three Fiber both ways: an R3F scene drawn by raea, a raea composi
         | src-grade   | out-grade exported                                                   | 0.9748 |
         | src-lens    | out-lens exported                                                    | 0.9933 |
         | src-catch   | out-catch exported                                                   | 0.9972 |
-        | src-entities| out-entities exported                                                | 0.9971 |
       And three's ACES scales its input by 1/0.6 where Bevy's doesn't: the host's exposure takes 0.6 under ACES, and
         an R3F canvas's ACES reads as 0.74 stops more (measured: out-lights 0.927 to 0.963, in-lights 0.927 to 0.979)
 
@@ -147,26 +133,3 @@ Feature: React Three Fiber both ways: an R3F scene drawn by raea, a raea composi
         after each frame's updates; effects that only raea's engine draws (three/kinds.ts "engine") are named in the
         header
       And test/export.test.tsx checks what is written; the src-* cases (R3F8) draw it against raea's render
-
-  Rule: What three.js can't draw, raea-web does
-
-    @done
-    Scenario: R3F10. The engine's own kinds held to `raea render` in the browser
-      Given sdk/web/test/parity/cases.ts: a case for each kind three/kinds.ts calls "engine", and <Entities>
-      When sdk/web/tools/parity.sh renders each with `raea render` and with raea-web (sdk/web, raea's engine on WebGPU)
-        in headless Chrome (tools/shoot.ts), and compares the two by SSIM
-      Then every case is at least 0.92, and a blank web frame fails whatever its SSIM (measured 11-06)
-        | case           | kinds                     | SSIM   |
-        | surface-shader | SurfaceShader             | 0.9998 |
-        | frame-pass     | FramePass                 | 1.0000 |
-        | compute        | Compute                   | 1.0000 |
-        | component      | BevyComponent             | 1.0000 |
-        | resource       | BevyResource              | 0.9999 |
-        | entities       | Entities                  | 0.9760 |
-        | fog            | VolumetricFog, FogVolume  | 0.9993 |
-      And the first five are sdk/raea/bench/bevy-ts's cases (shader-scene, frame-pass, compute, reflect-on-camera,
-        reflect-keyed-resource-still, 64x64); entities and fog are 320x180
-      And a page's files (a glTF, a picture) are fetched from assets/ beside the page, Bevy's asset folder on the web
-      And measuring it fixed raea-web: a model's file is fetched rather than looked for on disk (runtime/scene3d
-        model.rs), a black page background is the 3D's clear rather than a cover over it (rgb(0, 0, 0) was read as
-        see-through, here and in Scene3d), and a layered <Canvas3D>'s empty slot isn't drawn

@@ -12,8 +12,7 @@ export function backgroundUnder3d(page: Element): string | undefined {
     if (!el.hasAttribute(UNDER)) {
       const style = (el as HTMLElement).style;
       const bg = el.isConnected && typeof getComputedStyle === "function" ? getComputedStyle(el).backgroundColor : style?.backgroundColor || style?.background;
-      // see-through is rgba(..., 0); rgb(0, 0, 0), black, also ends in ", 0)" and is solid
-      if (bg && bg !== "transparent" && !/^rgba\(.*,\s*0\)$/.test(bg)) el.setAttribute(UNDER, bg);
+      if (bg && bg !== "transparent" && !bg.endsWith(", 0)")) el.setAttribute(UNDER, bg);
       else continue;
     }
     clear ??= el.getAttribute(UNDER)!;

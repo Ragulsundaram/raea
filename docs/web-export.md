@@ -87,15 +87,6 @@ page draws what it draws natively; 0.903 at `pixel: 4`, where a cell is one draw
 
 Still to measure: an iPad in Safari (30 fps) and the poster's first paint (1.5 s).
 
-## raea's own kinds in the browser
-
-The kinds three.js can't draw (sdk/r3f/src/three/kinds.ts "engine": SurfaceShader, FramePass, Compute, BevyComponent,
-BevyResource, VolumetricFog, FogVolume) and <Entities> are drawn here by raea's own engine. `sdk/web/tools/parity.sh`
-renders each case in sdk/web/test/parity with `raea render` and with raea-web in headless Chrome on WebGPU and compares
-them by SSIM: all seven at least 0.976, five at 0.9998 or more (docs/r3f.feature R3F10). A page's files (a glTF, a
-picture) are fetched from `assets/` beside the page, Bevy's asset folder on the web. Each GitHub release carries
-raea-web's module (`raea_web.js`, `raea_web_bg.wasm`), built by tools/release-web.sh.
-
 ## Sound
 
 In a page raea/tone is Tone.js (the page's bundler maps `raea/tone` to `tone`), so an edit's sound is written once in

@@ -60,7 +60,7 @@ untar() {
   return $rc
 }
 git archive "$ref" | untar "$gate" || { echo "release.sh: the skills gate couldn't unpack $ref" >&2; exit 1; }
-git -C "$gate" init -q && git -C "$gate" add -A && git -C "$gate" -c user.name=release -c user.email=release@raea.io commit -qm "$ref" --no-verify
+git -C "$gate" init -q && git -C "$gate" add -A && git -C "$gate" -c gc.auto=0 -c maintenance.auto=false -c user.name=release -c user.email=release@raea.io commit -qm "$ref" --no-verify
 raea_bin=$bin/raea; [ -f "$raea_bin.exe" ] && raea_bin=$raea_bin.exe
 if ! (cd "$gate" && SKILLS_STRICT=1 SKILLS_CHANGED= RAEA_BIN="$raea_bin" RAEA_APP="$root/apps/app" RAEA_APP_REV="$(git -C "$root" rev-parse "$ref:apps/app")" bash tools/skills.sh check); then
   echo "release.sh: tools/skills.sh check failed on $ref with $raea_bin; fix the skills (tools/skills.sh gen) before releasing" >&2
@@ -84,8 +84,9 @@ case $platform in
     # system, as on a Mac (raea warns once a character when no font has it)
     printf '%s\n' "raea $version for Linux x86_64 (glibc 2.39 or newer, Vulkan: a GPU driver or Mesa's llvmpipe).
 Install a CJK font for Japanese, Chinese and Korean text (Debian and Ubuntu: apt install fonts-noto-cjk).
-An app on the native target (raea app ... --target native, raea-rune-host) needs libxkbcommon-x11 and the Vulkan
-loader (Debian and Ubuntu: apt install libxkbcommon-x11-0 libvulkan1).
+An app's window, on either target (raea app run, raea-rune-host and raea-page-host), needs a display (X11 or
+Wayland; Xvfb on a server, as raea app check does there too), libxkbcommon-x11, the X client libraries and the Vulkan
+loader (Debian and Ubuntu: apt install libxkbcommon-x11-0 libxcursor1 libxi6 libxrandr2 libx11-xcb1 libvulkan1).
 Not in this build: raea song (its beat model's runner is macOS only so far)." > "$stage/README" ;;
   windows-x86_64)
     cp "$bin/raea.exe" "$bin/raea_bundle.dll" "$bin/raea-rune-host.exe" "$bin/raea-page-host.exe" "$stage/bin/"
@@ -101,7 +102,7 @@ esac
 pkgs=()
 # and its bevy/ (a package's plugin handles, generated from the plugin build: its src/plugin.ts imports ../bevy/)
 # and its examples/ (@raea/rune's, docs/targets.feature T1b: what a release's check runs)
-for p in $(git show "$ref:sdk/tsconfig.base.json" | jq -r '.compilerOptions.paths | to_entries[] | select(.key | test("^@raea/[a-z_]+$")) | .value[0] | ltrimstr("./") | split("/")[0]' | tr -d '\r'); do
+for p in $(git show "$ref:sdk/tsconfig.base.json" | jq -r '.compilerOptions.paths | to_entries[] | select(.key | test("^@raea/[a-z0-9_]+$")) | .value[0] | ltrimstr("./") | split("/")[0]' | tr -d '\r'); do
   pkgs+=("sdk/$p/src" "sdk/$p/package.json")
   git cat-file -e "$ref:sdk/$p/bevy" 2>/dev/null && pkgs+=("sdk/$p/bevy")
   git cat-file -e "$ref:sdk/$p/examples" 2>/dev/null && pkgs+=("sdk/$p/examples")

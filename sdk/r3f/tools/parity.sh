@@ -9,7 +9,7 @@ OUT=${1:-$(mktemp -d)}
 URL=${R3F_PARITY_URL:-serve}
 [ -f wasm/raea_shape_web.js ] || tools/shape-wasm.sh
 MIN=${MIN:-0.92}
-CASES=(in-basic:24 in-lights:0 in-things:0 in-catch:0 out-basic:24 out-tony:24 out-lights:0 out-bloom:0 out-grade:0 out-lens:0 out-catch:0 out-entities:10 src-basic:24 src-tony:24 src-lights:0 src-bloom:0 src-grade:0 src-lens:0 src-catch:0 src-entities:10)
+CASES=(in-basic:24 in-lights:0 in-things:0 in-catch:0 out-basic:24 out-tony:24 out-lights:0 out-bloom:0 out-grade:0 out-lens:0 out-catch:0 src-basic:24 src-tony:24 src-lights:0 src-bloom:0 src-grade:0 src-lens:0 src-catch:0)
 mkdir -p "$OUT"
 for c in "${CASES[@]}"; do
   # a src-* case is its out-* composition, drawn from the R3F source the source export wrote for it

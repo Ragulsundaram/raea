@@ -70,14 +70,6 @@ describe("raea → three.js coverage", () => {
     }
   });
 
-  test("every kind only raea's engine draws has a raea-web parity case (sdk/web/test/parity/cases.ts)", async () => {
-    const { CASES } = await import("../../web/test/parity/cases");
-    const measured = new Set(CASES.flatMap((c: { kinds: string[] }) => c.kinds));
-    const engine = Object.entries(KINDS).filter(([, r]) => r.status === "engine").map(([k]) => k);
-    expect(engine.length).toBeGreaterThan(0);
-    expect(engine.filter((k) => !measured.has(k))).toEqual([]);
-  });
-
   test("effects are listed for the app's composer, engine kinds named", () => {
     const host = new Scene3d();
     host.sync(parse(`<div data-3d="Bloom" data-props="${esc(JSON.stringify({ intensity: 0.3 }))}"></div><div data-3d="Fisheye" data-props="{}"></div>`) as unknown as Element);

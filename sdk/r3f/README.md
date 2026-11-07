@@ -24,21 +24,12 @@ In a project, three and @react-three/fiber are its own: `raea add three@0.180.0 
 import { Canvas } from "@react-three/fiber";
 import { Raea, loadShapes } from "@raea/r3f";
 
-loadShapes(await import("./raea_shape_web.js")); // solids, Text3D: from the release, or tools/shape-wasm.sh
+loadShapes(await import("./raea_shape_web.js")); // solids, Text3D: tools/shape-wasm.sh builds it
 <Canvas shadows><Raea component={Edit} fps={30} /></Canvas>
 ```
 
 Its camera, tone mapping (raea's default, TonyMcMapface, drawn with Bevy's own table), fog, environment and effects
 become the canvas's. Without React, `Scene3d` (`@raea/r3f/three`) draws a raea page into any three.js scene.
-
-The shape module, `raea_shape_web.js` and `raea_shape_web_bg.wasm`, is attached to the GitHub releases: every engine
-release (`vVERSION`, each with its own shape code) and a `web-SHA` pre-release for public commits between them
-(`https://github.com/shinyobjectz/raea/releases/download/TAG/raea_shape_web.js`). Serve the two files with
-your app: GitHub sends them as downloads, so a page can't import them from there.
-
-What only raea's engine draws (WESL and WGSL shaders, Bevy components and resources, volumetric fog) isn't three.js's
-to draw: `Scene3d` names each one it leaves out. A page that needs them plays the composition with `@raea/web`, raea's
-engine in the browser on WebGPU (`sdk/web/tools/parity.sh` holds each to `raea render`).
 
 **raea as R3F source.** Write a composition out as a plain R3F module, with no raea needed to run it:
 

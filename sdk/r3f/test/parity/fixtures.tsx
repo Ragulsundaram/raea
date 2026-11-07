@@ -6,9 +6,8 @@ import { useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useCurrentFrame } from "raea";
 import {
-  Bloom, Cuboid, Entities, Grade, LensDistortion, Fog, Sphere, Text3D, ToneMapping, Torus,
+  Bloom, Cuboid, Grade, LensDistortion, Fog, Sphere, Text3D, ToneMapping, Torus,
 } from "raea/3d";
-import { createWorld } from "raea/ecs";
 import {
   AmbientLight, DirectionalLight, Group, Mesh, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial,
   PerspectiveCamera, PointLight, RectAreaLight, SpotLight,
@@ -250,29 +249,6 @@ function OutCatch() {
   );
 }
 
-// an ECS world drawn with no React element per entity (<Entities>): a ship and its gun, turned by a system
-const fleet = createWorld();
-const ship = fleet.add({ Mesh: { shape: "rounded_box(2, 0.6, 1, 0.1)", color: "#2563eb", roughness: 0.5, metalness: 0 }, Transform: { x: 0, y: 0.5, z: 0, ry: 0 } });
-fleet.add({ Mesh: { shape: "cylinder(0.15, 1.2)", color: "#f59e0b", roughness: 0.4, metalness: 0 }, Transform: { x: 0, y: 0.6, z: 0, rx: 0.4 } }, { parent: ship });
-fleet.system((w, f) => w.insert(ship, { Transform: { x: 0, y: 0.5, z: 0, ry: f * 0.05 } }));
-
-function OutEntities() {
-  const f = useCurrentFrame();
-  return (
-    <AbsoluteFill style={{ background: "#0b1020" }}>
-      <PerspectiveCamera position={[0, 2, 6]} lookAt={[0, 0.5, 0]} fov={45} />
-      <ToneMapping mode="aces" />
-      <AmbientLight intensity={0.4} />
-      <DirectionalLight position={[2, 4, 3]} target={[0, 0, 0]} intensity={2} />
-      <Mesh name="ground" rotation={[-Math.PI / 2, 0, 0]}>
-        <Cuboid args={[12, 12, 0.001]} />
-        <MeshStandardMaterial color="#8090a0" roughness={0.9} />
-      </Mesh>
-      <Entities world={fleet.at(f)} />
-    </AbsoluteFill>
-  );
-}
-
 export const OUTPUTS: Record<string, { component: () => ReactNode; frame: number }> = {
   basic: { component: () => <OutBasic />, frame: 24 },
   // raea's default tone mapping, TonyMcMapface
@@ -284,6 +260,4 @@ export const OUTPUTS: Record<string, { component: () => ReactNode; frame: number
   lens: { component: () => <OutEffects fx="lens" />, frame: 0 },
   // shadow="catch" (three's ShadowMaterial): only the shadow on the floor
   catch: { component: OutCatch, frame: 0 },
-  // an ECS world's entities (<Entities>), frame 10 of its system
-  entities: { component: OutEntities, frame: 10 },
 };

@@ -3,7 +3,7 @@
 // ready, md: putting the two fields side by side, and dark: for the system's appearance. The submit springs on "snap"
 // in Rune; on the web that is a CSS transition (@raea/rune's web.css).
 import { useState } from "react";
-import { rune } from "../src/index.ts";
+import { rune } from "@raea/rune";
 
 const field =
   "h-9 w-full rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none hover:border-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50";

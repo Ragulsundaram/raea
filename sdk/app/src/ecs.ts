@@ -358,21 +358,11 @@ export class World {
   events<T = unknown>(name: string): T[] {
     return this.store.events(name) as T[];
   }
-  /** What draws: Mesh + Transform entities (world space, parents composed) and lights (`<Entities world={w.at(frame)} />`
-   * hands this to the renderer). From the engine's tables natively; from the world's own store in a browser (raea-web),
-   * the same list as runtime/calls ecs.scene makes. */
+  /** What draws, straight from the engine's world: Mesh + Transform entities (world space, parents composed) and
+   * lights. Only with native tables (`<Entities world={w.at(frame)} />` hands this to the renderer). */
   scene(): unknown[] {
-    if (this.store instanceof NativeStore) return native("ecs.scene", { world: this.store.world });
-    const store = this.store;
-    const out: unknown[] = [];
-    for (const id of store.find({ with: ["Mesh"] })) {
-      const c = store.components(id);
-      let t = transformOf(c.Transform);
-      for (let p = store.parent(id); p !== null; p = store.parent(p)) t = compose(transformOf(store.components(p).Transform), t);
-      out.push({ id, kind: "Mesh", mesh: c.Mesh ?? null, position: [t[0], t[1], t[2]], rotation: [t[3], t[4], t[5]], scale: t[6] });
-    }
-    for (const id of store.find({ with: ["Light"] })) out.push({ id, kind: "Light", light: store.components(id).Light ?? null });
-    return out;
+    if (!(this.store instanceof NativeStore)) throw new Error("scene() needs the engine's tables");
+    return native("ecs.scene", { world: this.store.world });
   }
   /** The engine's id of this world's tables (for the renderer), or null under plain bun. */
   get handle(): number | null {
@@ -417,24 +407,6 @@ export class World {
 }
 
 /** A new world: native tables in the engine, TypeScript's under plain bun (or with `{ native: false }`). */
-/** [x, y, z, rx, ry, rz, scale] from a Transform component (all optional), as runtime/calls ecs.rs transform_of. */
-function transformOf(t: unknown): number[] {
-  const o = (t ?? {}) as Record<string, unknown>;
-  const g = (k: string, d: number) => (typeof o[k] === "number" ? (o[k] as number) : d);
-  return [g("x", 0), g("y", 0), g("z", 0), g("rx", 0), g("ry", 0), g("rz", 0), g("scale", 1)];
-}
-
-/** a child's transform in its parent's space made world space (rotation by z, then y, then x; uniform scale), as
- * runtime/calls ecs.rs compose */
-function compose(p: number[], c: number[]): number[] {
-  const [sx, cx, sy, cy, sz, cz] = [Math.sin(p[3]), Math.cos(p[3]), Math.sin(p[4]), Math.cos(p[4]), Math.sin(p[5]), Math.cos(p[5])];
-  let [x, y, z] = [c[0] * p[6], c[1] * p[6], c[2] * p[6]];
-  [x, y] = [x * cz - y * sz, x * sz + y * cz];
-  [x, z] = [x * cy + z * sy, -x * sy + z * cy];
-  [y, z] = [y * cx - z * sx, y * sx + z * cx];
-  return [p[0] + x, p[1] + y, p[2] + z, p[3] + c[3], p[4] + c[4], p[5] + c[5], p[6] * c[6]];
-}
-
 export function createWorld(opts: { native?: boolean } = {}): World {
   if (opts.native === false) return new World(new JsStore());
   if (opts.native === true && !hasNative()) throw new Error("createWorld({ native: true }) needs the raea engine");

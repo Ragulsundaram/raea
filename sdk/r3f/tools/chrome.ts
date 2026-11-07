@@ -17,13 +17,12 @@ export interface Chrome {
   close(): void;
 }
 
-/** Chrome opened on `page` (a file or an http URL) at width x height, `scale` device pixels per CSS px; `webgpu` turns on
- * WebGPU in headless Chrome (sdk/web's raea-web parity) */
-export async function openChrome(page: string, width: number, height: number, opts: { scale?: number; mobile?: boolean; throttle?: number; webgpu?: boolean } = {}): Promise<Chrome> {
+/** Chrome opened on `page` (a file or an http URL) at width x height, `scale` device pixels per CSS px */
+export async function openChrome(page: string, width: number, height: number, opts: { scale?: number; mobile?: boolean; throttle?: number } = {}): Promise<Chrome> {
   const chrome = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
   const profile = mkdtempSync(resolve(tmpdir(), "raea-playable-chrome-"));
   const port = 9300 + Math.floor(Math.random() * 500);
-  const proc = Bun.spawn([chrome, "--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--enable-unsafe-swiftshader", ...(opts.webgpu ? ["--enable-unsafe-webgpu"] : []), "--no-first-run", "about:blank"], { stdout: "ignore", stderr: "ignore" });
+  const proc = Bun.spawn([chrome, "--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "--enable-unsafe-swiftshader", "--no-first-run", "about:blank"], { stdout: "ignore", stderr: "ignore" });
 
   let target: { webSocketDebuggerUrl: string } | undefined;
   for (let i = 0; i < 100 && !target; i++) {

@@ -27,8 +27,6 @@ interface Kept {
   copies?: ModelPart[];
   /** a solid waiting for the shape module */
   waiting?: boolean;
-  /** <Entities>: a mesh per entity id, and the shape it was made from */
-  entities?: Map<number, { mesh: THREE.Mesh; shape: string }>;
 }
 
 /** what raea's settings make of the renderer: apply() sets them */
@@ -154,40 +152,6 @@ export class Scene3d {
         const t = p.transform as { translation?: number[]; rotation?: number[]; scale?: number[] } | undefined;
         place(g, t ? { position: t.translation, quaternion: t.rotation, scale: t.scale } : p);
         this.hang(k, el, g);
-        return k;
-      }
-      case "Entities": {
-        // a world's entities (World.scene(): world space, parents composed): each Mesh entity a mesh of its shape with
-        // a standard surface, as the engine reads them (runtime/react scene/read.rs); its lights aren't drawn there either
-        const g = (k.obj as THREE.Group | undefined) ?? new THREE.Group();
-        this.hang(k, el, g);
-        const kept = (k.entities ??= new Map());
-        const seen = new Set<number>();
-        k.waiting = false;
-        for (const n of (p.scene as { id: number; kind: string; mesh?: Props; position?: number[]; rotation?: number[]; scale?: number }[] | undefined) ?? []) {
-          if (n.kind !== "Mesh") continue;
-          seen.add(n.id);
-          const shape = typeof n.mesh?.shape === "string" ? n.mesh.shape : "";
-          let e = kept.get(n.id);
-          if (!e || e.shape !== shape) {
-            const geometry = geometryOfShape(shape);
-            if (!geometry) {
-              k.waiting = true;
-              this.warnOnce("Entities shape", "is a solid: load raea's shape module (loadShapes) to draw it");
-              continue;
-            }
-            e?.mesh.removeFromParent();
-            const mesh = new THREE.Mesh(geometry, e?.mesh.material ?? new THREE.MeshStandardMaterial());
-            mesh.castShadow = mesh.receiveShadow = true;
-            g.add(mesh);
-            e = { mesh, shape };
-            kept.set(n.id, e);
-          }
-          place(e.mesh, { position: n.position, rotation: n.rotation, scale: n.scale });
-          const { color, roughness, metalness } = n.mesh ?? {};
-          paint(e.mesh.material as THREE.Material, { color, roughness, metalness }, true);
-        }
-        for (const [id, e] of kept) if (!seen.has(id)) (e.mesh.removeFromParent(), kept.delete(id));
         return k;
       }
       case "Mesh": {

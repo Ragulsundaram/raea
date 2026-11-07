@@ -4,8 +4,7 @@ use super::*;
 pub fn model(world: &mut World, e: Entity, t: &Tup, inserted: &[Tup], dir: &Path) -> Result<(), String> {
     let src = match t.vals.get("src") { Some(V::S(s)) => s.clone(), _ => return Err(format!("model {}: needs src (a .glb or .gltf file)", t.id)) };
     let path = resolve_src(inserted, &src, dir)?;
-    // in the browser (raea-web) a file is fetched by the asset server, so there's nothing on disk to look for
-    if cfg!(not(target_arch = "wasm32")) && !path.exists() {
+    if !path.exists() {
         return Err(format!("model {}: {} doesn't exist", t.id, path.display()));
     }
     let gltf: Handle<Gltf> = world.resource::<AssetServer>().load(path.to_string_lossy().to_string());

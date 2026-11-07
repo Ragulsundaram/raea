@@ -79,8 +79,7 @@ export function clearUnder3d(page: HTMLElement): string | undefined {
   for (let el = first.parentElement; el && el !== page; el = el.parentElement) {
     if (!el.hasAttribute(UNDER)) {
       const bg = getComputedStyle(el).backgroundColor;
-      // see-through is rgba(..., 0); rgb(0, 0, 0), black, also ends in ", 0)" and is solid
-      if (bg && bg !== "transparent" && !/^rgba\(.*,\s*0\)$/.test(bg)) el.setAttribute(UNDER, hex(bg));
+      if (bg && bg !== "transparent" && !bg.endsWith(", 0)")) el.setAttribute(UNDER, hex(bg));
       else continue;
     }
     clear ??= el.getAttribute(UNDER)!;
@@ -94,5 +93,4 @@ function hex(css: string): string {
   return m ? "#" + [m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("") : css;
 }
 
-// a layered <Canvas3D>'s slot (an <img> the native renderer paints the 3D into) is hidden: the 3D is drawn under the page here
-export const UNDER3D_CSS = `[${UNDER}]{background:transparent!important}img[data-raea-scene]{visibility:hidden}`;
+export const UNDER3D_CSS = `[${UNDER}]{background:transparent!important}`;

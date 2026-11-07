@@ -8,7 +8,7 @@ const [baseArg, out, ...only] = process.argv.slice(2);
 if (!baseArg || !out) throw new Error("usage: bun tools/shoot.ts BASE_URL|serve OUT_DIR [in-basic ...]");
 const served = baseArg === "serve" ? await serve() : undefined;
 const base = served?.url ?? baseArg;
-const cases = only.length ? only : ["in-basic", "in-lights", "in-things", "in-catch", "out-basic", "out-tony", "out-lights", "out-bloom", "out-grade", "out-lens", "out-catch", "out-entities", "src-basic", "src-tony", "src-lights", "src-bloom", "src-grade", "src-lens", "src-catch", "src-entities"];
+const cases = only.length ? only : ["in-basic", "in-lights", "in-things", "in-catch", "out-basic", "out-tony", "out-lights", "out-bloom", "out-grade", "out-lens", "out-catch", "src-basic", "src-tony", "src-lights", "src-bloom", "src-grade", "src-lens", "src-catch"];
 let failed = 0;
 for (const c of cases) {
   const [dir, name] = c.split("-");

@@ -2,7 +2,7 @@
 // that slides in on "pop"; a badge counts them with rolling digits; the panel behind has glass; a switch toggles
 // whether new toasts are urgent.
 import { useState } from "react";
-import { Badge, RollingText, Spring, Switch, rune } from "../src/index.ts";
+import { Badge, RollingText, Spring, Switch, rune } from "@raea/rune";
 
 export default function Toasts() {
   const [toasts, setToasts] = useState<{ id: number; urgent: boolean }[]>([]);

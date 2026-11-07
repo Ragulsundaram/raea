@@ -15,9 +15,5 @@
     "react": "file:../raea/node_modules/react",
     "react-dom": "file:../raea/node_modules/react-dom",
     "scheduler": "file:../raea/node_modules/scheduler"
-  },
-  "devDependencies": {
-    "@types/bun": "1.4.3",
-    "@types/react-dom": "19.2.0"
   }
 }
