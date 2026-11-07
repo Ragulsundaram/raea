@@ -1,11 +1,10 @@
 #!/bin/bash
 # A release of the raea engine for macOS on Apple Silicon, Linux on x86_64 or Windows on x86_64 (whichever machine runs
-# it; Linux's is built on the probe box in an ubuntu:24.04 root, for glibc 2.39; Windows's on GitHub's windows-latest
-# runner, .github/workflows/windows.yml's release mode, in Git's bash): raea and its bundler, with raea's own files
-# beside them (share/raea: the raea SDK's TypeScript, the lite runtime and its packages, the shell's sources, the tools
-# that install the local music and foley models, and the agent skills), laid out as the installer puts it under
-# ~/.raea. Built from the committed tree at REF (never anyone's unfinished edit); the runtime's packages
-# (sdk/react/js/node_modules, installed, not committed) come from this checkout.
+# it; .github/workflows/release.yml builds all three on GitHub's runners for a tag, Windows in Git's bash): raea and
+# its bundler, with raea's own files beside them (share/raea: the raea SDK's TypeScript, the lite runtime and its
+# packages, the shell's sources, the tools that install the local music and foley models, and the agent skills), laid
+# out as the installer puts it under ~/.raea. Built from the committed tree at REF (never anyone's unfinished edit);
+# the runtime's packages (sdk/react/js/node_modules, installed, not committed) come from this checkout.
 #
 #   tools/release.sh VERSION BIN_DIR [REF]     BIN_DIR holds a release build's raea and its bundler
 #                                              (libraea_bundle.dylib, .so, or raea.exe and raea_bundle.dll), and on
@@ -60,11 +59,14 @@ untar() {
   return $rc
 }
 raea_bin=$bin/raea; [ -f "$raea_bin.exe" ] && raea_bin=$raea_bin.exe
-# The gate reads the feed app's checkout (apps/app), a private submodule GitHub's Windows runner can't fetch. There,
-# RAEA_SKILLS_PASSED=SHA stands for it: the gate passed at SHA on macOS or Linux, and it counts for REF only when what
-# the gate reads (the skills and guides, the glossary, the CLI's usage, skills.sh) is the same at both (T1f, 11-07)
+# The gate reads the feed app's checkout (apps/app), which is private: a public checkout (release.yml's runners) has
+# none. There, RAEA_SKILLS_PASSED=SHA stands for it: the gate passed at SHA where the feed app is (a maintainer's
+# checkout), and it counts for REF only when what the gate reads (the skills and guides, the glossary, the CLI's usage,
+# skills.sh) is the same at both. With neither, the release refuses (T1f, 11-07)
 gate_inputs=(sdk/skills sdk/guides docs/skills.glossary.md engine/cli/src tools/skills.sh)
-if [ "$platform" = windows-x86_64 ] && [ ! -f "$root/apps/app/src/acp/protocol.ts" ] && [ -n "${RAEA_SKILLS_PASSED:-}" ]; then
+if [ ! -f "$root/apps/app/src/acp/protocol.ts" ]; then
+  [ -n "${RAEA_SKILLS_PASSED:-}" ] || { echo "release.sh: no feed app here (apps/app), so the skills gate can't run; run tools/skills.sh check in a checkout with the feed app, then name the commit it passed on as RAEA_SKILLS_PASSED (release.yml: a \"skills-passed: <sha>\" line in the annotated tag's message, or the skills_passed input when run by hand)" >&2; exit 1; }
+  git rev-parse -q --verify "$RAEA_SKILLS_PASSED^{commit}" >/dev/null || { echo "release.sh: RAEA_SKILLS_PASSED=$RAEA_SKILLS_PASSED isn't a commit here (a full SHA, fetched)" >&2; exit 1; }
   git diff --quiet "$RAEA_SKILLS_PASSED" "$ref" -- "${gate_inputs[@]}" \
     || { echo "release.sh: the skills changed between $RAEA_SKILLS_PASSED (where the gate passed) and $ref" >&2; exit 1; }
   echo "release.sh: note: the skills gate passed at $(git rev-parse --short "$RAEA_SKILLS_PASSED") elsewhere and its inputs are unchanged; not run here (no feed app)"

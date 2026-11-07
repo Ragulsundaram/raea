@@ -1,8 +1,12 @@
 # A release, built here where anyone can read how (public #6; docs/public-first.feature PF5): for a v* tag, macOS on
-# Apple Silicon and Linux on x86_64 are built from the tag on GitHub's runners, packed by tools/release.sh, checked by
-# tools/release-check.sh, attested (anyone can check a download with
+# Apple Silicon, Linux on x86_64 and Windows on x86_64 are built from the tag on GitHub's runners, packed by
+# tools/release.sh, checked by tools/release-check.sh, attested (anyone can check a download with
 # `gh attestation verify raea-VERSION-macos-arm64.tar.gz -R shinyobjectz/raea`) and attached to the tag's release.
-# Windows builds in windows.yml's release mode. The release's notes and whether it's a pre-release are set by hand.
+# The skills gate reads the feed app, which is private, so it runs in a maintainer's checkout first
+# (tools/skills.sh check), and the tag names the commit it passed on; tools/release.sh checks the gate's inputs haven't
+# changed since (tools/release/skills-passed.sh):
+#   git tag -a v0.1.0-canary.4 -m "raea 0.1.0-canary.4" -m "skills-passed: <full sha>"
+# The release's notes and whether it's a pre-release are set by hand.
 name: release
 
 on:
@@ -13,6 +17,10 @@ on:
       tag:
         description: the tag to build (v0.1.0-canary.4)
         required: true
+        type: string
+      skills_passed:
+        description: the full SHA where tools/skills.sh check passed with the feed app (else the tag's skills-passed line)
+        default: ""
         type: string
 
 permissions:
@@ -75,6 +83,8 @@ jobs:
           mkdir ship
           cp target/dist/raea target/dist/${{ matrix.lib }} target/dist/raea-rune-host target/dist/raea-page-host ship/
           if [ -n "${{ matrix.extra }}" ]; then cp target/dist/${{ matrix.extra }} ship/; fi
+      - name: Where the skills gate passed
+        run: bash tools/release/skills-passed.sh "$TAG" "${{ inputs.skills_passed }}"
       - name: Pack and check (tools/release.sh)
         run: |
           v=${TAG#v}
@@ -89,3 +99,126 @@ jobs:
         run: |
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --prerelease --title "raea ${TAG#v}" --notes "Built by .github/workflows/release.yml; notes follow."
           gh release upload "$TAG" dist/raea-*.tar.gz dist/raea-*.tar.gz.sha256 --clobber
+
+  # Windows in Git's bash on GitHub's runner, with the Visual Studio Build Tools in its image (their image terms; we
+  # accept no licence and download no Microsoft files). The C runtime is the DLL one (the VC++ redistributable): ort's
+  # prebuilt ONNX Runtime is built against it, so crt-static doesn't link (LNK2019 on __imp_ symbols, 10-29).
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          submodules: true
+          lfs: false
+      - name: Toolchain (rust-toolchain.toml's pin)
+        run: rustup show active-toolchain || rustup toolchain install
+      # jq for Windows ends -r lines with CRLF, so tools/bevy-plugins.sh read "ahoy\r" and lost its Bevy 0.20 block
+      # (feature `ahoy` not found, 11-04); -b writes LF
+      - name: jq that writes LF
+        run: |
+          mkdir -p "$RUNNER_TEMP/jq"
+          printf '#!/bin/bash\nexec "%s" -b "$@"\n' "$(command -v jq)" > "$RUNNER_TEMP/jq/jq"
+          chmod +x "$RUNNER_TEMP/jq/jq"
+          echo "$RUNNER_TEMP/jq" >> "$GITHUB_PATH"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: The runtime's packages
+        run: for d in sdk/react/js sdk/react/tw; do (cd "$d" && bun install --frozen-lockfile); done
+      # the app targets' hosts a cargo call each: with raea-cli's crates in one call taffy's features unify and
+      # rune-taffy doesn't build
+      - name: Build
+        run: |
+          feat=$(bash tools/bevy-plugins.sh features sdk/raea/bench/bevy-plugins)
+          cargo build --profile dist --locked -p raea-cli --bin raea --no-default-features --features "$feat"
+          cargo build --profile dist --locked -p raea-rune-host
+          cargo build --profile dist --locked -p raea-page-host --features window
+      # which DLLs raea needs from the machine (the CRT's come from the VC++ redistributable)
+      - name: What raea.exe imports
+        run: |
+          { echo '### what raea.exe and raea_bundle.dll import'; echo '```'
+            dumpbin=$(ls "/c/Program Files/Microsoft Visual Studio"/*/*/VC/Tools/MSVC/*/bin/HostX64/x64/dumpbin.exe | head -1)
+            "$dumpbin" -nologo -dependents target/dist/raea.exe target/dist/raea_bundle.dll | grep -iE '\.dll$|Dump of' | sed 's/^ *//'
+            echo '```'; } | tee -a "$GITHUB_STEP_SUMMARY" || true
+      # release.sh's checks render on Mesa's lavapipe (software Vulkan, MIT; on the runner only, never in the zip): the
+      # runner has no GPU, and WARP, Windows' own software DX12, crashes compiling one of Bevy's compute shaders there
+      # (d3d10warp ComputeShaderTransformer::ConstructLoadStoreSets, an access violation; 11-04)
+      - name: Software Vulkan
+        run: bash tools/release/lavapipe.sh
+      - name: Where the skills gate passed
+        run: bash tools/release/skills-passed.sh "$TAG" "${{ inputs.skills_passed }}"
+      - name: Pack and check (tools/release.sh)
+        run: bash tools/release.sh "${TAG#v}" target/dist HEAD
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/raea-*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: dist/raea-*.zip*
+          retention-days: 7
+          compression-level: 0
+
+  # the zip alone, on a runner that never had raea's sources, as a user's machine gets it; it also tests the
+  # published installer (raea.io/install.ps1), pointed at the zip by RAEA_DOWNLOAD. Only a zip that passes is attached.
+  windows-verify:
+    needs: windows
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+          lfs: false
+          sparse-checkout: |
+            tools/release-check.sh
+            tools/release/lavapipe.sh
+          sparse-checkout-cone-mode: false
+          path: check
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-zip
+          path: ${{ runner.temp }}/zip
+      - name: Software Vulkan
+        run: bash check/tools/release/lavapipe.sh
+      - name: The zip, unpacked and checked
+        run: |
+          set -e
+          v=${TAG#v}
+          cp check/tools/release-check.sh "$RUNNER_TEMP/"
+          rm -rf check
+          cd "$RUNNER_TEMP/zip"
+          sha256sum -c "raea-$v-windows-x86_64.zip.sha256"
+          bash "$RUNNER_TEMP/release-check.sh" "$PWD/raea-$v-windows-x86_64.zip" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: install.ps1, then a render from PATH
+        shell: pwsh
+        run: |
+          $v = $env:TAG.Substring(1)
+          $rel = Join-Path $env:RUNNER_TEMP "rel"
+          New-Item -ItemType Directory -Force -Path (Join-Path $rel "v$v") | Out-Null
+          Copy-Item (Join-Path $env:RUNNER_TEMP "zip/raea-$v-windows-x86_64.zip*") (Join-Path $rel "v$v")
+          $env:RAEA_DOWNLOAD = $rel; $env:RAEA_VERSION = $v; $env:RAEA_NO_SKILLS = "1"
+          & ([scriptblock]::Create((Invoke-RestMethod https://raea.io/install.ps1)))
+          $p = Join-Path $env:RUNNER_TEMP "user"; New-Item -ItemType Directory -Force -Path $p | Out-Null; Set-Location $p
+          $env:RAEA_NO_TREE = "1"; $env:RAEA_API = "http://127.0.0.1:9"
+          raea init
+          if ($LASTEXITCODE) { throw "raea init failed" }
+          Set-Content hello.tsx 'import { AbsoluteFill, Composition, registerRoot } from "raea"; registerRoot(() => <Composition id="hello" component={() => <AbsoluteFill style={{ background: "#123", color: "#fff", fontSize: 90, justifyContent: "center", alignItems: "center" }}>raea on Windows</AbsoluteFill>} width={640} height={360} fps={30} durationInFrames={30} />);'
+          $h = Join-Path $env:RUNNER_TEMP "hello"; New-Item -ItemType Directory -Force -Path $h | Out-Null; Move-Item hello.tsx $h; Set-Location $h
+          raea render hello.tsx --frame 1 -o hello.png
+          if ($LASTEXITCODE -or -not (Test-Path hello.png)) { throw "raea render failed" }
+          Get-Item hello.png | Format-List Name, Length
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --title "raea ${TAG#v}" --notes "Built by .github/workflows/release.yml; notes follow."
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" "$RUNNER_TEMP"/zip/raea-*.zip "$RUNNER_TEMP"/zip/raea-*.zip.sha256 --clobber

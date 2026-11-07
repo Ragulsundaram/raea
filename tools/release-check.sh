@@ -1,9 +1,9 @@
 #!/bin/bash
-# The check every release archive passes (tools/release.sh runs it on the archive it just made; windows.yml's verify job
-# runs it again on a fresh Windows runner, from the archive alone): unpacked into a fresh folder, with RAEA_NO_TREE=1 so
-# it can't be reading a checkout, its raea renders a frame, has the plugin catalog, prints a craft guide and writes
-# styles.gen.ts; its binaries name none of raea's API, nothing in it looks like a key, and a Windows archive holds no
-# Microsoft file (the CRT comes from the VC++ redistributable; docs/handoff/ports.md).
+# The check every release archive passes (tools/release.sh runs it on the archive it just made; release.yml's
+# windows-verify job runs it again on a fresh Windows runner, from the archive alone): unpacked into a fresh folder,
+# with RAEA_NO_TREE=1 so it can't be reading a checkout, its raea renders a frame, has the plugin catalog, prints a
+# craft guide and writes styles.gen.ts; its binaries name none of raea's API, nothing in it looks like a key, and a
+# Windows archive holds no Microsoft file (the CRT comes from the VC++ redistributable; docs/handoff/ports.md).
 #
 #   tools/release-check.sh ARCHIVE     raea-VERSION-PLATFORM.tar.gz or .zip
 set -eu
