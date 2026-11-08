@@ -70,6 +70,8 @@ if [ ! -f "$root/apps/app/src/acp/protocol.ts" ]; then
   git diff --quiet "$RAEA_SKILLS_PASSED" "$ref" -- "${gate_inputs[@]}" \
     || { echo "release.sh: the skills changed between $RAEA_SKILLS_PASSED (where the gate passed) and $ref" >&2; exit 1; }
   echo "release.sh: note: the skills gate passed at $(git rev-parse --short "$RAEA_SKILLS_PASSED") elsewhere and its inputs are unchanged; not run here (no feed app)"
+  # but cli.md is checked here, against this release's own build, which no other checkout has
+  RAEA_BIN="$(cd "$(dirname "$raea_bin")" && pwd)/$(basename "$raea_bin")" bash tools/skills.sh check-cli || { echo "release.sh: cli.md doesn't match $raea_bin's help" >&2; exit 1; }
 else
   git archive "$ref" | untar "$gate" || { echo "release.sh: the skills gate couldn't unpack $ref" >&2; exit 1; }
   git -C "$gate" init -q && git -C "$gate" add -A && git -C "$gate" -c gc.auto=0 -c maintenance.auto=false -c user.name=release -c user.email=release@raea.io commit -qm "$ref" --no-verify
