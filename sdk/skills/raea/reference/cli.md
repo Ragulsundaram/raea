@@ -11,12 +11,13 @@ or an argument its usage doesn't name, so these lists are what it takes.
 Access: HEADLESS. Arguments besides flags: 1.
 
 ```
-raea render EDIT.tsx -o OUT.mp4|OUT.png|DIR [--frame N | --at A,B] [--composition ID] [--w W] [--h H] [--fps FPS] [--frames N] [--words W.json] [--perception P.json] [--input I.json|inputs.rrl] [--manifest render.json] [--stage WxH] [--10bit] [--aov] [--alpha] [--kbps N | --quality draft|high|master|0..1]   (also: --lite --comps)
+raea render EDIT.tsx -o OUT.mp4|OUT.png|DIR [--frame N | --at A,B] [--composition ID] [--w W] [--h H] [--fps FPS] [--frames N] [--words W.json] [--perception P.json] [--input I.json|inputs.rrl] [--manifest render.json] [--stage WxH] [--10bit] [--aov] [--alpha] [--kbps N | --quality draft|high|master|0..1] [--clay]   (also: --lite --comps)
+raea render EDIT.tsx --review DIR [--frame N]   (fixed cameras hero, front, right, top, iso, low in colour and clay: DIR/colour.png, clay.png, review.json)
 raea render PAGE.html -o OUT.mp4|OUT.png|DIR [--at A,B] [--alpha]   (an HTML composition)
 raea render --bundle NAME.comp.js -o OUT.png|DIR [--dir DIR] [--frame N]   (a bundle from raea bundle, as render_bundle draws it)
 ```
 
-Flags: `--10bit`, `--alpha`, `--aov`, `--at` (1), `--bundle` (1), `--composition` (1), `--comps`, `--dir` (1), `--fps` (1), `--frame` (1), `--frames` (1), `--h` (1), `--input` (1), `--kbps` (1), `--lite`, `--manifest` (1), `--perception` (1), `--quality` (1), `--stage` (1), `--w` (1), `--words` (1), `-o` (1).
+Flags: `--10bit`, `--alpha`, `--aov`, `--at` (1), `--bundle` (1), `--clay`, `--composition` (1), `--comps`, `--dir` (1), `--fps` (1), `--frame` (1), `--frames` (1), `--h` (1), `--input` (1), `--kbps` (1), `--lite`, `--manifest` (1), `--perception` (1), `--quality` (1), `--review` (1), `--stage` (1), `--w` (1), `--words` (1), `-o` (1).
 
 ## raea media
 
@@ -238,7 +239,7 @@ Flags: `--check`, `--download`.
 Access: HEADLESS. Its arguments go to a parser of its own: `raea blender` alone lists them.
 
 ```
-raea blender run SCRIPT.py [ARGS...]   (blender --background --python SCRIPT.py -- ARGS, headless)
+raea blender run SCRIPT.py [ARGS...]   (blender --background --python SCRIPT.py -- ARGS, headless; blender/X.py missing from the project is copied from the library: convert, decimate, repair, split, bake, rig, cloth)
 ```
 
 ## raea init
@@ -302,6 +303,28 @@ Access: HEADLESS. Arguments besides flags: 1.
 ```
 raea context PROJECT   (what to read before working on a project: taste, brief, look, the floor and its modes' guides)
 ```
+
+## raea solid
+
+Access: HEADLESS. Arguments besides flags: 2.
+
+```
+raea solid info FILE.ts [--json] [--set k=v,...] [--expect E.json] [--walk]   (volume, box, pieces, genus per part; joints; predictions and mutants)
+raea solid view FILE.ts -o DIR [--set k=v,...] [--json]   (the solid's parts in colour and clay from fixed cameras)
+raea solid export FILE.ts -o OUT.glb [--set k=v,...] [--part NAME] [--colour #RRGGBB]   (the solid as one .glb for a Blender step, read back and checked)
+```
+
+Flags: `--colour` (1), `--expect` (1), `--json`, `--part` (1), `--set` (1), `--walk`, `-o` (1).
+
+## raea judge
+
+Access: HEADLESS. Arguments besides flags: any number.
+
+```
+raea judge DIR [--by clef|kimi|claude] [--brief brief.ts] [--target T.png] [--json] [--dry] | judge eye DIR (CATEGORY=SCORE ... [--pass yes|no] | --by kimi|claude) | judge calibrate [--json]   (a --review folder's sheets judged blind: clef-omni on the frozen rubric, or a fresh kimi or claude session on the judge prompt; the pass decided in code; clef advises until calibrated against your eye or an agent's)
+```
+
+Flags: `--brief` (1), `--by` (1), `--dry`, `--json`, `--pass` (1), `--target` (1).
 
 ## raea play
 
