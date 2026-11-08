@@ -348,7 +348,8 @@ case "${1:-}" in
     R=$(raea_bin)
     [ -x "$R" ] || { echo "FAIL skills: no raea to read the help from (RAEA_BIN, or build raea-cli)"; exit 1; }
     d=$(mktemp)
-    if ! diff -u sdk/skills/raea/reference/cli.md <(gen_cli) > "$d"; then
+    # a Windows checkout has CRLF line ends (Git's autocrlf) and the help's are LF: only the text is compared
+    if ! diff -u --strip-trailing-cr sdk/skills/raea/reference/cli.md <(gen_cli) > "$d"; then
       echo "FAIL skills: sdk/skills/raea/reference/cli.md:1: differs from the help of $R; fix: tools/skills.sh gen with a raea built from this tree, and commit it"
       head -40 "$d"; rm -f "$d"; exit 1
     fi
