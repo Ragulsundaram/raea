@@ -8,7 +8,9 @@
 #   tools/release-check.sh ARCHIVE     raea-VERSION-PLATFORM.tar.gz or .zip
 set -eu
 archive=${1:?usage: release-check.sh ARCHIVE}
-check=$(mktemp -d)
+# RAEA_CHECK_DIR keeps the check's folder where a CI job can upload it when a check fails (release.yml)
+check=${RAEA_CHECK_DIR:-$(mktemp -d)}
+mkdir -p "$check"
 case $archive in
   *.zip) if command -v unzip >/dev/null; then unzip -q "$archive" -d "$check"; else 7z x -y -o"$check" "$archive" >/dev/null; fi ;;
   *) tar -xzf "$archive" -C "$check" ;;

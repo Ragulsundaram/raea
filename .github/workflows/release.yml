@@ -86,10 +86,20 @@ jobs:
       - name: Where the skills gate passed
         run: bash tools/release/skills-passed.sh "$TAG" "${{ inputs.skills_passed }}"
       - name: Pack and check (tools/release.sh)
+        env:
+          RAEA_CHECK_DIR: ${{ runner.temp }}/release-check
         run: |
           v=${TAG#v}
           if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a -s "-screen 0 1280x1024x24" bash tools/release.sh "$v" ship HEAD
           else bash tools/release.sh "$v" ship HEAD; fi
+      # a failed check's own files (the app check's frames and logs), not the unpacked release
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: release-check-${{ runner.os }}
+          path: ${{ runner.temp }}/release-check/app
+          retention-days: 7
+          if-no-files-found: ignore
       - uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/raea-*.tar.gz
@@ -153,16 +163,29 @@ jobs:
       - name: Where the skills gate passed
         run: bash tools/release/skills-passed.sh "$TAG" "${{ inputs.skills_passed }}"
       - name: Pack and check (tools/release.sh)
+        env:
+          RAEA_CHECK_DIR: ${{ runner.temp }}/release-check
         run: bash tools/release.sh "${TAG#v}" target/dist HEAD
       - uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/raea-*.zip
+      # kept even when its check fails, with the check's own files, so a failure can be looked into on a fresh runner
+      # without a rebuild; only windows-verify attaches it to the release
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: windows-zip
           path: dist/raea-*.zip*
           retention-days: 7
           compression-level: 0
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: release-check-Windows
+          path: ${{ runner.temp }}/release-check/app
+          retention-days: 7
+          if-no-files-found: ignore
 
   # the zip alone, on a runner that never had raea's sources, as a user's machine gets it; it also tests the
   # published installer (raea.io/install.ps1), pointed at the zip by RAEA_DOWNLOAD. Only a zip that passes is attached.
