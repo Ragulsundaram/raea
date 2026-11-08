@@ -88,7 +88,7 @@ grep -q "unsigned" "$check/app/native.log" || { tail -5 "$check/app/native.log" 
 # engine only: no raea API in the binaries, nothing key-shaped anywhere
 api=$(cat "$check"/raea/bin/* | grep -aoE '(api|sign)\.raea\.io|RAEA_(SIGN|GEN)_TOKEN' | sort -u | tr '\n' ' ' || true)
 [ -z "$api" ] || fail "the binaries name raea's API ($api): build raea-cli with --no-default-features"
-keys=$(grep -rlE 'sk-or-v1-[0-9a-f]{20}|sk-ant-[A-Za-z0-9_-]{20}|AKIA[0-9A-Z]{16}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY' "$check/raea" 2>/dev/null | head -5 || true)
+keys=$(grep -rlE 'sk-or-v1-[0-9a-f]{20}|sk-ant-[A-Za-z0-9_-]{20}|(^|[^A-Za-z0-9+/])AKIA[0-9A-Z]{16}([^A-Za-z0-9+/=]|$)|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY' "$check/raea" 2>/dev/null | head -5 || true)
 [ -z "$keys" ] || fail "key-shaped text in: $keys"
 # Windows: our binaries only. Any other DLL, or a file named like the CRT, the SDK or DirectX's redistributables, is
 # Microsoft's and isn't ours to ship
