@@ -14,7 +14,7 @@
 #     DEVICE    the phone's devicectl id (the iPhone 13 Pro Max)
 #     BUILD=0   reuse the app already installed (no bundle, build or install; the "first" run is then skipped)
 #     KEEP=1    copy each render's MP4 back to OUT
-# Exits 1 when a render fails.
+# Exits 1 when a render fails, 3 when the phone is locked (devicectl launches nothing on a locked phone).
 set -u
 cd "$(dirname "$0")/../../.." || exit 2
 ROOT=$PWD
@@ -77,6 +77,9 @@ render() {
     --environment-variables "{\"RR_COMP\": \"$comp\"}" "$APP" > "$OUT/$id.console" 2>&1
   t1=$(now)
   span "$t0" "$t1" > "$OUT/$id.launch"
+  # a locked phone launches nothing, and every later render would fail the same way
+  if grep -q "could not be, unlocked" "$OUT/$id.console"; then echo "bench: the phone is locked: unlock it and run again"; exit 3; fi
+  rm -f "$OUT/$id".{log,tsv,json,mp4}
   copy_from "$comp.log" "$OUT/$id.log"; copy_from "$comp.tsv" "$OUT/$id.tsv"; copy_from "$comp.json" "$OUT/$id.json"
   [ "${KEEP:-0}" = 1 ] && copy_from "$comp.mp4" "$OUT/$id.mp4"
   [ -s "$OUT/$id.json" ] && [ "$(jq -r .code "$OUT/$id.json")" = 0 ] && grep -q '^APPLIED' "$OUT/$id.log" \
