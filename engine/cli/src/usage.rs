@@ -190,6 +190,8 @@ fn access(verb: &str) -> &'static str {
         // in the raea app's host: a folder an agent adds waits for the person's yes; what's shown is theirs to answer
         "library" => "HOST, then PERSON to add a folder",
         "show" => "HOST (starts the app), then PERSON to answer",
+        // take and ls read files; post shows the asks on the person's comments through show
+        "notes" => "HOST to show post's asks on the person's comments; take and ls run headless",
         _ => "HEADLESS",
     }
 }

@@ -22,7 +22,7 @@ const problems: string[] = []
 
 // the index's groups, in the order a reader meets them; every import path is in one
 const GROUPS: [string, string, string[]][] = [
-  ["Start here", "The composition, the app and the specs an agent writes.", ["raea", "app", "brief"]],
+  ["Start here", "The composition, the app, and the specs and notes an agent writes.", ["raea", "app", "brief", "note"]],
   ["Time and motion", "Frames, animation, springs, states and input.", ["time", "animation", "math", "state", "input"]],
   ["Video, sound and text", "Footage, pictures, sound, words and colour.", ["video", "audio", "text", "image", "asset", "color"]],
   ["3D", "Bevy's 3D: cameras, lights, materials, meshes and the frame after it's drawn.", ["3d", "camera", "light", "pbr", "mesh", "transform", "post_process", "picking", "gizmos"]],

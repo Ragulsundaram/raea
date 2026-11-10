@@ -116,6 +116,7 @@ What an agent reads and shows the person, and the tools raea installs.
 | --- | --- |
 | [`raea guide`](guide.md) | Print raea's craft guides: the floor read before any edit, the modes, the notes and the 3D guides. |
 | [`raea context`](context.md) | Print what to read before working on a project: its taste, brief and look, the floor and its modes' guides. |
+| [`raea notes`](notes.md) | A person's notes as files the work is held to: each taken word for word, then restated as asks before anything changes. |
 | [`raea show`](show.md) | Show the person something in the raea app, as an item they can use and answer: stills, a video, a sound, a script, an interactive .tsx or a question. |
 | [`raea skill`](skill.md) | Print the agent skill this raea ships, matched to its version, or one of its references. |
 | [`raea skills`](skills.md) | Install raea's agent skill where Claude Code, Codex, Kimi or Gemini read skills, with its MCP server and hook. |

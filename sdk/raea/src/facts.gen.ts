@@ -117,6 +117,47 @@ export type Rendered = { out: string, manifest: string, record?: string, stale: 
 
 export type Waits = { [key in string]: string };
 
+export type Pin = { t?: number, x?: number, y?: number, part?: string, };
+
+export type Proof = { shot?: string, frames?: [number, number], sign: boolean, };
+
+export type Ask = { 
+/**
+ * the one thing asked
+ */
+text: string, 
+/**
+ * the medium the person's words name for it, in their word: "2D", "3D", "flat", "extruded", "real",
+ * "modelled", "voxel"
+ */
+medium?: string, 
+/**
+ * what it is about: the part the pin is on (found in the world), or what a check would query
+ */
+about?: string, 
+/**
+ * what the note does not ask for, so a change keeps it (for a redesign: what is kept)
+ */
+not: Array<string>, 
+/**
+ * the craft verb this ask is (skills/skills/raea/craft/verbs): one per ask, not one per note
+ */
+verb?: string, 
+/**
+ * the check that shows it met (DR6): one of raea's by name, or a .ts check by its path, as a rule names one
+ */
+check?: string, 
+/**
+ * the values its check is held to
+ */
+values?: Record<string, unknown>, 
+/**
+ * where it can't be measured: the clip the person signs
+ */
+proof?: Proof, };
+
+export type Note = { words: Array<string>, from: string, round: number, pin?: Pin, redesign?: boolean, corrected?: Array<number>, asks: Array<Ask>, };
+
 export type Level = "error" | "warn" | "note";
 
 export type About = { name: string, key?: string, };

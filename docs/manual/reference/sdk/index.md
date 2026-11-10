@@ -27,13 +27,14 @@ mirrors a Bevy type and has no comment of its own, the page shows Bevy's doc for
 
 ## Start here
 
-The composition, the app and the specs an agent writes.
+The composition, the app, and the specs and notes an agent writes.
 
 | Import | What it's for | Exports |
 | --- | --- | --- |
 | [`raea`](raea.md) | The main entry: compositions, sequences, time, interpolation, springs, footage, sound and words. | 18 components, 8 hooks, 52 functions, 8 values, 91 types |
 | [`raea/app`](app.md) | The App, its plugins and schedules, and the registry a video's compositions are kept in. | 1 component, 4 functions, 3 classes, 17 values, 8 types |
 | [`raea/brief`](brief.md) | The specs an agent writes as data: brief, script, taste, plan and controller, checked against raea's schemas. | 5 functions, 28 types |
+| [`raea/note`](note.md) | A person's note as a file in the project: their words kept as written, and the asks the agent restates it as. | 1 function, 4 types |
 
 ## Time and motion
 
@@ -92,7 +93,7 @@ Checks, lints and a headless App you can drive.
 
 | Import | What it's for | Exports |
 | --- | --- | --- |
-| [`raea/check`](check.md) | A check written as a system over a composition's world: what `raea check` runs for a rule a controller holds. | 5 functions, 1 class, 32 types |
+| [`raea/check`](check.md) | A check written as a system over a composition's world: what `raea check` runs for a rule a controller holds. | 5 functions, 1 class, 36 types |
 | [`raea/dev_tools`](dev_tools.md) | Checks and lints you can run from code: a motion performance's lint report. | 2 functions, 3 types |
 | [`raea/remote`](remote.md) | A headless Bevy App you open, step and query from TypeScript, through Bevy's remote protocol. | 1 class, 1 type |
 

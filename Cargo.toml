@@ -154,6 +154,7 @@ members = [
     "runtime/shared",
     "apps/check",
     "apps/direction",
+    "apps/notes",
     "apps/sound",
     "apps/workspace",
     "apps/workspace/registry",

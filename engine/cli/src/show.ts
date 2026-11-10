@@ -24,10 +24,11 @@ raea show [--title T] --question Q1 [--preview FILE] --choice A [--preview FILE]
   FILE: stills (several make a storyboard), a video, a sound, a NAME.script.ts or .md, or a .tsx (an interactive
   artifact; one of the project's compositions opens in its editor). P: the project's id, title or Workspace/project;
   else the one this folder is in. Who's showing it: --as NAME [--role ROLE] [--inbox NAME], else your harness's.
-raea show --on ITEM --working ID... | --done ID... [--note LINE] [--sub NAME]
+raea show --on ITEM --working ID... [--ask TEXT]... | --done ID... [--note LINE] [--sub NAME]
 raea show FILE... --replaces ITEM --done ID...
   The person's edit comments are tasks they watch: mark each working as you start it and done when it's settled
-  (the version that settles them, with --replaces); --sub names a subagent when several split them.
+  (the version that settles them, with --replaces); --sub names a subagent when several split them. With --working,
+  each --ask is one ask you read the comment as, shown on it for the person to correct (raea notes post).
 `;
 
 const WITH_VALUE = new Set(["--title", "--ask", "--project", "--replaces", "--as", "--role", "--inbox", "--question", "--choice", "--preview", "--on", "--working", "--done", "--note", "--sub"]);
@@ -86,7 +87,7 @@ export function parseShow(args: string[], cwd: string) {
   // several questions, or any preview: one item with them all (host/show.ts questions); else the one question as before
   const questions = asked.length > 1 || asked.some((q) => q.preview || q.choices.some((c) => c.preview)) ? asked : undefined;
   if (questions && files.length) throw new Error(`with several questions or previews, each file is a --preview of the question or choice it shows\n${SHOW_USAGE}`);
-  return { files, choices, questions, open: args.includes("--open"), title: one("--title"), ask: one("--ask"), project: one("--project"), replaces: one("--replaces"), question: questions ? undefined : one("--question"), as: one("--as"), role: one("--role"), inbox: one("--inbox"), on: one("--on"), working: many("--working"), done: many("--done"), note: one("--note"), sub: one("--sub") };
+  return { files, choices, questions, open: args.includes("--open"), title: one("--title"), ask: one("--ask"), asks: many("--ask"), project: one("--project"), replaces: one("--replaces"), question: questions ? undefined : one("--question"), as: one("--as"), role: one("--role"), inbox: one("--inbox"), on: one("--on"), working: many("--working"), done: many("--done"), note: one("--note"), sub: one("--sub") };
 }
 
 export function showVerb(ask: Ask, args: string[], cwd: string, env: Record<string, string | undefined>): string {
@@ -101,9 +102,10 @@ export function showVerb(ask: Ask, args: string[], cwd: string, env: Record<stri
   };
   const by = posterOf(env, a.as, a.role, a.inbox, cwd, a.as && a.inbox ? undefined : parent());
   // the person's edit comments as tasks (docs/review.feature R3): marked working or done on their item, or done by
-  // the version shown with --replaces
+  // the version shown with --replaces; a working mark carries the asks the agent read the comments as (DR5), for the
+  // person to correct
   const mark = (item: string, comments: string[], state: "working" | "done", version?: string) =>
-    ask("task", { item, comments, state, by, sub: a.sub, note: state === "done" ? a.note : undefined, version }) as { item: string; comments: string[] };
+    ask("task", { item, comments, state, by, sub: a.sub, note: state === "done" ? a.note : undefined, asks: state === "working" && a.asks.length ? a.asks : undefined, version }) as { item: string; comments: string[] };
   const said = (m: { item: string; comments: string[] }, state: string) => `Marked ${m.comments.join(", ")} ${state} on ${m.item}: the person sees ${a.sub ? `${by.name} · ${a.sub}` : by.name} ${state === "working" ? "on them" : "finished them"}.`;
   if (!a.files.length && !a.question && !a.questions && (a.working.length || a.done.length)) {
     const item = a.on ?? a.replaces;

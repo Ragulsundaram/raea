@@ -243,7 +243,7 @@ pub fn declarations() -> Vec<String> {
     let cfg = Config::default().with_large_int("number");
     macro_rules! decls { ($($t:ty),*) => { vec![$(format!("export {}", <$t as TS>::decl(&cfg))),*] }; }
     use crate::rendered::*;
-    decls!(Source, Medium, Layer, Text, Part, Camera, Shot, Word, Clip, Cue, Line, Contrast, Ocr, Picture, Onset, Covered, Covers, Mix, Rendered, Waits, crate::Level, crate::About, crate::Measure, crate::Finding)
+    decls!(Source, Medium, Layer, Text, Part, Camera, Shot, Word, Clip, Cue, Line, Contrast, Ocr, Picture, Onset, Covered, Covers, Mix, Rendered, Waits, crate::Pin, crate::Proof, crate::Ask, crate::Note, crate::Level, crate::About, crate::Measure, crate::Finding)
 }
 
 #[cfg(test)]

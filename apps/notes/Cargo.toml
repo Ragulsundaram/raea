@@ -1,0 +1,15 @@
+[package]
+name = "raea-app-notes"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "A person's notes on a project as files the work is held to (docs/direction.feature DR5): `raea notes take`, `ls` and `post`"
+
+[dependencies]
+# Note and Ask, the project found by its .raea/project, and the world a note is an entity in
+raea-core-facts = { path = "../../core/facts" }
+serde_json = "1"
+
+[dev-dependencies]
+tempfile = "3"

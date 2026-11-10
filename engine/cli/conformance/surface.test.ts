@@ -26,7 +26,7 @@ const checkout = ownCheckout && existsSync(join(ownCheckout, "engine/cli/src/cli
  *  later). Another lane's uncommitted edit counts from the commit alone, so it can't fail this check, and a file HEAD
  *  doesn't have doesn't count. Undefined without git history (an L1 export uses the binary's own checkout) */
 const rustIn = (dir: string) => readdirSync(join(checkout, dir), { recursive: true }).map(String).filter((f) => f.endsWith(".rs")).map((f) => `${dir}/${f}`);
-const helpSources = ["runtime/react/src/scene.rs", ...rustIn("runtime/react/src/scene"), ...rustIn("engine/cli/src"), ...rustIn("apps/check/src"), ...rustIn("apps/game/src"), ...rustIn("apps/tools/src")];
+const helpSources = ["runtime/react/src/scene.rs", ...rustIn("runtime/react/src/scene"), ...rustIn("engine/cli/src"), ...rustIn("apps/check/src"), ...rustIn("apps/game/src"), ...rustIn("apps/tools/src"), ...rustIn("apps/notes/src")];
 const git = (...a: string[]) => spawnSync("git", ["-C", checkout, ...a], { encoding: "utf8" });
 const committed = git("rev-parse", "-q", "--verify", "HEAD").status !== 0 ? undefined : Math.max(0, ...helpSources.map((f) => {
   if (git("cat-file", "-e", `HEAD:${f}`).status !== 0) return 0;

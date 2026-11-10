@@ -31,7 +31,7 @@ const GROUPS: [string, string, string[]][] = [
   ["Footage", "Takes, cuts and the camera, from your own media.", ["media", "cut", "frame", "track", "splat", "mezz", "neural"]],
   ["Sound", "Music read, foley and instruments made on this machine.", ["song", "sounds", "sao", "tokensynth", "setup-audio"]],
   ["Generate and 3D tools", "Generated media, physics bakes and Blender.", ["gen", "physics", "blender"]],
-  ["Agents and setup", "What an agent reads and shows the person, and the tools raea installs.", ["guide", "context", "show", "skill", "skills", "setup"]],
+  ["Agents and setup", "What an agent reads and shows the person, and the tools raea installs.", ["guide", "context", "notes", "show", "skill", "skills", "setup"]],
 ]
 const groupOf = new Map(GROUPS.flatMap(([g, , vs]) => vs.map((v, i) => [v, { g, i }] as const)))
 

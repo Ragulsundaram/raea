@@ -1,7 +1,7 @@
 ---
 title: "raea show"
 summary: "Show the person something in the raea app, as an item they can use and answer: stills, a video, a sound, a script, an interactive .tsx or a question."
-order: 124
+order: 125
 sources: ["engine/cli/src/show.ts"]
 ---
 
@@ -22,6 +22,8 @@ or a browser.
 The person's edit comments are tasks they watch. The inbox line that carries them gives each one's id; `--on ITEM
 --working ID` marks one as being worked (with `--sub NAME` when a subagent has it), and `--done ID` marks it settled,
 or, with files and `--replaces`, settled by that version. Done stays in view, checked, until the person resolves it.
+Each `--ask` with `--working` is one ask you read the comment as, shown on it so the person can correct your reading
+before the work starts; `raea notes post` sends a restated note's asks this way.
 
 ```sh
 raea show out/look-1.png out/look-2.png out/look-3.png --ask "Which of these three?"
@@ -38,7 +40,7 @@ raea show out/cut-v2.mp4 --replaces i-show-2f9c --done c-3 --done c-4 --note "Wa
 ## Usage
 
 ```sh
-raea show FILE... [--title T] [--ask LINE] [--project P] [--replaces ITEM] [--as NAME] [--role ROLE] [--inbox NAME] [--open] | raea show --question Q --choice A --choice B [STILL...] | raea show [--title T] --question Q [--preview FILE] --choice A [--preview FILE] --choice B ... [--question Q2] ... | raea show --on ITEM [--working ID] [--done ID] [--note LINE] [--sub NAME]   (shown in the raea app as an item the person can use and answer, posted quietly with a notice, the window left where they are unless --open: stills (several, a storyboard), a video, a sound, a NAME.script.ts or .md, a .tsx (an interactive artifact; a project's composition opens in its editor), or questions, all of them one item, each question and choice with a --preview to play or read while answering (a still, a video, a sound, a script or .md; after a --choice that choice's, else the question's); what they send comes to ~/.raea/inbox/INBOX.jsonl; their edit comments are tasks: --working ID as you start one, --done ID when it's settled, or with the version that settles it, FILE --replaces ITEM --done ID; never open media in Preview while the app is installed)
+raea show FILE... [--title T] [--ask LINE] [--project P] [--replaces ITEM] [--as NAME] [--role ROLE] [--inbox NAME] [--open] | raea show --question Q --choice A --choice B [STILL...] | raea show [--title T] --question Q [--preview FILE] --choice A [--preview FILE] --choice B ... [--question Q2] ... | raea show --on ITEM [--working ID] [--ask TEXT] [--done ID] [--note LINE] [--sub NAME]   (shown in the raea app as an item the person can use and answer, posted quietly with a notice, the window left where they are unless --open: stills (several, a storyboard), a video, a sound, a NAME.script.ts or .md, a .tsx (an interactive artifact; a project's composition opens in its editor), or questions, all of them one item, each question and choice with a --preview to play or read while answering (a still, a video, a sound, a script or .md; after a --choice that choice's, else the question's); what they send comes to ~/.raea/inbox/INBOX.jsonl; their edit comments are tasks: --working ID as you start one (each --ask with it one ask you read it as, for the person to correct), --done ID when it's settled, or with the version that settles it, FILE --replaces ITEM --done ID; never open media in Preview while the app is installed)
 ```
 
 Needs the raea app's host running on this machine; then waits for a person's click in the raea app (to answer). Takes any number of arguments besides its flags.
@@ -48,7 +50,7 @@ Needs the raea app's host running on this machine; then waits for a person's cli
 | Flag | Takes | What it does |
 | --- | --- | --- |
 | `--as` | `NAME` | Who's showing it, as the feed names them (your harness's name when left out: Claude Code, Codex, Gemini). |
-| `--ask` | `LINE` | What you want from the person, shown with the item. |
+| `--ask` | `LINE` | What you want from the person, shown with the item. With `--on` and `--working`: one ask you read the comment as (give it once per ask), shown on the comment for the person to correct. |
 | `--choice` | `A` | With `--question`: one answer to pick; give it once per answer. Stills given instead are the choices. |
 | `--done` | `ID` | Marks the person's edit comment done (give it once per comment), on the item named by `--on`, or with files on the item they `--replaces`. |
 | `--inbox` | `NAME` | The inbox the answers go to, `~/.raea/inbox/NAME.jsonl` (one per session when left out). |

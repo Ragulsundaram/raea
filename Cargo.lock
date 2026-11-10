@@ -13670,6 +13670,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-app-notes"
+version = "0.1.0"
+dependencies = [
+ "raea-core-facts",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "raea-app-play"
 version = "0.1.0"
 dependencies = [
@@ -13968,6 +13977,7 @@ dependencies = [
  "raea-app-game",
  "raea-app-judge",
  "raea-app-media",
+ "raea-app-notes",
  "raea-app-play",
  "raea-app-solid",
  "raea-app-sound",

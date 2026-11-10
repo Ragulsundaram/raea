@@ -51,6 +51,8 @@ regex = "1"
 # the app crates' verbs: `raea check`, `raea ci`, and the local tools' (sao, tokensynth, setup-audio, sounds, splat)
 raea-app-check = { path = "../../apps/check" }
 raea-app-direction = { path = "../../apps/direction" }
+# `raea notes`: a person's notes as files the work is held to (docs/direction.feature DR5)
+raea-app-notes = { path = "../../apps/notes" }
 raea-app-sound = { path = "../../apps/sound" }
 raea-app-ci = { path = "../../apps/ci" }
 raea-app-tools = { path = "../../apps/tools" }

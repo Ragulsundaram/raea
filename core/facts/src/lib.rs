@@ -23,6 +23,10 @@ pub mod record;
 pub mod rule;
 pub use rule::Rule;
 
+// a person's note, its words verbatim and the asks it is restated as (DR5)
+pub mod note;
+pub use note::{Ask, Note, Pin, Proof};
+
 /// A JSON value as text: a string as it is, anything else as its JSON (a list key may be a number, a stamp a string).
 pub fn text_of(v: &serde_json::Value) -> String {
     match v {

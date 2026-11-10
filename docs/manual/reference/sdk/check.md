@@ -37,7 +37,7 @@ export default check({ id: "caption", text: "a caption clears the platform's but
 import { check, declared, found, runChecks } from "raea/check"
 ```
 
-`raea/check` exports 5 functions, 1 class, 32 types. Source: [sdk/raea/src/check.ts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/check.ts).
+`raea/check` exports 5 functions, 1 class, 36 types. Source: [sdk/raea/src/check.ts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/check.ts).
 
 ## Functions
 
@@ -126,6 +126,12 @@ A world of entities: rows in tables by kind.
 
 ```ts
 type About = { name: string, key?: string, }
+```
+
+### `Ask`
+
+```ts
+type Ask = { /** * the one thing asked */ text: string, /** * the medium the person's words name for it, in their word: "2D", "3D", "flat", "extruded", "real", * "modelled", "voxel" */ medium?: string, /** * what it is about: the part the pin is on (found in the world), or what a check would query */ about?…
 ```
 
 ### `Camera`
@@ -272,6 +278,12 @@ type Medium = "2d-type" | "2d-graphic" | "3d" | "footage" | "page"
 type Mix = { lufs?: number, peak?: number, }
 ```
 
+### `Note`
+
+```ts
+type Note = { words: Array<string>, from: string, round: number, pin?: Pin, redesign?: boolean, corrected?: Array<number>, asks: Array<Ask>, }
+```
+
 ### `Ocr`
 
 ```ts
@@ -296,6 +308,12 @@ type Part = { /** * what draws it: "mesh", "model", "text3d" ... */ kind: string
 type Picture = { luma: number, motion?: number, frames?: number, }
 ```
 
+### `Pin`
+
+```ts
+type Pin = { t?: number, x?: number, y?: number, part?: string, }
+```
+
 ### `Planned`
 
 Which check runs on which frames with which values, as raea check plans it from a rule: the rule's level (none:
@@ -308,6 +326,12 @@ the check's own) and where the rule was written.
 | `values` (required) | `Values` | the rule's values, which the check's system is given |
 | `level` | `Level \| null` | the rule's level, which its findings take where they don't say their own |
 | `by` | `string` | where the rule was written, which its findings carry |
+
+### `Proof`
+
+```ts
+type Proof = { shot?: string, frames?: [number, number], sign: boolean, }
+```
 
 ### `Rendered`
 

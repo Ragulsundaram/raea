@@ -416,8 +416,13 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
     Scenario: DR5. A note is restated before anything changes
       Given the plan
         | crate              | file                           | lines | job                                                                    |
-        | raea-core-facts    | core/facts/src/note.rs         | 200   | Note: words, from, round, pin, asks; Ask: text, medium, about, not, check, proof |
-        | raea-app-direction | apps/direction/src/notes.rs    | 320   | `raea notes take, ls, check, retire, keep`; a note as an entity in the world |
+        | raea-core-facts    | core/facts/src/note.rs         | 230   | Note: words, from, round, pin, asks; Ask: text, medium, about, not, check, proof |
+        | raea-app-notes     | apps/notes/src/lib.rs          | 220   | `raea notes take, ls, post`; the project's notes read; a note as an entity in the world |
+        | raea-app-notes     | apps/notes/src/take.rs         | 280   | what the app sent and what was said, as note files; the person's corrections written in |
+        | raea-app-notes     | apps/notes/src/post.rs         | 120   | each restated note's asks posted back on its comment in the app, once  |
+      # Fixed in the code (DR5): the notes are a crate of their own, raea-app-notes (apps/notes), not apps/direction
+      # notes.rs. apps/direction is 1,504 of its 2,000 lines with its tests, and DR6 and DR7 add to it; `raea notes
+      # check, retire, keep` come with DR6, DR7 and DR8, in this crate, which apps/direction reads the notes through.
       And sdk/raea/src/note.ts (about 90 lines): `note({...})` for notes/<round>/<id>.ts
       And notes sent from the app (review.feature R3a: their words, their pin with its frame, place and part), or
         said in a session
