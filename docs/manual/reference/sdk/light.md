@@ -166,7 +166,7 @@ Used in: [3d/rect_light](https://github.com/shinyobjectz/raea/blob/main/sdk/raea
 ### `Shadows`
 
 Shadow quality for every light in the Canvas3D: map size, the sun's cascades, biases, filtering. Put it inside the
-Canvas3D, once; the first frame's holds for the piece. mapSize sets both shadow maps' size, filter the camera's
+Canvas3D, once; each frame's is its own. mapSize sets both shadow maps' size, filter the camera's
 filtering, and the cascade props the sun's cascades (engine/render scene3d.rs):
 
 Bevy: `bevy_light::directional_light::DirectionalLightShadowMap`, `bevy_light::point_light::PointLightShadowMap`, `bevy_light::ShadowFilteringMethod`, `bevy_light::cascade::CascadeShadowConfig`.

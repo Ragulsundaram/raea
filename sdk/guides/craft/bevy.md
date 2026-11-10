@@ -62,8 +62,10 @@ the rest come from `raea`.
    A Mesh that appears, disappears or swaps places with one of the same shape needs a `name`.
 5. **A shape is fixed for the life of a part.** Animate position, rotation, scale, colour, opacity, glow,
    roughness and metalness; don't change `args` or `shape` frame to frame (that's a new part each frame).
-6. **One camera, one set of effects.** The first camera in the tree is used. Bloom, Fog and ToneMapping take their
-   first frame's values; the lens (Fisheye, LensDistortion) and MotionBlur animate per frame.
+6. **One camera; each frame's own effects.** The first camera in the tree is used. The effects (the sky, Bloom, Fog,
+   Grade, ToneMapping, Shadows and the rest) and each light's colour, shadows and shafts take each frame's values, so
+   shots with different looks are one composition and one render, not one render a shot joined after; the lens
+   (Fisheye, LensDistortion) and MotionBlur animate per frame too.
 7. **Import what you use.** Every component in the scene comes from its module in the import line (`Camera3d`
    from `raea/camera`, `Mesh3d` and `Cuboid` from `raea/mesh`, `StandardMaterial` from `raea/pbr`, the lights from
    `raea/light`, `Transform` from `raea/transform`, `Canvas3D`, `Bloom` and the rest from `raea/3d`); a missing one

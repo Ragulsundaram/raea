@@ -33,7 +33,10 @@
 The router's eight, plus:
 
 - Parts are matched across frames by `name`, else kind and shape in tree order: name what comes and goes.
-- The first camera, and the first frame's Bloom, Fog, ToneMapping and Shadows, are the piece's.
+- The first camera is the piece's. The effects and each light's colour, shadows and shafts are each frame's own. A
+  frame that brings or takes a sky, ambient occlusion, anti-aliasing, a tonemapper, shadows or volumetric fog (a cut
+  to a shot with a different look) warms up as a load does, about 0.3 s at that frame; a value that moves (a grade
+  ramping) doesn't.
 - Overlapping FogVolumes are composited in the order of their rows (the engine pins it), so a render of any frame
   equals its play; give each a `name` so its row, and so the order, stays put when others come and go.
 - A partly transparent page element over the 3D blends slightly differently in a render than in play; keep page

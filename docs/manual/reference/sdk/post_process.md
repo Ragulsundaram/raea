@@ -35,7 +35,7 @@ import { AntiAliasing, Bloom, Compute, DepthOfField } from "raea/post_process"
 
 ### `AntiAliasing`
 
-How the 3D's edges are smoothed. Put it inside the Canvas3D, once; the first frame's holds for the piece.
+How the 3D's edges are smoothed. Put it inside the Canvas3D, once; each frame's is its own.
 
 Bevy: `bevy_anti_alias::smaa::Smaa`, `bevy_anti_alias::fxaa::Fxaa`.
 

@@ -334,7 +334,7 @@ export interface AmbientOcclusionProps {
 /** Screen-space ambient occlusion: creases, corners and the ground under things darken where the sky's and the room's
  * light can't reach. It darkens ambient and environment light (an <AmbientLight>, an <Environment>), not the direct
  * light of a sun or a lamp. Turns multisampling off, so the edges are smoothed by SMAA instead (see <AntiAliasing>).
- * Put it inside the Canvas3D, once; the first frame's holds for the piece.
+ * Put it inside the Canvas3D, once; each frame's is its own, so a shot can have it and the next not.
  * @bevy bevy_pbr::ssao::ScreenSpaceAmbientOcclusion */
 export function AmbientOcclusion(props: AmbientOcclusionProps) {
   if (props.quality !== undefined && !["low", "medium", "high", "ultra"].includes(props.quality)) throw new RangeError(`AmbientOcclusion: quality must be "low", "medium", "high" or "ultra", got ${JSON.stringify(props.quality)}`);
@@ -349,7 +349,7 @@ export interface AntiAliasingProps {
   mode: "msaa" | "smaa" | "fxaa" | "none";
 }
 
-/** How the 3D's edges are smoothed. Put it inside the Canvas3D, once; the first frame's holds for the piece.
+/** How the 3D's edges are smoothed. Put it inside the Canvas3D, once; each frame's is its own.
  * @bevy bevy_anti_alias::smaa::Smaa
  * @bevy bevy_anti_alias::fxaa::Fxaa */
 export function AntiAliasing(props: AntiAliasingProps) {
@@ -379,7 +379,7 @@ export interface ShadowsProps {
 }
 
 /** Shadow quality for every light in the Canvas3D: map size, the sun's cascades, biases, filtering. Put it inside the
- * Canvas3D, once; the first frame's holds for the piece. mapSize sets both shadow maps' size, filter the camera's
+ * Canvas3D, once; each frame's is its own. mapSize sets both shadow maps' size, filter the camera's
  * filtering, and the cascade props the sun's cascades (engine/render scene3d.rs):
  * @bevy bevy_light::directional_light::DirectionalLightShadowMap
  * @bevy bevy_light::point_light::PointLightShadowMap

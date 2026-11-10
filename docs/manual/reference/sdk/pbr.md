@@ -38,7 +38,7 @@ import { AmbientOcclusion, Decal, ExtendedMaterial, Fire } from "raea/pbr"
 Screen-space ambient occlusion: creases, corners and the ground under things darken where the sky's and the room's
 light can't reach. It darkens ambient and environment light (an <AmbientLight>, an <Environment>), not the direct
 light of a sun or a lamp. Turns multisampling off, so the edges are smoothed by SMAA instead (see <AntiAliasing>).
-Put it inside the Canvas3D, once; the first frame's holds for the piece.
+Put it inside the Canvas3D, once; each frame's is its own, so a shot can have it and the next not.
 
 Bevy: `bevy_pbr::ssao::ScreenSpaceAmbientOcclusion`.
 
