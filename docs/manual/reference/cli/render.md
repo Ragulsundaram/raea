@@ -12,7 +12,7 @@ layout. It also renders an HTML composition and a bundle made by [`raea bundle`]
 ```sh
 raea render piece.tsx -o piece.mp4                       # the whole video
 raea render piece.tsx --frame 120 -o frame-120.png       # one frame
-raea render piece.tsx --at 15,63,144 -o stills/          # some frames, as stills/frame-00015.png and on
+raea render piece.tsx --at 15,63,144 -o stills/          # some frames, in order: stills/frame-00000.png is frame 15
 raea render piece.tsx --alpha -o frames/                 # every frame as a transparent PNG
 raea render piece.tsx --quality master -o final.mp4      # constant quality for type and thin lines
 raea render scene.tsx --review review/                   # a 3D scene from six fixed cameras, in colour and clay

@@ -30,11 +30,11 @@ pub fn run_bundle(bundle: &Path, secs: f64) -> R<(i32, String)> {
 /// master row): React is stepped through every frame for its sounds, with no page painted and no video decoded. Live
 /// play hands this to the mixer, so a timeline sounds as its render does.
 pub fn sound_only(js: &Path, dir: &Path) -> R<Option<raea_io_media::Audio>> {
-    // the one mixer core: its bounce of the frames, mastered as the render's bounce is (core_master)
+    // the one mixer core: its bounce of the frames, mastered as the render's bounce is (core_master); its staticFile
+    // assets (a <FramePass> file) found in the edit's folder, as a render finds them, not at the filesystem's /media
+    edit_dir(dir);
     let Some((cues, mix, p, rows, fps)) = core_cues(js, dir, false)? else { return Ok(None) };
-    if cues.iter().all(|c| c.sounds.is_empty() && c.tone.graph.is_none() && c.tone.evs.is_empty() && c.tone.speech.is_none()) {
-        return Ok(None);
-    }
+    if cues.iter().all(|c| c.sounds.is_empty() && c.tone.graph.is_none() && c.tone.evs.is_empty() && c.tone.speech.is_none()) { return Ok(None) }
     Ok(Some(core_master(&cues, fps, mix, &p, &rows, dir)?.1))
 }
 
