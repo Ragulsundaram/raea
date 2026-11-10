@@ -19,8 +19,9 @@ export interface InstancesProps {
   /** a glTF file drawn at every placement: staticFile("models/house.glb"). Without it, a geometry child (or `shape`)
    * and a material child draw a mesh at every placement */
   src?: string;
-  /** where each copy stands. Fixed for the shot: the first frame's list is drawn on every frame (move, turn, scale,
-   * hide or recolour the whole set by the Instances' own props) */
+  /** where each copy stands, this frame: a list that changes moves the copies with it (each distinct list is kept, so a
+   * set of thousands moving every frame costs a list a frame; moving the whole set by the Instances' own props costs
+   * nothing). How many copies is the first frame's: a frame with another count holds the list before it */
   at: Instance[];
   /** the entity's name, for picking, the inspector and world.* */
   name?: string;

@@ -264,7 +264,7 @@ pub(crate) fn meshes_rows(tr: &Tracks, names: &[String], p: &mut Program) {
             row.insert("receive".into(), V::N(0.0));
         }
         layers_column(&mut row, &its[0].props);
-        instances_column(&mut row, &its);
+        instances_column(p, &mut row, &id, &its);
         // its geometry's own vertex attributes (JSON, Mesh3d `attributes`), from the first frame: raea-sys-mesh with_attributes
         if let Some(Value::String(a)) = its[0].props.get("attributes") {
             row.insert("attributes".into(), V::S(a.clone()));
