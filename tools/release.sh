@@ -109,6 +109,7 @@ case $platform in
     # what a Linux machine needs beside it: the bundled Noto Sans JP is a Latin subset, so kanji and kana come from the
     # system, as on a Mac (raea warns once a character when no font has it)
     printf '%s\n' "raea $version for Linux x86_64 (glibc 2.39 or newer, Vulkan: a GPU driver or Mesa's llvmpipe).
+raea links ALSA and fontconfig (Ubuntu 24.04 and Debian: apt install libasound2t64 libfontconfig1; libasound2 before 24.04).
 Install a CJK font for Japanese, Chinese and Korean text (Debian and Ubuntu: apt install fonts-noto-cjk).
 An app's window, on either target (raea app run, raea-rune-host and raea-page-host), needs a display (X11 or
 Wayland; Xvfb on a server, as raea app check does there too), libxkbcommon-x11, the X client libraries and the Vulkan
