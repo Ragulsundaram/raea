@@ -11,13 +11,15 @@ export type VolumeProp = number | ((mediaFrame: number) => number);
 export interface MediaProps {
   /** the file: staticFile("clip.mp4"), or a generated asset */
   src: string;
-  /** the media's own frame it starts playing from (0); the same as trimBefore */
+  /** where in the media it starts playing (0), counted in the composition's frames, not the
+   * media's own: a 24 fps clip in a 60 fps film starts at its 4 s with startFrom={240}; the same as trimBefore */
   startFrom?: number;
-  /** the media's frame it stops before (exclusive): it holds the last frame, or loops; the same as trimAfter */
+  /** where in the media it stops (exclusive), in the composition's frames like startFrom: it holds the last frame, or
+   * loops; the same as trimAfter */
   endAt?: number;
-  /** frames of the media cut off its start (the newer name for startFrom) */
+  /** how much of the media is cut off its start, in the composition's frames (the newer name for startFrom) */
   trimBefore?: number;
-  /** the media's frame it's cut at (the newer name for endAt) */
+  /** where the media is cut, in the composition's frames (the newer name for endAt) */
   trimAfter?: number;
   /** linear gain, 1 being unity (0.5 is about -6 dB, 1.78 about +5 dB), or a function of the media's own frame */
   volume?: VolumeProp;
