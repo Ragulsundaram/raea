@@ -49,6 +49,8 @@ pub(crate) struct ImageCache {
     map: HashMap<u64, ResidentImage>,
     /// Images that must be uploaded in the current resolve pass, with atlas locations.
     images: Vec<(ImageData, u32, u32)>,
+    /// raea: whether the current resolve has packed the atlas again (`repack_with`: once a resolve)
+    repacked_in_resolve: bool,
 }
 
 impl Default for ImageCache {
@@ -70,6 +72,7 @@ impl ImageCache {
             evicted_in_resolve: 0,
             map: HashMap::default(),
             images: Vec::default(),
+            repacked_in_resolve: false,
         }
     }
 
@@ -77,6 +80,7 @@ impl ImageCache {
         self.generation = self.generation.wrapping_add(1);
         self.evicted_in_resolve = 0;
         self.images.clear();
+        self.repacked_in_resolve = false;
     }
 
     pub(crate) fn restart_resolve_pass(&mut self) {
@@ -185,6 +189,54 @@ impl ImageCache {
             self.evicted_in_resolve += 1;
         }
         self.evicted_in_resolve != 0
+    }
+
+    /// raea: with the atlas at its largest and no room for an image, the resident images the current resolve hasn't
+    /// used are let go, the ones unused longest first (one generation a call; false when none is left). Upstream stops
+    /// at `evict_stale_entries`, which keeps what the last two resolves used: an embedder whose images are new in
+    /// every frame (raea-page's layers, each a placeholder the size of its box) fills the atlas with the last two
+    /// frames' and draws the frame without its last images.
+    pub(crate) fn evict_unused(&mut self) -> bool {
+        // once packed again (`repack_with`), what's resident is the resolve's own images, the ones its pass hasn't
+        // reached yet among them
+        if self.repacked_in_resolve {
+            return false;
+        }
+        let generation = self.generation;
+        let Some(oldest) = self.map.values().map(|resident| resident.last_used_generation).filter(|used| *used != generation).min() else {
+            return false;
+        };
+        for (_id, resident) in self.map.extract_if(|_, resident| resident.last_used_generation == oldest) {
+            self.atlas.deallocate(resident.alloc_id);
+            self.evicted_in_resolve += 1;
+        }
+        true
+    }
+
+    /// raea: the atlas emptied and packed with `wanted` alone (the current resolve's images), the tallest first, once
+    /// a resolve (false after that). What `evict_unused` leaves lies where the images it let go had put it, and
+    /// images met in paint order cut the room up: 18 images near a 1080p frame's size, a few px apart, didn't all
+    /// find a place in an atlas with the area for 28. Tallest first, a guillotine packs them in rows. The caller
+    /// starts its pass again, as after `bump_size`: every image is uploaded again.
+    pub(crate) fn repack_with<'a>(&mut self, wanted: impl Iterator<Item = &'a ImageData>) -> bool {
+        if std::mem::replace(&mut self.repacked_in_resolve, true) {
+            return false;
+        }
+        let mut wanted: Vec<&ImageData> = wanted.collect();
+        wanted.sort_by_key(|image| (std::cmp::Reverse(image.height), std::cmp::Reverse(image.width), image.data.id()));
+        wanted.dedup_by_key(|image| image.data.id());
+        self.evicted_in_resolve += self.map.keys().filter(|id| !wanted.iter().any(|image| image.data.id() == **id)).count();
+        self.atlas = AtlasAllocator::new(self.atlas.size());
+        self.map.clear();
+        // not yet used by this pass: `get_or_insert` uploads each as it meets it
+        let unused = self.generation.wrapping_sub(1);
+        for image in wanted {
+            let Some(alloc) = self.atlas.allocate(size2(image.width as _, image.height as _)) else { continue };
+            let (x, y) = (alloc.rectangle.min.x as u32, alloc.rectangle.min.y as u32);
+            self.map.insert(image.data.id(), ResidentImage { image: image.clone(), alloc_id: alloc.id, x, y, dirty: true, last_used_generation: unused });
+        }
+        self.images.clear();
+        true
     }
 
     fn repack_to_size(&mut self, size: i32) -> bool {
@@ -346,6 +398,50 @@ mod tests {
 
         assert!(cache.evict_stale_entries());
         assert!(!cache.evict_stale_entries());
+    }
+
+    /// raea: at the atlas's largest size, what the resolve hasn't used goes the longest unused first, and what it has
+    /// used stays
+    #[test]
+    fn unused_entries_are_let_go_longest_unused_first() {
+        let mut cache = ImageCache::new_with_sizes(32, 32);
+        let (old, last, this) = (image(1, 8, 8), image(2, 8, 8), image(3, 8, 8));
+        for image in [&old, &last, &this] {
+            cache.begin_resolve();
+            assert!(cache.get_or_insert(image).is_some());
+        }
+        let resident = |cache: &ImageCache| [&old, &last, &this].map(|image| cache.map.contains_key(&image.data.id()));
+        assert!(cache.evict_unused());
+        assert_eq!(resident(&cache), [false, true, true]);
+        assert!(cache.evict_unused());
+        assert_eq!(resident(&cache), [false, false, true]);
+        assert!(!cache.evict_unused());
+        assert_eq!((resident(&cache), cache.evicted_in_resolve), ([false, false, true], 2));
+    }
+
+    /// raea: a crowded atlas packed again holds the wanted images alone, each to be uploaded as the pass meets it, and
+    /// is packed once a resolve
+    #[test]
+    fn a_crowded_atlas_is_packed_again_with_the_wanted_images() {
+        let mut cache = ImageCache::new_with_sizes(16, 16);
+        let (before, a, b) = (image(1, 10, 10), image(2, 16, 6), image(3, 16, 10));
+        cache.begin_resolve();
+        assert!(cache.get_or_insert(&before).is_some());
+        cache.finish_resolve();
+        cache.begin_resolve();
+        // twice wanted: one place
+        assert!(cache.repack_with([&a, &b, &a].into_iter()));
+        assert!(!cache.map.contains_key(&before.data.id()));
+        assert_eq!((cache.map.len(), cache.evicted_in_resolve, cache.images.len()), (2, 1, 0));
+        // what it packed is the resolve's own, though the pass hasn't met it yet: none of it is let go
+        assert!(!cache.evict_unused());
+        assert_eq!(cache.map.len(), 2);
+        // the taller first, at the top
+        assert_eq!((cache.get_or_insert(&b), cache.get_or_insert(&a)), (Some((0, 0)), Some((0, 10))));
+        assert_eq!(cache.images.len(), 2);
+        assert!(!cache.repack_with([&a, &b].into_iter()));
+        cache.begin_resolve();
+        assert!(cache.repack_with([&a].into_iter()));
     }
 
     #[test]

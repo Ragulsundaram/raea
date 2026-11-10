@@ -512,8 +512,15 @@ impl Resolver {
     fn resolve_pending_images(&mut self) {
         'outer: loop {
             self.image_cache.restart_resolve_pass();
+            // raea: an image the atlas could hold found no room in it at its largest
+            let mut crowded = false;
             // Loop over the images, attempting to allocate them all into the atlas.
             for pending_image in &mut self.pending_images {
+                // raea: an empty image has no place to find (the allocator gives none, and the atlas grew to its
+                // largest looking): it's drawn at no size as it is, and isn't one left out
+                if pending_image.image.width == 0 || pending_image.image.height == 0 {
+                    continue;
+                }
                 pending_image.xy = loop {
                     if let Some(xy) = self.image_cache.get_or_insert(&pending_image.image) {
                         break Some(xy);
@@ -527,7 +534,12 @@ impl Resolver {
                     if self.image_cache.bump_size() {
                         // We were able to increase the atlas size. Restart the outer loop.
                         continue 'outer;
+                    } else if self.image_cache.can_fit_image(&pending_image.image) && self.image_cache.evict_unused() {
+                        // raea: the atlas is at its largest: what this resolve hasn't used goes before an image
+                        // is left out, the longest unused first
+                        continue;
                     } else {
+                        crowded |= self.image_cache.can_fit_image(&pending_image.image);
                         // If the atlas is already maximum size, there's nothing we can do. Set
                         // the xy field to None so this image isn't rendered and then carry on--
                         // other images might still fit.
@@ -535,11 +547,28 @@ impl Resolver {
                     }
                 };
             }
+            // raea: an image left out for want of room, with nothing unused left to let go: the atlas is packed again
+            // with this resolve's images alone, in an order that packs, and the pass run again (once)
+            if crowded && self.image_cache.repack_with(self.pending_images.iter().map(|pending| &pending.image)) {
+                continue;
+            }
             // If we made it here, we've either successfully allocated all images or we reached
             // the maximum atlas size.
             break;
         }
+        // raea: an image with no place is drawn at no size and nothing says so: counted, for the embedder to refuse
+        // the frame with (`take_images_left_out`)
+        let left_out = self.pending_images.iter().filter(|pending| pending.xy.is_none() && pending.image.width > 0 && pending.image.height > 0).count();
+        IMAGES_LEFT_OUT.fetch_add(left_out as u32, std::sync::atomic::Ordering::Relaxed);
     }
+}
+
+static IMAGES_LEFT_OUT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// raea: how many images the resolves since the last call left out, the atlas having no room for them at its largest
+/// size (or an image being larger than it): each is drawn at no size, and neither the resolve nor the render says so.
+pub fn take_images_left_out() -> u32 {
+    IMAGES_LEFT_OUT.swap(0, std::sync::atomic::Ordering::Relaxed)
 }
 
 /// Patch for a late bound resource.
@@ -652,4 +681,54 @@ fn size_to_words(byte_size: usize) -> u32 {
 
 fn align_up(len: usize, alignment: u32) -> usize {
     len + (len.wrapping_neg() & (alignment as usize - 1))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use peniko::{Blob, ImageAlphaType, ImageFormat};
+
+    /// raea: frame `f`'s `n` images, each new (a blob of its own) and near a 1080p frame's size, a few px apart and
+    /// differently in each frame: raea-page's layers under a moving camera, each a placeholder the size of its box
+    fn frame(n: u32, f: u32) -> Encoding {
+        let mut encoding = Encoding::new();
+        for i in 0..n {
+            encoding.encode_image(&image(1920 - (i * 37 + f * 11) % 23, 1080 - (i * 17 + f * 7) % 13), 1.0);
+        }
+        encoding
+    }
+
+    fn image(width: u32, height: u32) -> ImageData {
+        ImageData { data: Blob::new(Arc::new([0_u8; 0])), format: ImageFormat::Rgba8, alpha_type: ImageAlphaType::Alpha, width, height }
+    }
+
+    fn placed(resolver: &Resolver) -> usize {
+        resolver.pending_images.iter().filter(|pending| pending.xy.is_some()).count()
+    }
+
+    /// raea: every image of a frame gets a place while the frames before it held as many of their own. The atlas has
+    /// the area for 28 this size and kept the last two frames' (36 of them), so the second frame drew 10 of its 18;
+    /// with those let go but nothing packed again, 13 frames of 40 still drew 17.
+    #[test]
+    fn images_new_in_each_frame_all_get_a_place() {
+        let (mut resolver, mut packed) = (Resolver::new(), Vec::new());
+        for f in 0..40 {
+            resolver.resolve(&frame(18, f), &mut packed);
+            assert_eq!(placed(&resolver), 18, "frame {f}");
+        }
+        assert_eq!(take_images_left_out(), 0);
+        // more than the atlas holds at once: the ones left out are counted, once
+        resolver.resolve(&frame(40, 40), &mut packed);
+        let left_out = 40 - placed(&resolver);
+        assert!((12..40).contains(&left_out), "{left_out} of 40 left out");
+        assert_eq!(take_images_left_out() as usize, left_out);
+        assert_eq!(take_images_left_out(), 0);
+        // an empty image has no place and isn't one left out, and the atlas doesn't grow looking for one
+        let (mut resolver, mut empty) = (Resolver::new(), Encoding::new());
+        empty.encode_image(&image(0, 16), 1.0);
+        empty.encode_image(&image(16, 16), 1.0);
+        let (_, _, images) = resolver.resolve(&empty, &mut packed);
+        assert_eq!((images.width, images.images.len()), (1024, 1));
+        assert_eq!((placed(&resolver), take_images_left_out()), (1, 0));
+    }
 }

@@ -162,6 +162,10 @@ pub fn on_settle(settle: fn()) {
 /// skipped too (#23).
 pub fn fed_checked<T>(f: i64, first: T, wait: fn(), redraw_full: fn(bool), paint: impl FnOnce() -> Result<T, String>) -> Result<T, String> {
     wait();
+    // a frame raea-page refused (`refuse`) fails the render naming it, as a still's does (`black_checked`): the fed
+    // render had no one to read the refusal, encoded the frame as it came and went on
+    let unrefused = || refused().map_or(Ok(()), |why| Err(format!("frame {f}: {why}")));
+    unrefused()?;
     if take_skipped().is_none() {
         return Ok(first);
     }
@@ -170,6 +174,7 @@ pub fn fed_checked<T>(f: i64, first: T, wait: fn(), redraw_full: fn(bool), paint
     redraw_full(false);
     let again = again?;
     wait();
+    unrefused()?;
     match take_skipped() {
         Some(why) => Err(format!("frame {f}: {why}")),
         None => Ok(again),
@@ -293,6 +298,14 @@ mod tests {
         })
         .unwrap_err();
         assert_eq!(e, "frame 7: a page (1920x1080) wasn't drawn");
+        // the fed render's frame, which no read back checks: a refused one fails the render by its number too, and
+        // the frame after it isn't refused with it
+        fn drawn() {}
+        assert_eq!(fed_checked(8, 1, drawn, full, || panic!("no draw skipped")).unwrap(), 1);
+        refuse("a page (1920x1080) was drawn without 2 of its images".into());
+        let e = fed_checked(9, 1, drawn, full, || panic!("no draw skipped")).unwrap_err();
+        assert_eq!(e, "frame 9: a page (1920x1080) was drawn without 2 of its images");
+        assert_eq!(fed_checked(10, 1, drawn, full, || panic!("no draw skipped")).unwrap(), 1);
     }
 
     #[test]
