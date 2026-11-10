@@ -8,7 +8,7 @@
 use std::path::{Path, PathBuf};
 
 use raea_core_brief::{controller, taste};
-use raea_core_facts::{finding, record, Facts, Finding, Level, Rule};
+use raea_core_facts::{finding, record, Facts, Finding, Level, Rule, Shot};
 use raea_runtime_bundle::flag;
 use raea_runtime_world::{Ask, Render};
 use serde_json::{json, Value};
@@ -74,9 +74,26 @@ enum How {
     File(ts::Meta),
 }
 
-/// Every rule `project` is held to (`given`: `--taste`'s files), and a finding for each file of rules raea couldn't
-/// read.
-fn rules(project: &Path, given: Vec<PathBuf>, host: &Host) -> (Vec<Rule>, Vec<Finding>) {
+/// Every rule `project` is held to (`given`: `--taste`'s files) with its notes' asks (DR6), the notes, and a finding
+/// for each file of rules or note raea couldn't read.
+fn rules(project: &Path, given: Vec<PathBuf>, host: &Host) -> (Vec<Rule>, Vec<Finding>, Vec<raea_app_notes::Kept>) {
+    let (mut out, mut bad) = held(project, given, host);
+    let notes = raea_app_notes::read(project, host.ts.eval);
+    let (asks, unread) = raea_app_notes::check::rules(project, &notes);
+    out.extend(asks);
+    bad.extend(unread);
+    // a check's path made plain (no `..`), as its import will name it
+    for r in out.iter_mut() {
+        if let Some(p) = r.file() {
+            r.check = raea_runtime_bundle::normalize(p).display().to_string();
+        }
+    }
+    (out, bad, notes)
+}
+
+/// raea's floor, the person's taste and the workspace's and project's controllers' rules, and a finding for each file
+/// of them raea couldn't read.
+fn held(project: &Path, given: Vec<PathBuf>, host: &Host) -> (Vec<Rule>, Vec<Finding>) {
     // raea's own: the floor, and the reading check (DR28: its findings keep their own levels, so no rule level)
     let read = Rule { level: None, ..Rule::named("text-read", "text can be read for as long as it needs, and OCR reads it", Default::default(), Level::Warn, "raea") };
     let mut out = vec![Rule::named("floor", "raea's floor", Default::default(), Level::Error, "raea"), read];
@@ -98,11 +115,7 @@ fn rules(project: &Path, given: Vec<PathBuf>, host: &Host) -> (Vec<Rule>, Vec<Fi
         files.sort();
         for f in files {
             match (host.ts.eval)(&f).and_then(|j| controller::of_json(&j)) {
-                // a check's path made plain (no `..`), as its import will name it
-                Ok(c) => out.extend(Rule::of_controller(&c, &dir, &format!("{scope} {}", name(&f))).into_iter().map(|r| match r.file() {
-                    Some(p) => Rule { check: raea_runtime_bundle::normalize(p).display().to_string(), ..r },
-                    None => r,
-                })),
+                Ok(c) => out.extend(Rule::of_controller(&c, &dir, &format!("{scope} {}", name(&f)))),
                 Err(e) => bad.push(Finding::new("controller", Level::Error, format!("raea can't read it: {e}"), "raea check").about(name(&f), None)),
             }
         }
@@ -134,16 +147,21 @@ fn compositions(target: &Path, args: &[String]) -> R<Vec<(PathBuf, Option<String
     Ok(out)
 }
 
-/// What one composition's checks found, and each check that waits, with what for.
+/// What one composition's checks found, each check that waits with what for, and its newest render, its named shots
+/// (each from its first frame to its end) and its rate, for a note's clip (DR6).
 struct Checked {
     file: PathBuf,
     id: Option<String>,
     found: Vec<Finding>,
     waits: Vec<(String, String)>,
+    render: Option<raea_app_notes::check::Rendered>,
+    shots: Vec<(String, i64, Option<i64>)>,
+    fps: f64,
 }
 
-/// One composition checked against `rules` (`--only`'s already picked).
-fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], host: &Host) -> R<Checked> {
+/// One composition checked against `rules` (`--only`'s already picked), every frame read when `whole` or a check
+/// ranges over them.
+fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], whole: bool, host: &Host) -> R<Checked> {
     let named = systems::named();
     let mut found = Vec::new();
     let mut hows = Vec::new();
@@ -161,7 +179,7 @@ fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], ho
     }
     let frames: Vec<&Frames> = hows.iter().map(|(_, h)| match h { How::Named(n) => &n.frames, How::File(m) => &m.frames }).collect();
     // every frame when a check ranges over them (cuts and lines are found in them), else the frames named and the first
-    let whole = frames.iter().any(|f| f.whole());
+    let whole = whole || frames.iter().any(|f| f.whole());
     let mut asked: Vec<i64> = if whole { Vec::new() } else { frames.iter().flat_map(|f| if let Frames::At(v) = f { v.clone() } else { vec![] }).chain([0]).collect() };
     asked.sort();
     asked.dedup();
@@ -244,7 +262,39 @@ fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], ho
         plan.push(ts::Planned { check: k, frames: on, values: r.values.clone(), level: r.level, by: r.by.clone() });
     }
     found.extend(ts::run(&files, &plan, &worlds, &host.ts)?);
-    Ok(Checked { file: tsx.to_path_buf(), id, found: finding::ranked(found), waits })
+    let render = rendered.map(|r| {
+        // how many frames it drew, as its manifest lists them
+        let m: Value = std::fs::read(r["manifest"].as_str().unwrap_or("")).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
+        raea_app_notes::check::Rendered { out: PathBuf::from(r["out"].as_str().unwrap_or("")), stale: r["stale"] == true, frames: m["frames"].as_array().map_or(0, |f| f.len() as i64) }
+    });
+    let mut shots: Vec<(String, i64, Option<i64>)> = worlds.iter().flat_map(|w| w.find(&["Shot"]).into_iter().filter_map(|e| w.get::<Shot>(e.id)).filter_map(|s| Some((s.name?, s.from, s.to)))).collect();
+    shots.sort();
+    shots.dedup();
+    let fps = worlds.first().map_or(30.0, |w| w.fps);
+    Ok(Checked { file: tsx.to_path_buf(), id, found: finding::ranked(found), waits, render, shots, fps })
+}
+
+/// Whether `r` runs on the composition `tsx` (`id` where its file registers several) of `project`: a rule a note's ask
+/// scopes to one (`of`) runs there alone.
+fn applies(r: &Rule, project: &Path, tsx: &Path, id: Option<&str>) -> bool {
+    r.of.as_ref().is_none_or(|of| raea_app_notes::check::is_of(of, &named_as(project, tsx, id)))
+}
+
+/// A composition as a note's ask names it: its file from the project, `#ID` after it where the file registers several.
+fn named_as(project: &Path, tsx: &Path, id: Option<&str>) -> String {
+    format!("{}{}", record::rel(project, tsx), id.map(|i| format!("#{i}")).unwrap_or_default())
+}
+
+/// `rules` run on `project`'s compositions (`--composition` picks one), each where it applies, as `raea check` runs
+/// its own: what `raea notes check` runs a project's asks through (DR6).
+pub fn run(project: &Path, rules: &[Rule], args: &[String], whole: bool, host: &Host) -> R<Vec<raea_app_notes::check::Ran>> {
+    let mut out = Vec::new();
+    for (tsx, id) in compositions(project, args)? {
+        let mine: Vec<Rule> = rules.iter().filter(|r| applies(r, project, &tsx, id.as_deref())).cloned().collect();
+        let c = check_one(&tsx, id, &mine, args, whole, host)?;
+        out.push(raea_app_notes::check::Ran { of: named_as(project, &c.file, c.id.as_deref()), found: c.found, waits: c.waits, render: c.render, shots: c.shots, fps: c.fps });
+    }
+    Ok(out)
 }
 
 /// The frames the render joined (each with what it rendered, or says it waits), or None when it joined none.
@@ -270,7 +320,7 @@ pub fn check(args: &[String], host: &Host) -> R<(String, bool)> {
     let here = if target.is_dir() { target.clone() } else { target.parent().filter(|p| !p.as_os_str().is_empty()).map_or_else(|| PathBuf::from("."), Path::to_path_buf) };
     let here = here.canonicalize().map_err(|e| format!("{}: {e}", here.display()))?;
     let project = record::up(&here, ".raea/project").unwrap_or(here);
-    let (mut rules, unread) = rules(&project, taste_files(args), host);
+    let (mut rules, unread, notes) = rules(&project, taste_files(args), host);
     if let Some(only) = flag(args, "--only") {
         rules.retain(|r| r.id == only);
         if rules.is_empty() {
@@ -279,20 +329,29 @@ pub fn check(args: &[String], host: &Host) -> R<(String, bool)> {
     }
     let mut all = Vec::new();
     for (tsx, id) in compositions(&target, args)? {
-        all.push(check_one(&tsx, id, &rules, args, host)?);
+        let mine: Vec<Rule> = rules.iter().filter(|r| applies(r, &project, &tsx, id.as_deref())).cloned().collect();
+        all.push(check_one(&tsx, id, &mine, args, false, host)?);
     }
     let stamp = raea_io_trace::utc(std::time::SystemTime::now()).1;
+    // what the notes' asks found, kept with what each has been through (DR6): an ask's first run that passes is refused
+    let ran: Vec<raea_app_notes::check::Ran> = all.iter().map(|c| raea_app_notes::check::Ran { of: named_as(&project, &c.file, c.id.as_deref()), found: c.found.clone(), waits: c.waits.clone(), render: None, shots: Vec::new(), fps: c.fps }).collect();
+    let mut kept = raea_app_notes::state::read(&project);
+    let (asks, _) = raea_app_notes::check::settle(&project, &notes, &rules, &ran, &stamp, &mut kept);
+    if !asks.is_empty() {
+        raea_app_notes::state::write(&project, &kept)?;
+    }
     let mut bad = unread.iter().any(|f| f.level == Level::Error);
     if args.iter().any(|a| a == "--json") {
         let v: Vec<Value> = all.iter().map(|c| json!({"file": c.file, "composition": c.id, "findings": c.found, "waits": c.waits.iter().map(|(r, w)| json!({"rule": r, "for": w})).collect::<Vec<_>>()})).collect();
         bad |= all.iter().any(|c| c.found.iter().any(|f| f.level == Level::Error));
-        return Ok((serde_json::to_string_pretty(&json!({"unread": unread, "compositions": v})).unwrap_or_default(), bad));
+        return Ok((serde_json::to_string_pretty(&json!({"unread": unread, "compositions": v, "asks": asks})).unwrap_or_default(), bad));
     }
     let mut out: Vec<String> = unread.iter().map(Finding::line).collect();
     let mut every = unread.clone();
     for c in &all {
         out.push(format!("raea check {}{}", c.file.display(), c.id.as_ref().map(|i| format!(" ({i})")).unwrap_or_default()));
-        out.extend(c.found.iter().map(Finding::line));
+        // a note's ask's finding says which ask, as two asks can run one check
+        out.extend(c.found.iter().map(|f| if f.by.starts_with("note ") { format!("{}  [{}]", f.line(), f.by) } else { f.line() }));
         out.extend(c.waits.iter().map(|(r, w)| format!("waits {r}: needs {w}")));
         // kept in its project's record (DR3), what raea findings and raea next read
         if let Some(e) = record::keep("raea check", &c.file, None, &c.found, vec![], &stamp) {
@@ -301,6 +360,7 @@ pub fn check(args: &[String], host: &Host) -> R<(String, bool)> {
         bad |= c.found.iter().any(|f| f.level == Level::Error);
         every.extend(c.found.iter().cloned());
     }
+    out.extend(asks.iter().map(|a| format!("raea check: note {a}")));
     out.push(format!("raea check: {}", finding::count(&every)));
     Ok((out.join("\n"), bad))
 }

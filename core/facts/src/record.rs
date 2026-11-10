@@ -67,8 +67,8 @@ pub fn rel(project: &Path, p: &Path) -> String {
     full.strip_prefix(project).map(|r| r.display().to_string()).unwrap_or_else(|_| full.display().to_string())
 }
 
-/// The project's commit, with "+" when `of` differs from it.
-fn commit(project: &Path, of: &str) -> Option<String> {
+/// The project's commit, with "+" when `of` (a path from the project; "." for all of it) differs from it.
+pub fn commit(project: &Path, of: &str) -> Option<String> {
     let git = |a: &[&str]| {
         let o = std::process::Command::new("git").arg("-C").arg(project).args(a).output().ok()?;
         o.status.success().then_some(String::from_utf8_lossy(&o.stdout).trim().to_string())

@@ -13613,6 +13613,7 @@ name = "raea-app-direction"
 version = "0.1.0"
 dependencies = [
  "raea-app-check",
+ "raea-app-notes",
  "raea-app-registry",
  "raea-core-brief",
  "raea-core-facts",
@@ -13674,7 +13675,10 @@ name = "raea-app-notes"
 version = "0.1.0"
 dependencies = [
  "raea-core-facts",
+ "raea-io-trace",
+ "serde",
  "serde_json",
+ "sha2 0.10.9",
  "tempfile",
 ]
 

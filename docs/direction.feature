@@ -477,8 +477,77 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
       And the restated asks are posted back on the note in the app before work starts, where the person can correct
         one in a word; a correction is a new line of the note, kept
 
-    @needs:DR5
+    @needs:DR5 @done
     Scenario: DR6. Each ask gets a check that fails now, or a clip to sign
+      # Status 11-10: built. An ask names its check (one of raea's by name, or a .ts check by its path from the note's
+      # folder), its values, the composition it is about (`of`) and, where it can't be measured, its proof, a clip to
+      # sign. `raea notes check` runs each ask's check as a rule through `raea check`'s run (apps/direction, lent by the
+      # CLI), only on the composition the ask names (Rule.of), and keeps what each ask has been through in
+      # .raea/notes-checks.json: a check whose first run passes is refused (exit 1); one that fails is kept with its
+      # values, and the work may change; a check changed after it failed is to be shown failing again. Each finding's
+      # `by` is its ask (note n1.2), so two asks running one check are counted apart, and `raea check` runs the notes'
+      # checks beside the rules, marking their findings with the ask. A clip is cut with ffmpeg from the composition's
+      # newest render (the shot's frames, or the ask's), again only when the render or the frames change, and nothing
+      # is cut from a render the composition changed after. The person's sign comes from the app's inbox with the
+      # render's sha256 and their name when signed in; `raea notes take` keeps the last one per ask. An ask reads to
+      # check, failing, to sign, passing or signed, the note its worst (to restate before any); `raea notes ls` says
+      # each, and `raea notes post` sends the badge, each ask's state and each clip to sign (`raea show --working
+      # --status --states`, `--sign N --clip --render`). raea/check gained a per-rule memo, `after` (run once past the
+      # last frame), `named`, `turned` and `inside`; five worked checks ship in sdk/guides/craft/checks, copied into the
+      # skill as craft/checks: rides, flat-type, faces, stands-on, shot-length, no-part.
+      # Run on: bench/direction/asks/asks.sh with this commit's raea, every case as expected (35). Each worked check
+      # passes its piece and fails every cheat (ride turned 33.2 degrees and moved 29 mm, 10 cm into the chair's back,
+      # the rider gone; the lyric 2 mm deep, with nothing in front of it, its words changed; a desk turned 180 degrees,
+      # the kettle on a desk, the desks renamed so neither check has anything to measure; the reveal 2.0 s, the shot
+      # renamed; an orb, renamed to lamp-glass, scaled tiny). The notes' flow on a project of its own: three notes said,
+      # restated, two failing first and one refused (its check named a part the office hasn't), that check fixed and
+      # failing, the work changed until all pass, the reveal's clip cut (4.0 s, 120 frames), a sign kept, and the
+      # shortened hold reopening it. And end to end in a copy of the raea app (0.1.0-dev.1109.87, its own state; the
+      # app side is raea-feed 5fa93c7 and 1317a9d): the hold shown, "Hold the reveal longer, and let me see it."
+      # written and sent in the page, taken, posted as "to restate", restated as a check and a clip, checked failing
+      # and posted ("failing", ask 2 "to check"), the hold made 4 s and rendered, checked passing, the clip posted
+      # under ask 2 with "Sign: this is what I asked for", the agent's --done refused ("cm-1 is a note: it closes when
+      # the person retires it, not when the agent marks it done"), signed in the page (the inbox line's render matched
+      # the clip's), taken and posted as passing; the hold shortened again read to check, and its new render's clip
+      # came back unsigned. I looked at the page at each step and at the clip's frames: the reveal alone, no lead-in.
+      # Proved by tests in raea-core-facts (16), raea-app-notes (10: post with states and clips, an ask's check failing
+      # first, refused, counted apart and run alone with --only, a changed check; signs named and unnamed, a newer
+      # render and a changed composition; no clip from a stale render; how an ask names its composition),
+      # raea-app-direction (16), raea-runtime-world (15: an element that covers is named by its component) and
+      # engine/cli/conformance/show.test.ts (5: what --status, --states and --sign send, and what's refused first).
+      # Not seen, or left: an agent restating a note and choosing its check on its own (I wrote the asks); a sign with
+      # a name (the copy had no account signed in); the pieces are flat colour and boxes, so no clip had motion to
+      # judge; the five checks name things by name, model file or component until DR11 and DR16 give them kinds and
+      # relations; and a person retiring a note is DR7's.
+      Given the plan
+        | crate              | file                           | lines | job                                                                    |
+        | raea-app-notes     | apps/notes/src/check.rs        | 260   | `raea notes check`: each ask's check run as a rule on the work as it stands (the CLI lends apps/direction's run); a first run that passes is refused |
+        | raea-app-notes     | apps/notes/src/state.rs        | 220   | what each ask has been through, in .raea/notes-checks.json: its check as it first failed, its last run, its clip and the person's sign; to check, failing, passing, to sign, signed |
+        | raea-app-notes     | apps/notes/src/post.rs         | 220   | each note's state on its comment in the app, and each clip to sign     |
+        | raea-app-notes     | apps/notes/src/take.rs         | 300   | the person's signs from the app: their name and the render's hash      |
+        | raea-app-direction | apps/direction/src/check.rs    | 400   | the notes' asks as rules beside the others, each finding's `by` its ask; the notes' rules alone, for `raea notes check` |
+        | raea-core-facts    | core/facts/src/note.rs         | 260   | an ask's composition (Ask.of): where its check runs and its clip is cut from |
+        | raea-core-facts    | core/facts/src/rule.rs         | 200   | a rule held to one composition (Rule.of), as an ask's is               |
+        | raea-runtime-world | runtime/world/src/covers.rs    | 180   | a plain element that covers another is named by the component it was drawn in |
+        | raea-runtime-world | runtime/world/src/renders.rs   | 300   | the composition's folder kept with its render, for that element's Source |
+        | raea-cli           | engine/cli/src/cli.rs          | 380   | `raea notes` lent apps/direction's run                                 |
+      And engine/cli/src/show.ts: `--status S --states S1,S2` with `--working` (the note's state for the badge, and each
+        ask's) and `--sign N --clip FILE --render HASH` (a clip for the person to sign under ask N); sdk/raea/src/check.ts: a check's memo, kept
+        across its frames, and its `after`, run once past its last frame (a shot that runs to its end is measured, and
+        a part the ask names that no frame has is found, not passed); `named(world, id, kinds)`, how a check names a
+        part, a shot or a layer until DR11's taxonomy; and the worked checks, each a .ts file in
+        sdk/guides/craft/checks (copied into the skill as craft/checks), with a piece that holds it and a cheat in
+        bench/direction/asks, run by its asks.sh
+      # Fixed in the code (DR6): the worked checks' table had two rows whose facts no world holds yet. "this is low
+      # poly" is DR14's detail floor, measured at a component's `seenFrom` (DR11's meta); "the light isn't timed to the
+      # cut" needs the subject's own pixels in the render, which for a 3D or footage subject is DR19's mask. Each row
+      # moves to that scenario and ships with its cheat there. The other five are built on the world as it is, the
+      # parts named in the ask's values (by name, model file or component) until DR11's taxonomy and DR16's relations
+      # say them: the rider's offset and turn are held to the seat's as on its first frame until DR16 gives it a
+      # socket, and no part of the rider is inside a part of the seat (box in box: a 3D part is in no Covers); a front
+      # is the model's own axis given in the values until DR11 measures it, and StandsOn is measured from the boxes (a
+      # bottom on a top, inside its footprint) until DR16 declares it; "occlusion" is a cover by the subject where the
+      # render has one (a page layer), and a 3D or footage subject is DR19's.
       Then an ask's check is a system (DR4) written in the note's file or named from raea's, and `raea notes check`
         must show it failing on the work as it stands before the work may change (a check that already passes is
         refused: it isn't measuring the ask)
@@ -487,8 +556,14 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
         apart (the prototype counted both asks' findings against each until it did)
       And where the ask can't be measured, its proof is a clip: `proof: { shot | frames, sign: true }`; it passes only
         when the person marks it in the app (their name, the render's hash), and reopens when its source changes
-      And the app's task badge (R3) reads: to restate, to check, failing, passing, signed; "done" is never typed by
-        the agent
+      And the app's task badge (R3) reads: to restate, to check, failing, to sign, passing, signed; "done" is never
+        typed by the agent
+      # Fixed in the code (DR6): "to sign" is added: a clip waiting on the person is neither the agent's to check nor
+      # passing, and the badge says whose move it is: a clip not cut yet, or cut from a render that's no longer the
+      # work, is the agent's (to check), as the app copy showed when "yours to sign" sat on an ask with no clip. And an ask names its composition (Ask.of), not only its clip:
+      # a project holds several, and an ask about the office's desks run on the hold's shots finds nothing there to
+      # measure and passes, so it would be refused for the wrong reason. Its check runs only where it applies (Rule.of;
+      # a controller's rules leave it unset and run everywhere, as before), and its clip is cut from that composition's newest render.
       And worked checks ship in the skill for the asks that recur, each with its cheat:
         | the ask, as a person says it                         | the check                                                     |
         | "the seat turns with the computer"                    | Rides: offset and turn from its socket every frame; no Covers of the rider by the seat's parts |
@@ -496,8 +571,6 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
         | "desks face the wrong way", "kitchen props on a desk" | every Part's `meta.front` toward what it serves; no Part of kind X StandsOn kind Y           |
         | "hold this longer"                                    | the Shot is at least N seconds                                |
         | "no orbs anywhere"                                    | no Part of the named component in any frame                   |
-        | "this is low poly", "more detail"                     | the component passes its detail floor at its nearest (DR14)   |
-        | "the light isn't timed to the cut"                    | the lit share of the subject crosses its half within a frame of the cut |
 
     @needs:DR6
     Scenario: DR7. Rounds hold
@@ -595,6 +668,8 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
         parts, its triangles and edge detail against that share, its surface detail (textures, or shader detail), and
         whether it is one primitive or a few; under the floor is a finding, and the stage doesn't close
       And the floor is a rule (DR8) a project can raise, never an agent
+      And the worked check for a note's "this is low poly", "more detail" ships in the skill with its cheat (moved
+        here from DR6, whose world had no `seenFrom`): the component passes its detail floor at its nearest
       And how a component is made follows the skill's routing (built in code when exact, a permissive library, or
         generated), and a spend or a download is the person's yes, asked once for the stage with its quote
       And the stage's time is the largest in the plan the agent gives: a brief with twelve places says so before
@@ -671,6 +746,10 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
       And an element's medium is recorded on its Layer and its Text, so a note's ask (DR5) can check it: extruded
         letters fail an ask that said 2D, flat ones fail an ask that said 3D
       And the skill's core says: the scene being 3D decides nothing about a title, a lyric or a graphic
+      And with the subject's own pixels in the render, two of DR6's worked checks ship with their cheats (moved here
+        from DR6, whose render had no mask of a 3D or footage subject): "2D text with occlusion" MaskedBy a 3D or
+        footage subject where they meet, and "the light isn't timed to the cut": the lit share of the subject crosses
+        its half within a frame of the cut
 
   # =====================================================================================================================
   Rule: Part 8. Review in motion and in sound (finding 7)

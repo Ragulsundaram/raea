@@ -45,6 +45,8 @@ pub(crate) struct Found {
     masks: Option<Option<crate::covers::Masks>>,
     /// its frames, decoded once as they're asked for (a text's contrast, what OCR reads)
     pixels: crate::pixels::Pixels,
+    /// the composition's folder, where its source stamps' files are
+    dir: PathBuf,
 }
 
 fn secs(p: &Path) -> u64 {
@@ -76,7 +78,7 @@ pub(crate) fn find(how: &Render, tsx: &Path, size: (u32, u32, f64)) -> Option<Fo
         // another composition of the file draws another size or rate
         let same = m["width"] == size.0 && m["height"] == size.1 && m["fps"].as_f64() == Some(size.2);
         let at = m["frames"].as_array()?.iter().enumerate().filter_map(|(k, f)| Some((f["frame"].as_i64()?, k))).collect();
-        (same && out.exists()).then(|| Found { stale: secs(tsx) > made, out, path, m, record, at, dirty: false, env: None, masks: None, pixels: Default::default() })
+        (same && out.exists()).then(|| Found { stale: secs(tsx) > made, out, path, m, record, at, dirty: false, env: None, masks: None, pixels: Default::default(), dir: tsx.parent().map(Path::to_path_buf).unwrap_or_default() })
     })
 }
 
@@ -282,7 +284,9 @@ fn covers(facts: &mut Facts, r: &mut Found, laid: &Value, tree: &[El], mut boxed
         }
     }
     let order: HashMap<String, usize> = tree.iter().enumerate().filter_map(|(i, el)| Some((raea_sys_layers::key_from_props(&el.props)?, i))).collect();
-    crate::covers::put(facts, masks, &boxed, &order);
+    // a covering layer as the world has it when it holds the element: its Source, the component it was drawn in
+    let source = |k: &str| tree.iter().find(|el| raea_sys_layers::key_from_props(&el.props).as_deref() == Some(k)).and_then(|el| crate::source::of(&el.props, &r.dir));
+    crate::covers::put(facts, masks, &boxed, &order, &source);
 }
 
 #[cfg(test)]

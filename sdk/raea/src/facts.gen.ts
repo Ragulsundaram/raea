@@ -144,6 +144,11 @@ not: Array<string>,
  */
 verb?: string, 
 /**
+ * the composition it is about, its file from the project (its id after a `#` where the file registers several):
+ * where its check runs and its clip is cut from; none: every composition of the project
+ */
+of?: string, 
+/**
  * the check that shows it met (DR6): one of raea's by name, or a .ts check by its path, as a rule names one
  */
 check?: string, 

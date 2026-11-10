@@ -16,7 +16,7 @@
 //   });
 
 import { createWorld, type World } from "@raea/app/ecs";
-import type { About, Finding, Level, Measure } from "./facts.gen";
+import type { About, Finding, Level, Measure, Part } from "./facts.gen";
 
 export type * from "./facts.gen";
 export type { World };
@@ -38,26 +38,101 @@ export interface CheckMeta {
   frames?: Frames;
 }
 
-/** A rule's values for its check (a controller's `values`). */
+/** A rule's values for its check (a controller's `values`, an ask's). */
 export type Values = Record<string, number | string | boolean>;
-/** The system: a frame's world, the frame, and the rule's values. */
-export type CheckFn = (world: World, frame: number, values: Values) => void;
+/** What one rule's run of a check keeps from frame to frame: empty on its first frame, its own (two asks that run
+ * one check each have theirs). */
+export type Memo = Record<string, any>;
+/** The system: a frame's world, the frame, the rule's values, and what this run has kept. */
+export type CheckFn = (world: World, frame: number, values: Values, memo: Memo) => void;
+/** Run once after the last frame, with what the frames kept: for what only the whole run can say (how long a shot
+ * held, that no frame had the part an ask is about). A finding here has no frames unless it gives them. */
+export type AfterFn = (values: Values, memo: Memo) => void;
 export interface Check extends CheckMeta {
   /** its system, run on each frame it ranges over */
   run: CheckFn;
+  /** run once past its last frame */
+  after?: AfterFn;
 }
 
-/** A check: what it holds the work to, and the system that finds where the work doesn't hold. */
-export function check(meta: CheckMeta, run: CheckFn): Check {
-  return { ...meta, run };
+/** A check: what it holds the work to, the system that finds where the work doesn't hold, and what it says once the
+ * frames are run. */
+export function check(meta: CheckMeta, run: CheckFn, after?: AfterFn): Check {
+  return { ...meta, run, after };
+}
+
+/** The names an entity goes by, as `named` matches them: its part's name, its model file's name (no folder, no
+ * extension), its shot's name and its layer key; and, each only by its prefix, the component that drew it
+ * (`component:Orb`) and its model file in full (`file:props/orb.glb`). */
+function names(world: World, id: number): { bare: string[]; component?: string; file?: string } {
+  const c = world.components(id) as Record<string, Record<string, unknown> | undefined>;
+  const str = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+  const file = str(c.Part?.src);
+  const stem = file?.split("/").pop()?.replace(/\.[^.]+$/, "");
+  return { bare: [str(c.Part?.name), stem, str(c.Shot?.name), str(c.Source?.key)].filter((v): v is string => !!v), component: str(c.Source?.component), file };
+}
+
+/** Whether entity `id` is one of `kinds` (a list, or one string of them split at commas): a bare kind is a part's,
+ * shot's or layer's name or a model file's, as written or as its start ("desk" is desk-3 and Desk.glb), any case;
+ * `component:Orb` is what the Orb component drew, and `file:props/orb.glb` what that model file is. Until a
+ * component's taxonomy (DR11) says what a thing is, an ask's check names it this way. */
+export function named(world: World, id: number, kinds: string | string[] | undefined): boolean {
+  const ks = (Array.isArray(kinds) ? kinds : String(kinds ?? "").split(",")).map((k) => k.trim().toLowerCase()).filter(Boolean);
+  if (!ks.length) return false;
+  const n = names(world, id);
+  const starts = (v: string | undefined, k: string) => !!v && v.toLowerCase().startsWith(k);
+  return ks.some((k) => {
+    if (k.startsWith("component:")) return n.component?.toLowerCase() === k.slice(10);
+    if (k.startsWith("file:")) return !!n.file && n.file.toLowerCase().endsWith(k.slice(5));
+    return n.bare.some((v) => starts(v, k));
+  });
+}
+
+/** `v` turned by a rotation `q` (x, y, z, w), as a part's `rotation` turns its own space into the world's. */
+export function turned(q: number[], v: number[]): number[] {
+  const [x, y, z, w] = q;
+  const t = [2 * (y * v[2] - z * v[1]), 2 * (z * v[0] - x * v[2]), 2 * (x * v[1] - y * v[0])];
+  return [v[0] + w * t[0] + (y * t[2] - z * t[1]), v[1] + w * t[1] + (z * t[0] - x * t[2]), v[2] + w * t[2] + (x * t[1] - y * t[0])];
+}
+
+/** A part as a box turned as it is: its centre, its axes and its half sizes along them, in world metres. A part with
+ * no box of its own is its world box; one with neither has none. */
+function boxOf(p: Part): { c: number[]; axes: number[][]; half: number[] } | null {
+  const unit = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+  if (!p.own) return p.min && p.max ? { c: [0, 1, 2].map((k) => (p.min![k] + p.max![k]) / 2), axes: unit, half: [0, 1, 2].map((k) => (p.max![k] - p.min![k]) / 2) } : null;
+  const [lo, hi] = p.own;
+  const c = turned(p.rotation, [0, 1, 2].map((k) => ((lo[k] + hi[k]) / 2) * p.scale[k])).map((v, k) => v + p.at[k]);
+  return { c, axes: unit.map((u) => turned(p.rotation, u)), half: [0, 1, 2].map((k) => (Math.abs(hi[k] - lo[k]) / 2) * Math.abs(p.scale[k])) };
+}
+
+/** How far two parts are in each other, in metres: the least overlap of their own boxes, turned as they are, along
+ * the axes that could part them (0: apart, or a part with no box). */
+export function inside(a: Part, b: Part): number {
+  const p = boxOf(a);
+  const q = boxOf(b);
+  if (!p || !q) return 0;
+  const dot = (u: number[], v: number[]) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+  const cross = (u: number[], v: number[]) => [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+  const d = [0, 1, 2].map((k) => q.c[k] - p.c[k]);
+  let least = Infinity;
+  for (const ax of [...p.axes, ...q.axes, ...p.axes.flatMap((u) => q.axes.map((v) => cross(u, v)))]) {
+    const len = Math.hypot(ax[0], ax[1], ax[2]);
+    if (len < 1e-9) continue;
+    const n = ax.map((v) => v / len);
+    const reach = (o: NonNullable<typeof p>) => o.half.reduce((s, h, k) => s + h * Math.abs(dot(o.axes[k], n)), 0);
+    const overlap = reach(p) + reach(q) - Math.abs(dot(d, n));
+    if (overlap <= 0) return 0;
+    least = Math.min(least, overlap);
+  }
+  return least === Infinity ? 0 : least;
 }
 
 /** What a check found: the entities it is about, what it says, and, where they aren't the check's or the frame's,
  * its level and frames (its first, and the frame after its last); the number it turns on and the fix, when there
  * are. */
 export interface Found {
-  /** the entities it is about, by their ids in this frame's world */
-  about?: number[];
+  /** the entities it is about, by their ids in this frame's world, or by name (a check's `after` has no world) */
+  about?: (number | string)[];
   /** what is wrong, in a line a person reads */
   says: string;
   /** its level, where it isn't its rule's or its check's */
@@ -80,8 +155,9 @@ export function found(f: Found): void {
     check: c.id,
     // the finding's own level, else its rule's, else the check's
     level: f.level ?? plan.level ?? c.level ?? "error",
-    about: (f.about ?? []).map((id) => aboutOf(world, id)),
-    frames: f.frames ?? [frame, frame + 1],
+    about: (f.about ?? []).map((id) => (typeof id === "string" ? ({ name: id } as About) : aboutOf(world, id))),
+    // past the last frame (a check's `after`), none unless it says
+    frames: f.frames ?? (frame < 0 ? null : [frame, frame + 1]),
     says: f.says,
     measure: f.measure ? { ...f.measure, limit: f.measure.limit ?? null } : null,
     fix: f.fix ?? null,
@@ -161,22 +237,35 @@ export interface Planned {
 export function runChecks(checks: Check[], plan: Planned[], worlds: Facts[]): { findings: Finding[]; threw: { check: string; says: string }[] } {
   const out: Finding[] = [];
   const threw: { check: string; says: string }[] = [];
+  // each planned run's memo, kept across its frames
+  const memos: Memo[] = plan.map(() => ({}));
+  const call = (c: Check, at: string, f: () => void) => {
+    try {
+      f();
+    } catch (e) {
+      if (!threw.some((t) => t.check === c.id)) threw.push({ check: c.id, says: `${at}: ${e instanceof Error ? e.message : String(e)}` });
+    } finally {
+      running = null;
+    }
+  };
   for (const facts of worlds) {
-    const here = plan.filter((p) => p.frames.includes(facts.frame));
-    if (!here.length) continue;
+    if (!plan.some((p) => p.frames.includes(facts.frame))) continue;
     const world = worldOf(facts);
-    for (const p of here) {
+    plan.forEach((p, i) => {
+      if (!p.frames.includes(facts.frame)) return;
       const c = checks[p.check];
       running = { world, frame: facts.frame, check: c, plan: p, out };
-      try {
-        c.run(world, facts.frame, p.values);
-      } catch (e) {
-        if (!threw.some((t) => t.check === c.id)) threw.push({ check: c.id, says: `at frame ${facts.frame}: ${e instanceof Error ? e.message : String(e)}` });
-      } finally {
-        running = null;
-      }
-    }
+      call(c, `at frame ${facts.frame}`, () => c.run(world, facts.frame, p.values, memos[i]));
+    });
   }
+  // what only the whole run can say, once, with no frame's world
+  const none = createWorld({ native: false });
+  plan.forEach((p, i) => {
+    const c = checks[p.check];
+    if (!c.after || threw.some((t) => t.check === c.id)) return;
+    running = { world: none, frame: -1, check: c, plan: p, out };
+    call(c, "after its frames", () => c.after!(p.values, memos[i]));
+  });
   return { findings: joined(out), threw };
 }
 

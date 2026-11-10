@@ -31,22 +31,58 @@ export default check({ id: "caption", text: "a caption clears the platform's but
 });
 ```
 
+A check keeps what it needs from frame to frame in its `memo` (empty on the first frame, and each rule's own, so two
+asks that run one check don't share it), and its `after` runs once past the last frame with that memo: for what only
+the whole run can say, such as how long a shot held, or that no frame had the part the check was about (a check that
+finds nothing to measure must say so, or it passes for the wrong reason). A finding from `after` names what it is
+about by name, since there is no world then. `named(world, id, kinds)` is how a check finds what its values name: a
+part's, shot's or layer's name or a model file's, as written or as its start, in any case (`desk` is `desk-3` and
+`Desk.glb`), `component:Orb` for what the Orb component drew, `file:props/orb.glb` for that model. `turned(q, v)`
+turns a vector by a part's rotation, and `inside(a, b)` says how far two parts are in each other, in metres, from
+their own boxes turned as they are. A note's ask names its check the same way a rule does
+([`raea notes`](../cli/notes.md)); the skill carries worked checks in `craft/checks`.
+
+```ts
+// checks/shot-length.ts (the skill's craft/checks has it in full): a shot held at least N seconds
+import { check, found, type Shot } from "raea/check";
+
+export default check(
+  { id: "shot-length", text: "the shot holds long enough" },
+  (world, frame, values, memo) => {
+    memo.fps ??= (world.resource("Frame") as { fps: number }).fps;
+    for (const s of world.find({ with: ["Shot"] })) {
+      const shot = world.component<Shot>(s, "Shot")!;
+      if (shot.name !== String(values.shot)) continue;
+      memo.shot ??= { from: shot.from, to: shot.to ?? null, last: frame };
+      memo.shot.last = frame;
+    }
+  },
+  (values, memo) => {
+    if (!memo.shot) return found({ says: `no shot is named ${values.shot}`, fix: "name the shot's Sequence as the ask does" });
+    const end = memo.shot.to ?? memo.shot.last + 1;
+    const secs = (end - memo.shot.from) / memo.fps;
+    if (secs < Number(values.seconds)) found({ about: [String(values.shot)], frames: [memo.shot.from, end], says: `the shot ${values.shot} is ${secs.toFixed(1)} s, under ${values.seconds} s` });
+  },
+);
+```
+
 <!-- generated:begin by tools/manual-ref/sdk.ts from the SDK's exports and doc comments; edit outside this block -->
 
 ```ts
-import { check, declared, found, runChecks } from "raea/check"
+import { check, declared, found, inside } from "raea/check"
 ```
 
-`raea/check` exports 5 functions, 1 class, 36 types. Source: [sdk/raea/src/check.ts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/check.ts).
+`raea/check` exports 8 functions, 1 class, 38 types. Source: [sdk/raea/src/check.ts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/check.ts).
 
 ## Functions
 
 ### `check`
 
-A check: what it holds the work to, and the system that finds where the work doesn't hold.
+A check: what it holds the work to, the system that finds where the work doesn't hold, and what it says once the
+frames are run.
 
 ```ts
-function check(meta: CheckMeta, run: CheckFn): Check
+function check(meta: CheckMeta, run: CheckFn, after?: AfterFn): Check
 ```
 
 ### `declared`
@@ -65,6 +101,26 @@ Says what the running check found. Only inside a check's system, as raea check r
 function found(f: Found): void
 ```
 
+### `inside`
+
+How far two parts are in each other, in metres: the least overlap of their own boxes, turned as they are, along
+the axes that could part them (0: apart, or a part with no box).
+
+```ts
+function inside(a: Part, b: Part): number
+```
+
+### `named`
+
+Whether entity `id` is one of `kinds` (a list, or one string of them split at commas): a bare kind is a part's,
+shot's or layer's name or a model file's, as written or as its start ("desk" is desk-3 and Desk.glb), any case;
+`component:Orb` is what the Orb component drew, and `file:props/orb.glb` what that model file is. Until a
+component's taxonomy says what a thing is, an ask's check names it this way.
+
+```ts
+function named(world: World, id: number, kinds: string | string[] | undefined): boolean
+```
+
 ### `runChecks`
 
 Every planned check run on its frames' worlds: what they found, a run of frames finding the same thing as one
@@ -72,6 +128,14 @@ finding over those frames, and each check that threw, with what it threw.
 
 ```ts
 function runChecks(checks: Check[], plan: Planned[], worlds: Facts[]): { findings: Finding[]; threw: { check: string; says: string; }[]; }
+```
+
+### `turned`
+
+`v` turned by a rotation `q` (x, y, z, w), as a part's `rotation` turns its own space into the world's.
+
+```ts
+function turned(q: number[], v: number[]): number[]
 ```
 
 ### `worldOf`
@@ -128,6 +192,15 @@ A world of entities: rows in tables by kind.
 type About = { name: string, key?: string, }
 ```
 
+### `AfterFn`
+
+Run once after the last frame, with what the frames kept: for what only the whole run can say (how long a shot
+held, that no frame had the part an ask is about). A finding here has no frames unless it gives them.
+
+```ts
+type AfterFn = (values: Values, memo: Memo) => void
+```
+
 ### `Ask`
 
 ```ts
@@ -145,6 +218,7 @@ type Camera = { eye: [number, number, number], look: [number, number, number], /
 | Field | Type | What it is |
 | --- | --- | --- |
 | `run` (required) | `CheckFn` | its system, run on each frame it ranges over |
+| `after` | `AfterFn` | run once past its last frame |
 | `id` (required) | `string` | what `raea check --only` names, and its findings' check |
 | `text` (required) | `string` | the line it holds the work to |
 | `needs` | `"render"` | "render": it reads what only a render has (Contrast, Picture, Mix, Onset, Covers); with none, it waits for one |
@@ -153,10 +227,10 @@ type Camera = { eye: [number, number, number], look: [number, number, number], /
 
 ### `CheckFn`
 
-The system: a frame's world, the frame, and the rule's values.
+The system: a frame's world, the frame, the rule's values, and what this run has kept.
 
 ```ts
-type CheckFn = (world: World, frame: number, values: Values) => void
+type CheckFn = (world: World, frame: number, values: Values, memo: Memo) => void
 ```
 
 ### `CheckMeta`
@@ -226,7 +300,7 @@ are.
 
 | Field | Type | What it is |
 | --- | --- | --- |
-| `about` | `number[]` | the entities it is about, by their ids in this frame's world |
+| `about` | `(number \| string)[]` | the entities it is about, by their ids in this frame's world, or by name (a check's `after` has no world) |
 | `says` (required) | `string` | what is wrong, in a line a person reads |
 | `level` | `Level` | its level, where it isn't its rule's or its check's |
 | `frames` | `[number, number]` | its first frame and the frame after its last (this frame alone when unset) |
@@ -270,6 +344,15 @@ type Measure = { name: string, value: number, unit: string, limit?: number, }
 
 ```ts
 type Medium = "2d-type" | "2d-graphic" | "3d" | "footage" | "page"
+```
+
+### `Memo`
+
+What one rule's run of a check keeps from frame to frame: empty on its first frame, its own (two asks that run
+one check each have theirs).
+
+```ts
+type Memo = Record<string, any>
 ```
 
 ### `Mix`
@@ -359,7 +442,7 @@ type Text = { words: string, font?: string, /** * its letters' height in px of a
 
 ### `Values`
 
-A rule's values for its check (a controller's `values`).
+A rule's values for its check (a controller's `values`, an ask's).
 
 ```ts
 type Values = Record<string, number | string | boolean>

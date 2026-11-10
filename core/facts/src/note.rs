@@ -18,7 +18,8 @@ pub struct Pin {
     pub part: Option<String>,
 }
 
-/// Where an ask that can't be measured is shown, for the person to sign (DR6): a shot or a range of frames.
+/// Where an ask that can't be measured is shown, for the person to sign (DR6): a shot or a range of frames (the frame
+/// after its last ends it) of the ask's composition, cut from its newest render.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(optional_fields)]
 pub struct Proof {
@@ -42,6 +43,9 @@ pub struct Ask {
     pub not: Vec<String>,
     /// the craft verb this ask is (skills/skills/raea/craft/verbs): one per ask, not one per note
     pub verb: Option<String>,
+    /// the composition it is about, its file from the project (its id after a `#` where the file registers several):
+    /// where its check runs and its clip is cut from; none: every composition of the project
+    pub of: Option<String>,
     /// the check that shows it met (DR6): one of raea's by name, or a .ts check by its path, as a rule names one
     pub check: Option<String>,
     /// the values its check is held to
@@ -147,7 +151,7 @@ mod tests {
     use super::*;
 
     fn ask(text: &str, medium: Option<&str>, not: &[&str]) -> Ask {
-        Ask { text: text.into(), medium: medium.map(Into::into), about: None, not: not.iter().map(|s| s.to_string()).collect(), verb: None, check: None, values: None, proof: None }
+        Ask { text: text.into(), medium: medium.map(Into::into), about: None, not: not.iter().map(|s| s.to_string()).collect(), verb: None, of: None, check: None, values: None, proof: None }
     }
 
     fn note(words: &str, asks: Vec<Ask>) -> Note {

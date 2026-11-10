@@ -1,14 +1,18 @@
-//! `raea notes post`: each restated note sent from the raea app gets its asks shown back on its comment (DR5), through
-//! `raea show --on ITEM --working COMMENT --ask TEXT...`, before the work starts. The person reads them there and can
-//! correct one in a word; `raea notes take` writes their correction into the note, which is then restated again.
+//! `raea notes post`: each note sent from the raea app gets where it stands shown on its comment (DR5, DR6), through
+//! `raea show --on ITEM --working COMMENT`: its asks once restated (`--ask TEXT...`), for the person to correct one in
+//! a word, which `raea notes take` writes into the note to be restated again; the note's state for the comment's
+//! badge and each ask's (`--status S --states S1,S2`: to restate, to check, failing, to sign, passing, signed); and
+//! each clip the person is to sign, under its ask (`--sign N --clip FILE --render HASH`). "done" is never the agent's:
+//! a note closes when the person retires it.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use crate::{Eval, R, read};
+use crate::state::{self, Standing};
+use crate::{Eval, R, place, read};
 
-/// What was last shown for each note, by where it came from (`.raea/notes-shown.json`): a note shown with these asks
-/// already isn't shown again, so a comment the agent has since settled isn't marked working again.
+/// What was last shown for each note, by where it came from (`.raea/notes-shown.json`): its asks, its states and its
+/// clips. A note shown so already isn't shown again, so a comment isn't marked working again for nothing.
 fn shown_at(project: &Path) -> PathBuf {
     project.join(".raea/notes-shown.json")
 }
@@ -44,10 +48,14 @@ pub(crate) fn comment_of(from: &str) -> Option<(&str, &str)> {
     (comment.starts_with("cm-") && it.next().is_none()).then_some((item, comment))
 }
 
-/// The arguments that show a note's asks on its comment.
-pub(crate) fn args(item: &str, comment: &str, asks: &[&str]) -> Vec<String> {
+/// The arguments that show a note on its comment: its asks (none while it's to restate), its state and each ask's.
+pub(crate) fn args(item: &str, comment: &str, asks: &[&str], status: &str, states: &[&str]) -> Vec<String> {
     let mut a: Vec<String> = ["show", "--on", item, "--working", comment].map(String::from).to_vec();
     a.extend(asks.iter().flat_map(|t| ["--ask".to_string(), t.to_string()]));
+    a.extend(["--status".to_string(), status.to_string()]);
+    if !states.is_empty() {
+        a.extend(["--states".to_string(), states.join(",")]);
+    }
     a
 }
 
@@ -57,6 +65,7 @@ pub(crate) fn post(project: &Path, eval: Eval, run: Run) -> (String, i32) {
     let mut code = 0;
     let mut shown: BTreeMap<String, Vec<String>> = std::fs::read_to_string(shown_at(project)).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
     let before = shown.clone();
+    let kept = state::read(project);
     for k in read(project, eval) {
         let file = k.file.display().to_string();
         let n = match k.note {
@@ -67,26 +76,49 @@ pub(crate) fn post(project: &Path, eval: Eval, run: Run) -> (String, i32) {
                 continue;
             }
         };
-        let owed = n.flags();
         let Some((item, comment)) = comment_of(&n.from) else {
             if n.from.starts_with("app ") {
                 out.push(format!("{file}: a note on its item as a whole has no comment to show its asks on: say them to the person"));
             }
             continue;
         };
-        if n.state() == "to restate" || !owed.is_empty() {
-            out.push(format!("{file}: not posted: {}", if owed.is_empty() { "it's still to restate".to_string() } else { format!("its restatement still owes: {}", owed.join("; ")) }));
+        let number = place(project, &project.join(&k.file)).map_or(0, |p| p.1);
+        let owed = n.flags();
+        let (standing, each) = state::of_note(&n, number, &kept);
+        // a restatement that still owes something isn't shown: the comment reads "to restate" until it's whole
+        let whole = n.state() != "to restate" && owed.is_empty();
+        let asks: Vec<&str> = if whole { n.asks.iter().map(|a| a.text.as_str()).collect() } else { Vec::new() };
+        let status = if whole { standing.word() } else { "to restate" };
+        let states: Vec<&str> = if whole { each.iter().map(Standing::word).collect() } else { Vec::new() };
+        // each clip the person is to sign, under its ask: (its number, file, render)
+        let clips: Vec<(usize, String, String)> = if whole {
+            each.iter().enumerate().filter(|(_, s)| matches!(s, Standing::ToSign(_))).filter_map(|(i, _)| {
+                let c = kept.get(&state::id(number, i + 1))?.clip.as_ref().filter(|c| !c.stale)?;
+                Some((i + 1, c.file.display().to_string(), c.render.clone()))
+            }).collect()
+        } else {
+            Vec::new()
+        };
+        let mut said: Vec<String> = asks.iter().map(|a| a.to_string()).collect();
+        said.push(format!("status {status} {}", states.join(",")));
+        said.extend(clips.iter().map(|(i, _, h)| format!("clip {i} {h}")));
+        if shown.get(&n.from) == Some(&said) {
+            out.push(format!("{file}: shown on {comment} of {item} as it stands already ({status})"));
             continue;
         }
-        let asks: Vec<&str> = n.asks.iter().map(|a| a.text.as_str()).collect();
-        if shown.get(&n.from).is_some_and(|s| s.iter().eq(asks.iter().copied())) {
-            out.push(format!("{file}: its asks are shown on {comment} of {item} already"));
-            continue;
-        }
-        match run(&args(item, comment, &asks)) {
-            Ok(_) => {
-                out.push(format!("{file}: its {} ask{} shown on {comment} of {item}, where the person can correct one", asks.len(), if asks.len() == 1 { "" } else { "s" }));
-                shown.insert(n.from.clone(), asks.iter().map(|a| a.to_string()).collect());
+        let mut calls = vec![args(item, comment, &asks, status, &states)];
+        calls.extend(clips.iter().map(|(i, f, h)| ["show", "--on", item, "--working", comment, "--sign", &i.to_string(), "--clip", f, "--render", h].map(String::from).to_vec()));
+        match calls.iter().try_for_each(|a| run(a).map(|_| ())) {
+            Ok(()) => {
+                let what = match (asks.len(), whole) {
+                    (_, false) if owed.is_empty() => "to restate".to_string(),
+                    (_, false) => format!("to restate: its restatement still owes: {}", owed.join("; ")),
+                    (1, true) => format!("its ask, {status}"),
+                    (n, true) => format!("its {n} asks, {status}"),
+                };
+                let signs = if clips.is_empty() { String::new() } else { format!(", with {} clip{} to sign", clips.len(), if clips.len() == 1 { "" } else { "s" }) };
+                out.push(format!("{file}: shown on {comment} of {item}: {what}{signs}"));
+                shown.insert(n.from.clone(), said);
             }
             Err(e) => {
                 out.push(format!("{file}: not posted: {e}"));

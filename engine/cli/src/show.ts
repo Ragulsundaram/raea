@@ -24,14 +24,18 @@ raea show [--title T] --question Q1 [--preview FILE] --choice A [--preview FILE]
   FILE: stills (several make a storyboard), a video, a sound, a NAME.script.ts or .md, or a .tsx (an interactive
   artifact; one of the project's compositions opens in its editor). P: the project's id, title or Workspace/project;
   else the one this folder is in. Who's showing it: --as NAME [--role ROLE] [--inbox NAME], else your harness's.
-raea show --on ITEM --working ID... [--ask TEXT]... | --done ID... [--note LINE] [--sub NAME]
+raea show --on ITEM --working ID... [--ask TEXT]... [--status S [--states S1,S2...]] | --done ID... [--note LINE] [--sub NAME]
+raea show --on ITEM --working ID --sign N --clip FILE --render HASH
 raea show FILE... --replaces ITEM --done ID...
   The person's edit comments are tasks they watch: mark each working as you start it and done when it's settled
   (the version that settles them, with --replaces); --sub names a subagent when several split them. With --working,
-  each --ask is one ask you read the comment as, shown on it for the person to correct (raea notes post).
+  each --ask is one ask you read the comment as, shown on it for the person to correct, --status where the note
+  stands on its badge and --states each ask's (to restate, to check, failing, to sign, passing, signed); --sign shows
+  ask N's clip, cut from the render whose sha256 is HASH, for the person to sign. A comment read as asks is a note: it
+  closes when the person retires it, never with --done. raea notes post sends all of these from the notes.
 `;
 
-const WITH_VALUE = new Set(["--title", "--ask", "--project", "--replaces", "--as", "--role", "--inbox", "--question", "--choice", "--preview", "--on", "--working", "--done", "--note", "--sub"]);
+const WITH_VALUE = new Set(["--title", "--ask", "--project", "--replaces", "--as", "--role", "--inbox", "--question", "--choice", "--preview", "--on", "--working", "--done", "--note", "--sub", "--status", "--states", "--sign", "--clip", "--render"]);
 const FLAGS = new Set(["--open"]);
 
 /** The harness an agent runs in, named as the feed shows it, from the program that started this command (native.ts
@@ -87,7 +91,7 @@ export function parseShow(args: string[], cwd: string) {
   // several questions, or any preview: one item with them all (host/show.ts questions); else the one question as before
   const questions = asked.length > 1 || asked.some((q) => q.preview || q.choices.some((c) => c.preview)) ? asked : undefined;
   if (questions && files.length) throw new Error(`with several questions or previews, each file is a --preview of the question or choice it shows\n${SHOW_USAGE}`);
-  return { files, choices, questions, open: args.includes("--open"), title: one("--title"), ask: one("--ask"), asks: many("--ask"), project: one("--project"), replaces: one("--replaces"), question: questions ? undefined : one("--question"), as: one("--as"), role: one("--role"), inbox: one("--inbox"), on: one("--on"), working: many("--working"), done: many("--done"), note: one("--note"), sub: one("--sub") };
+  return { files, choices, questions, open: args.includes("--open"), title: one("--title"), ask: one("--ask"), asks: many("--ask"), project: one("--project"), replaces: one("--replaces"), question: questions ? undefined : one("--question"), as: one("--as"), role: one("--role"), inbox: one("--inbox"), on: one("--on"), working: many("--working"), done: many("--done"), note: one("--note"), sub: one("--sub"), status: one("--status"), states: one("--states")?.split(",").map((s) => s.trim()).filter(Boolean), sign: one("--sign"), clip: one("--clip"), render: one("--render") };
 }
 
 export function showVerb(ask: Ask, args: string[], cwd: string, env: Record<string, string | undefined>): string {
@@ -104,12 +108,23 @@ export function showVerb(ask: Ask, args: string[], cwd: string, env: Record<stri
   // the person's edit comments as tasks (docs/review.feature R3): marked working or done on their item, or done by
   // the version shown with --replaces; a working mark carries the asks the agent read the comments as (DR5), for the
   // person to correct
+  // where a note stands (DR6): its badge and each ask's, and a clip under one of its asks for the person to sign
+  const noted = a.status !== undefined || a.states !== undefined || a.sign !== undefined;
+  if (noted && !a.working.length) throw new Error(`--status, --states and --sign go with --working: raea show --on ITEM --working ID --status S\n${SHOW_USAGE}`);
+  if (a.sign !== undefined && (a.working.length !== 1 || a.done.length || !a.clip || !a.render)) throw new Error(`--sign N shows one comment's clip: raea show --on ITEM --working ID --sign N --clip FILE --render HASH\n${SHOW_USAGE}`);
+  if ((a.clip || a.render) && a.sign === undefined) throw new Error(`--clip and --render go with --sign N, the ask the clip is for\n${SHOW_USAGE}`);
+  if (a.states && a.asks.length && a.states.length !== a.asks.length) throw new Error(`--states says one state for each --ask: ${a.asks.length} asks, ${a.states.length} states\n${SHOW_USAGE}`);
+  const sign = a.sign === undefined ? undefined : { ask: Number(a.sign), clip: a.clip!.startsWith("/") ? a.clip : `${cwd.replace(/\/$/, "")}/${a.clip}`, render: a.render };
   const mark = (item: string, comments: string[], state: "working" | "done", version?: string) =>
-    ask("task", { item, comments, state, by, sub: a.sub, note: state === "done" ? a.note : undefined, asks: state === "working" && a.asks.length ? a.asks : undefined, version }) as { item: string; comments: string[] };
-  const said = (m: { item: string; comments: string[] }, state: string) => `Marked ${m.comments.join(", ")} ${state} on ${m.item}: the person sees ${a.sub ? `${by.name} · ${a.sub}` : by.name} ${state === "working" ? "on them" : "finished them"}.`;
+    ask("task", { item, comments, state, by, sub: a.sub, note: state === "done" ? a.note : undefined, asks: state === "working" && a.asks.length ? a.asks : undefined, version, ...(state === "working" ? { status: a.status, states: a.states, sign } : {}) }) as { item: string; comments: string[] };
+  const said = (m: { item: string; comments: string[] }, state: string) => `Marked ${m.comments.join(", ")} ${state} on ${m.item}: the person sees ${a.sub ? `${by.name} · ${a.sub}` : by.name} ${state === "working" ? "on them" : "finished them"}${state === "working" && a.status ? `; it reads "${a.status}"${a.states?.length ? ` (its asks: ${a.states.join(", ")})` : ""}` : ""}.`;
   if (!a.files.length && !a.question && !a.questions && (a.working.length || a.done.length)) {
     const item = a.on ?? a.replaces;
     if (!item) throw new Error(`which item the comments are on: --on ITEM\n${SHOW_USAGE}`);
+    if (sign) {
+      const m = mark(item, a.working, "working");
+      return `Shown ask ${sign.ask}'s clip on ${m.comments[0]} of ${m.item} for the person to sign (render ${String(sign.render).slice(0, 12)}…): their sign comes to the inbox, and raea notes take keeps it.\n`;
+    }
     const out = [...(a.working.length ? [said(mark(item, a.working, "working"), "working")] : []), ...(a.done.length ? [said(mark(item, a.done, "done"), "done")] : [])];
     return `${out.join("\n")}\n`;
   }

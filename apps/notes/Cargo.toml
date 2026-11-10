@@ -4,12 +4,18 @@ version = "0.1.0"
 edition = "2024"
 license = "FSL-1.1-ALv2"
 publish = false
-description = "A person's notes on a project as files the work is held to (docs/direction.feature DR5): `raea notes take`, `ls` and `post`"
+description = "A person's notes on a project as files the work is held to (docs/direction.feature DR5, DR6): `raea notes take`, `check`, `ls` and `post`"
 
 [dependencies]
 # Note and Ask, the project found by its .raea/project, and the world a note is an entity in
 raea-core-facts = { path = "../../core/facts" }
+# when a run of an ask's check was (UTC), as raea check stamps its record
+raea-io-trace = { path = "../../io/trace" }
+# what each ask has been through, kept as JSON (state.rs)
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# the render a clip to sign is cut from, by its SHA-256 (check.rs)
+sha2 = "0.10"
 
 [dev-dependencies]
 tempfile = "3"

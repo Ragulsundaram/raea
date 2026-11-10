@@ -25,14 +25,18 @@ pub struct Rule {
     /// how bad what it finds is (None: the check's own level, else an error)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub level: Option<Level>,
-    /// where it was written: "raea", or "taste", "workspace" or "project" and the file
+    /// where it was written: "raea", or "taste", "workspace" or "project" and the file; "note" and the ask's id
     pub by: String,
+    /// the one composition it runs on, its file from the project (its id after a `#`), as a note's ask names it;
+    /// none: every composition
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub of: Option<String>,
 }
 
 impl Rule {
     /// One of raea's checks by `name`, held to `values`.
     pub fn named(name: &str, text: &str, values: Map<String, Value>, level: Level, by: &str) -> Rule {
-        Rule { id: name.into(), text: text.into(), check: name.into(), values, level: Some(level), by: by.into() }
+        Rule { id: name.into(), text: text.into(), check: name.into(), values, level: Some(level), by: by.into(), of: None }
     }
 
     /// The project's .ts check this rule runs, when it runs one.
@@ -68,7 +72,7 @@ impl Rule {
                 false => (check.clone(), check.clone()),
             };
             let level = level.as_deref().map(Level::of_word);
-            out.push(Rule { id, text: f.label.clone(), check, values: values.clone().unwrap_or_default(), level, by: by.into() });
+            out.push(Rule { id, text: f.label.clone(), check, values: values.clone().unwrap_or_default(), level, by: by.into(), of: None });
         }
         out
     }

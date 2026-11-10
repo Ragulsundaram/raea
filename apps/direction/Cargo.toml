@@ -18,5 +18,7 @@ serde_json = "1"
 raea-core-brief = { path = "../../core/brief" }
 raea-app-check = { path = "../check" }
 raea-app-registry = { path = "../workspace/registry" }
+# the project's notes, whose asks' checks raea check runs beside its rules (DR6)
+raea-app-notes = { path = "../notes" }
 # a TS check's run printing nothing to the terminal (its ECHO)
 raea-runtime-react = { path = "../../runtime/react", default-features = false }

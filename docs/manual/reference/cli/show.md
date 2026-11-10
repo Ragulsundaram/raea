@@ -23,7 +23,11 @@ The person's edit comments are tasks they watch. The inbox line that carries the
 --working ID` marks one as being worked (with `--sub NAME` when a subagent has it), and `--done ID` marks it settled,
 or, with files and `--replaces`, settled by that version. Done stays in view, checked, until the person resolves it.
 Each `--ask` with `--working` is one ask you read the comment as, shown on it so the person can correct your reading
-before the work starts; `raea notes post` sends a restated note's asks this way.
+before the work starts. `--status` is where the note stands, on the comment's badge, and `--states` each ask's, in
+order (to restate, to check, failing, to sign, passing, signed). `--sign N --clip FILE --render HASH` shows a clip
+under ask N for the person to sign, cut from the render whose sha256 is HASH; their sign comes back to the inbox. A
+comment read as asks is a note: it closes when the person retires it, and the app refuses `--done` on it.
+[`raea notes post`](notes.md) sends all of these from the project's notes.
 
 ```sh
 raea show out/look-1.png out/look-2.png out/look-3.png --ask "Which of these three?"
@@ -32,6 +36,8 @@ raea show --question "Warmer or cooler grade?" --choice Warmer --choice Cooler
 raea show --question "Which opening?" --choice Slam --preview out/slam.mp4 --choice Drift --preview out/drift.mp4 \
   --question "Narrator speed?" --preview voice/take.mp3 --choice "As is" --choice Faster
 raea show --on i-show-2f9c --working c-3 --sub "grade pass"
+raea show --on i-show-2f9c --working cm-4 --ask "the lyric is flat type" --ask "it arrives word by word" \
+  --status failing --states "failing,to check"
 raea show out/cut-v2.mp4 --replaces i-show-2f9c --done c-3 --done c-4 --note "Warmer grade, title held a beat longer"
 ```
 
@@ -40,7 +46,7 @@ raea show out/cut-v2.mp4 --replaces i-show-2f9c --done c-3 --done c-4 --note "Wa
 ## Usage
 
 ```sh
-raea show FILE... [--title T] [--ask LINE] [--project P] [--replaces ITEM] [--as NAME] [--role ROLE] [--inbox NAME] [--open] | raea show --question Q --choice A --choice B [STILL...] | raea show [--title T] --question Q [--preview FILE] --choice A [--preview FILE] --choice B ... [--question Q2] ... | raea show --on ITEM [--working ID] [--ask TEXT] [--done ID] [--note LINE] [--sub NAME]   (shown in the raea app as an item the person can use and answer, posted quietly with a notice, the window left where they are unless --open: stills (several, a storyboard), a video, a sound, a NAME.script.ts or .md, a .tsx (an interactive artifact; a project's composition opens in its editor), or questions, all of them one item, each question and choice with a --preview to play or read while answering (a still, a video, a sound, a script or .md; after a --choice that choice's, else the question's); what they send comes to ~/.raea/inbox/INBOX.jsonl; their edit comments are tasks: --working ID as you start one (each --ask with it one ask you read it as, for the person to correct), --done ID when it's settled, or with the version that settles it, FILE --replaces ITEM --done ID; never open media in Preview while the app is installed)
+raea show FILE... [--title T] [--ask LINE] [--project P] [--replaces ITEM] [--as NAME] [--role ROLE] [--inbox NAME] [--open] | raea show --question Q --choice A --choice B [STILL...] | raea show [--title T] --question Q [--preview FILE] --choice A [--preview FILE] --choice B ... [--question Q2] ... | raea show --on ITEM [--working ID] [--ask TEXT] [--status S] [--states S1,S2] [--sign N --clip FILE --render HASH] [--done ID] [--note LINE] [--sub NAME]   (shown in the raea app as an item the person can use and answer, posted quietly with a notice, the window left where they are unless --open: stills (several, a storyboard), a video, a sound, a NAME.script.ts or .md, a .tsx (an interactive artifact; a project's composition opens in its editor), or questions, all of them one item, each question and choice with a --preview to play or read while answering (a still, a video, a sound, a script or .md; after a --choice that choice's, else the question's); what they send comes to ~/.raea/inbox/INBOX.jsonl; their edit comments are tasks: --working ID as you start one (each --ask with it one ask you read it as, for the person to correct; --status and --states where the note and each ask stand: to restate, to check, failing, to sign, passing, signed; --sign N --clip FILE --render HASH a clip under ask N for them to sign; a note closes when they retire it, never with --done), --done ID when it's settled, or with the version that settles it, FILE --replaces ITEM --done ID; never open media in Preview while the app is installed)
 ```
 
 Needs the raea app's host running on this machine; then waits for a person's click in the raea app (to answer). Takes any number of arguments besides its flags.
@@ -52,6 +58,7 @@ Needs the raea app's host running on this machine; then waits for a person's cli
 | `--as` | `NAME` | Who's showing it, as the feed names them (your harness's name when left out: Claude Code, Codex, Gemini). |
 | `--ask` | `LINE` | What you want from the person, shown with the item. With `--on` and `--working`: one ask you read the comment as (give it once per ask), shown on the comment for the person to correct. |
 | `--choice` | `A` | With `--question`: one answer to pick; give it once per answer. Stills given instead are the choices. |
+| `--clip` | `FILE` | With `--sign`: the clip the person is to sign, cut from the render (`raea notes check` cuts it). |
 | `--done` | `ID` | Marks the person's edit comment done (give it once per comment), on the item named by `--on`, or with files on the item they `--replaces`. |
 | `--inbox` | `NAME` | The inbox the answers go to, `~/.raea/inbox/NAME.jsonl` (one per session when left out). |
 | `--note` | `LINE` | With `--done`: a line for the person on what settled it, shown under the comment. |
@@ -60,8 +67,12 @@ Needs the raea app's host running on this machine; then waits for a person's cli
 | `--preview` | `FILE` | A still, video, sound, script or `.md` the person can play or read while answering. After a `--choice` it is that choice's preview, otherwise the question's. |
 | `--project` | `P` | The project to post to: its id, title or `Workspace/project`. The project this folder is in when left out. |
 | `--question` | `Q` | Ask the person this, with `--choice` answers or stills to pick from. |
+| `--render` | `HASH` | With `--sign`: the sha256 of the render the clip was cut from, which the person's sign names. |
 | `--replaces` | `ITEM` | The item this is the next version of, so the feed shows it as that item's new version. |
 | `--role` | `ROLE` | With `--as`: the role shown beside the name. |
+| `--sign` | `N` | With `--working` on one comment: shows a clip under ask N for the person to sign; give `--clip` and `--render` with it. |
+| `--states` | `S1,S2` | With `--working` and `--ask`: each ask's state, in order, one for each ask (to restate, to check, failing, to sign, passing, signed). |
+| `--status` | `S` | With `--working`: where the note stands, on the comment's badge: to restate, to check, failing, to sign, passing or signed. |
 | `--sub` | `NAME` | With `--working` or `--done`: the subagent on those comments, shown beside your name when several split them. |
 | `--title` | `T` | The item's title in the feed. |
 | `--working` | `ID` | Marks the person's edit comment as being worked (give it once per comment), on the item named by `--on`. |

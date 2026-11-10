@@ -1,13 +1,16 @@
 //! `raea notes take`: what the person sent from the raea app to this project (the inbox lines it wrote: each edit
 //! comment of a send, with its pin, or a note on an item) and what they said in a session (`--said`), each written
 //! as a note file with their words verbatim and no asks, all in one new round. A note already taken isn't taken again.
+//! What the person sends back on a restated note comes the same way: a correction, written into its note (DR5), and
+//! a sign on an ask's clip, kept with what that ask has been through (state.rs, DR6).
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use raea_core_facts::{Pin, note};
 use serde_json::Value;
 
-use crate::{R, files, place, quoted, values};
+use crate::{R, files, place, quoted, state, values};
 
 /// What a note asks of the agent before anything changes, said where notes are taken and listed.
 pub(crate) const RESTATE: &str = "restate each note before changing anything: one ask for each thing it asks for, the medium where its words name one (2D, 3D, flat, extruded, real, modelled, voxel), what it is about, and what it doesn't ask for (`not`), so a change keeps the rest";
@@ -115,6 +118,65 @@ pub(crate) fn corrected(t: &str, c: &Correction) -> Option<String> {
     Some(out)
 }
 
+/// The person's sign on an ask's clip in the app: the note (by where it came from), the ask (1 is the first), the
+/// render they watched (its SHA-256), their name (none when the app had no account) and when.
+pub(crate) struct Signed {
+    pub from: String,
+    pub ask: u32,
+    pub render: String,
+    pub name: Option<String>,
+    pub when: String,
+}
+
+/// The sign in one inbox line sent to `project`, if it is one.
+pub(crate) fn sign_of(v: &Value, project: &str) -> Option<Signed> {
+    if v["project"].as_str() != Some(project) || v["kind"].as_str() != Some("sign") {
+        return None;
+    }
+    let ask = v["ask"].as_u64().and_then(|n| u32::try_from(n).ok()).filter(|n| *n > 0)?;
+    let name = v["name"].as_str().map(str::trim).filter(|n| !n.is_empty()).map(String::from);
+    Some(Signed { from: format!("app {} {}", v["item"].as_str()?, v["comment"].as_str()?), ask, render: v["render"].as_str()?.into(), name, when: v["when"].as_str().unwrap_or("").into() })
+}
+
+/// Each ask's last sign kept with what it has been through (state.rs), once: what was signed, or why it wasn't.
+fn sign(project: &Path, kept: &[PathBuf], signs: Vec<Signed>) -> R<Vec<String>> {
+    // the last sign of each ask: a newer render's sign replaces an older one's
+    let mut last: BTreeMap<(String, u32), Signed> = BTreeMap::new();
+    for g in signs {
+        last.insert((g.from.clone(), g.ask), g);
+    }
+    let mut s = state::read(project);
+    let before = s.clone();
+    let mut out = Vec::new();
+    for g in last.into_values() {
+        let from = format!("from: {}", serde_json::to_string(&g.from).unwrap_or_default());
+        // the note whose file says it came from this comment
+        let note = kept.iter().find_map(|f| {
+            let said = std::fs::read_to_string(f).ok()?;
+            if said.contains(&from) { Some((f, place(project, f)?)) } else { None }
+        });
+        let Some((f, (_, number))) = note else {
+            out.push(format!("a sign for a note not in notes/ ({}, ask {})", g.from, g.ask));
+            continue;
+        };
+        let k = s.entry(state::id(number, g.ask as usize)).or_default();
+        let signed = state::Sign { name: g.name.clone(), render: g.render.clone(), at: g.when.clone() };
+        if k.signed.as_ref() == Some(&signed) {
+            continue;
+        }
+        let now = k.clip.as_ref().is_some_and(|c| c.render == g.render);
+        k.signed = Some(signed);
+        let rel = f.strip_prefix(project).unwrap_or(f).display();
+        let by = g.name.as_deref().unwrap_or("the person (unnamed: the app had no account)");
+        let short: String = g.render.chars().take(12).collect();
+        out.push(format!("{rel}: ask {} signed by {by}, on the render {short}…{}", g.ask, if now { "" } else { ", not the one its clip is cut from now: it is to sign again" }));
+    }
+    if s != before {
+        state::write(project, &s)?;
+    }
+    Ok(out)
+}
+
 /// Each correction applied to its note's file, once: what was done, or why it wasn't.
 fn apply(project: &Path, kept: &[PathBuf], corrections: &[Correction]) -> R<Vec<String>> {
     let s = |v: &str| serde_json::to_string(v).unwrap_or_default();
@@ -178,12 +240,13 @@ pub(crate) fn take_from(dir: &Path, project: &Path, args: &[String]) -> R<String
             v
         }
     };
-    let (mut new, mut fixes): (Vec<New>, Vec<Correction>) = (Vec::new(), Vec::new());
+    let (mut new, mut fixes, mut signs): (Vec<New>, Vec<Correction>, Vec<Signed>) = (Vec::new(), Vec::new(), Vec::new());
     for f in &inboxes {
         let text = std::fs::read_to_string(f).map_err(|e| format!("{}: {e}", f.display()))?;
         for v in text.lines().filter_map(|l| serde_json::from_str::<Value>(l).ok()) {
             new.extend(of_line(&v, &name));
             fixes.extend(correction_of(&v, &name));
+            signs.extend(sign_of(&v, &name));
         }
     }
     new.extend(values(args, "--said").into_iter().map(str::trim).filter(|w| !w.is_empty()).map(|w| New { words: w.into(), from: "session".into(), pin: None, at: None }));
@@ -218,6 +281,7 @@ pub(crate) fn take_from(dir: &Path, project: &Path, args: &[String]) -> R<String
     }
     // corrections last, so one for a note taken just now finds its file
     out.extend(apply(project, &files(project), &fixes)?);
+    out.extend(sign(project, &files(project), signs)?);
     if out.is_empty() {
         return Ok(format!("no new notes for {name}: what was sent to it from the raea app ({} inbox file{}) or said is in notes/ already (raea notes ls)", inboxes.len(), if inboxes.len() == 1 { "" } else { "s" }));
     }

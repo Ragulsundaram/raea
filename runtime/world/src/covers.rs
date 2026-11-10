@@ -96,8 +96,9 @@ impl Masks {
 
 /// Each boxed layer of the world (`boxed`: its entity, key and box) and what covers it this frame, as Covers on the
 /// covering layer's entity: the world's entity with that key, or a new one with only its Source when the page drew it
-/// but the world holds no entity of it (a plain element, a band).
-pub(crate) fn put(facts: &mut Facts, masks: &Masks, boxed: &[(u32, String, [f64; 4])], order: &HashMap<String, usize>) {
+/// but the world holds no entity of it (a plain element, a band): `source`'s for its key (the element's, with the
+/// component it was drawn in), else the key's file and line.
+pub(crate) fn put(facts: &mut Facts, masks: &Masks, boxed: &[(u32, String, [f64; 4])], order: &HashMap<String, usize>, source: &dyn Fn(&str) -> Option<Source>) {
     let mut by: HashMap<String, Vec<Covered>> = HashMap::new();
     for (e, key, bx) in boxed {
         for (k, share) in masks.over(facts.frame, key, *bx, order) {
@@ -109,7 +110,7 @@ pub(crate) fn put(facts: &mut Facts, masks: &Masks, boxed: &[(u32, String, [f64;
     for k in keys {
         let id = keyed(facts, &k).unwrap_or_else(|| {
             let id = facts.spawn(None);
-            facts.put(id, &source_of(&k));
+            facts.put(id, &source(&k).unwrap_or_else(|| source_of(&k)));
             id
         });
         facts.put(id, &Covers(by.remove(&k).unwrap_or_default()));
@@ -154,9 +155,15 @@ mod tests {
         assert!(m.over(8, "bg.tsx:2:3", [0.0, 0.0, 1.0, 1.0], &order).is_empty(), "a frame not recorded");
         let mut w = Facts::new(7, 4, 1, 30.0);
         let caption = w.spawn(None);
-        put(&mut w, &m, &[(caption, "bg.tsx:2:3".into(), [0.0, 0.0, 1.0, 1.0])], &order);
+        put(&mut w, &m, &[(caption, "bg.tsx:2:3".into(), [0.0, 0.0, 1.0, 1.0])], &order, &|_| None);
         let band = w.find(&["Covers"])[0];
         assert_eq!(band.components["Covers"], serde_json::json!([{"layer": caption, "share": 0.5}]));
         assert_eq!((band.components["Source"]["file"].as_str(), band.components["Source"]["line"].as_u64()), (Some("bg.tsx"), Some(3)));
+        // where the element is known, it is named by the component it was drawn in, as every entity of the world is
+        let mut w = Facts::new(7, 4, 1, 30.0);
+        let caption = w.spawn(None);
+        let drawn = |k: &str| (k == "bg.tsx:3:3").then(|| Source { component: Some("Band".into()), key: Some(k.into()), ..Default::default() });
+        put(&mut w, &m, &[(caption, "bg.tsx:2:3".into(), [0.0, 0.0, 1.0, 1.0])], &order, &drawn);
+        assert_eq!(w.find(&["Covers"])[0].components["Source"]["component"], "Band");
     }
 }
