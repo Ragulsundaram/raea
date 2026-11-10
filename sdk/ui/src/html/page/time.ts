@@ -101,9 +101,11 @@ export async function seek(t: number) {
   } catch (e) {
     warn(`gsap tick: ${e}`);
   }
+  // a paused timeline's playhead starts at 0, so totalTime(0) is a no-op and its time-0 sets never apply (#79): force that render
+  const to = (tl: any, x: number) => (x === 0 && typeof tl.render === "function" ? tl.render(0, false, true) : tl.totalTime(x, false));
   try {
-    S.rootTl?.totalTime(Math.max(0, Math.min(t, S.rootTl.totalDuration())), false);
-    for (const [tl, at] of S.nested) tl.totalTime(Math.max(0, Math.min(t - at, tl.totalDuration())), false);
+    if (S.rootTl) to(S.rootTl, Math.max(0, Math.min(t, S.rootTl.totalDuration())));
+    for (const [tl, at] of S.nested) to(tl, Math.max(0, Math.min(t - at, tl.totalDuration())));
   } catch (e) {
     warn(`timeline seek: ${e}`);
   }
