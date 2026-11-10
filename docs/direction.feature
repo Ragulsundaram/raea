@@ -653,8 +653,37 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
       And `raea stage review sound` posts the mix with its cues marked on a waveform under the strip
       And every post an agent makes ends with what it did not watch in motion and did not hear
 
-    @needs:DR2,DR4
+    @needs:DR2,DR4 @done
     Scenario: DR28. Text on screen is timed by when it can be read, and text that can't be read is broken
+      # Status 11-10: built. A render's frames are read once, in order (runtime/world pixels.rs: a video by raea's own
+      # decoders, a still by its file), and each Text on each frame gets its Contrast and an Ocr (core/facts
+      # rendered.rs: the words Apple Vision reads in its box, and the share of its own words among them). OCR reads the
+      # box fast first; where that misses a word, it reads the text's line across the frame accurately, then the box
+      # (a short word alone reads as well upside down: the manual's title example's "you" was "nof"). What it read is
+      # kept in the render's manifest, so a second check reads nothing again, and a crop that is the picture last read
+      # in its place but for coding noise (2 of 255 between still frames of an H.264 render) isn't read again.
+      # text-read (apps/direction read.rs) runs on every composition's newest render as one of raea's own rules, holds
+      # each text's reading time to the frames it can be read on, says which were lost and why (off the frame, opacity,
+      # size, covered, contrast, not shown), and calls more than 3 frames in a row that can be read and that OCR
+      # doesn't read broken: an error. A text OCR reads on under half its frames is a warn; what it couldn't measure
+      # is a note.
+      # The proof, bench/direction/read/proof.sh (release binary, M5 Pro; nothing downloaded): a caption that holds (0
+      # findings) and five cheats, each 540x960 and 3 s, rendered with --layers. Faded (12% opacity): "can't be read on
+      # any frame of it (frames 0-89 at 12% opacity)". Camo (the colour of its ground): "1.1:1 against what's behind
+      # it". Covered (a panel over it until frame 75): "can be read for 0.5 s (frames 0-74 100% covered)". Flicker (on
+      # one frame in ten): one warn, "is up 2.7 s but can be read for 0.3 s". Broken (mirrored): the error, "OCR reads
+      # "pnimnom" in its box". Six cases, all as expected. The manual's title and hello examples check clean, in 2.5 s
+      # and 1.8 s from no record (212 and 88 OCR reads).
+      # Found and fixed on the way: the title's lone "you" (above); a covered text blamed on its contrast (covers are
+      # judged first now); a flicker said as nine findings of "0.0 s" (runs a blink apart are one text).
+      # Proved by tests in raea-app-direction (16), raea-runtime-world (15), raea-core-facts (11: the generated TS
+      # types match), raea-app-check (27), raea-sys-vision (2), and the proof.
+      # Not seen, or left: of the proof I looked at a contact sheet of each case's frames; none was watched in motion,
+      # and nothing here has sound. Off the Mac, OCR waits and the report says so (Open, below). 3D type has no box in
+      # the world yet, so its OCR reads the whole frame. What covers a text is known only from a render made with
+      # --layers; without one, covers aren't judged and that is a note. The first checks of the title took 28-36 s
+      # while other work was running on the Mac; I couldn't make that happen again (2.5 s each time since, including
+      # the first check after a new build), so its cause isn't known.
       # Shane, 11-10, verbatim: "also q coupel notes we need to maintain too. we need to automatically measure reading
       # time of text on screen and note how long its actually visible including chekcign if its visible in OCR. if
       # text exists and is visible and has no ocr its broken."
@@ -663,7 +692,12 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
       # it while it is visible; (4) text that is there and visible but that OCR doesn't read is an error; (5) these
       # are kept: they run on every render, every round. Not asked: a new reading speed (craft/floor.md's 0.3 s a
       # word, a second at least, stays the check's value), a change to any piece's text, or a check of spelling.
-      Given a render (every render has its manifest and findings, DR2 and DR3), of 2D or 3D text (Text, either medium)
+      Given the plan
+        | crate              | file                           | lines | job                                                                    |
+        | raea-core-facts    | core/facts/src/rendered.rs     | 90    | Ocr: what OCR reads in a text's box on a frame of the render, and the share of its words |
+        | raea-runtime-world | runtime/world/src/pixels.rs    | 240   | the render's frames decoded once, in order: a text's contrast, and what OCR reads in its box |
+        | raea-app-direction | apps/direction/src/read.rs     | 270   | text-read: on, visible and read for each text; reading time against visible; visible and unread is broken |
+      And a render (every render has its manifest and findings, DR2 and DR3), of 2D or 3D text (Text, either medium)
       Then each Text is given three times, in seconds: `on` (the frames it is in the world: today's "held"), `visible`
         (the frames it is in the frame, at an opacity, size and contrast against what is behind it that can be
         read, and covered by no other layer past a share, DR2's Covers) and `read` (the frames on which OCR reads its
@@ -676,6 +710,12 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
         Source and the frames; a run OCR reads on less than half its visible frames is a warn (OCR drops a word for a
         frame or two, as textread's GAP allows)
       And it is a named raea check (DR4) run on every render with no flag, so it holds every round (DR7)
+      # Fixed in the code (DR28): "run on every render" is `raea check` running text-read on each composition's newest
+      # render as one of raea's own rules, beside the floor, with no rule or flag asking; `raea render` itself doesn't
+      # OCR its frames. A render's own findings are what its drawing knows (clipping, exposure), and every harness render
+      # (P26's rows, a review's tiles) would pay for OCR it never reads. DR7 runs `raea check` with every round, which is
+      # what makes it hold every round. Where text-read runs, the floor's own reading rule (held against `on`) is its,
+      # so one line isn't said twice by two measures; `raea check VIDEO.mp4`, with no composition, keeps the floor's.
       And its cheats fail it: the reading time met by holding the text at an opacity no one can read; the text the
         colour of what's behind it; the text behind a part for most of its time; the text visible only on a frame
         here and there

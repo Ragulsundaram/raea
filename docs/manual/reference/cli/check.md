@@ -32,6 +32,12 @@ composition: raea's floor on its newest render, your taste's measurable lines, a
 the project's controllers. A rule is a controller field of type `rule`: its words, and the check that holds it,
 either one of raea's by name with its values or a `.ts` check of your own.
 
+raea's reading check, `text-read`, runs on the newest render too, with nothing asking for it. Each text's reading
+time (0.3 s a word, at least a second) is held to the frames it can be read on (in the frame, at an opacity, size and
+contrast that read, and not covered), not the frames it's on, and the finding says which frames were lost and why.
+Text that can be read where OCR doesn't read it is an error: it's broken. Render with `--layers` so what covers a
+text is counted.
+
 ```ts
 // controllers/rules.ts
 { label: "Captions clear the button band", type: "rule", check: "../checks/caption.ts", values: { band: 0.8 } }

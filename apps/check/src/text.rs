@@ -232,9 +232,7 @@ pub(crate) fn transcript(path: &str, fps: f64) -> R<Vec<Word>> {
     Ok(raea_core_facts::transcript_words(&v, fps))
 }
 
-pub(crate) fn norm(s: &str) -> String {
-    s.chars().filter(|c| c.is_alphanumeric()).collect::<String>().to_lowercase()
-}
+pub(crate) use raea_core_facts::word_key as norm;
 
 pub(crate) const SMALL: [&str; 24] = ["the", "and", "you", "your", "for", "with", "that", "this", "its", "it's", "are", "was", "our", "out", "from", "into", "then", "than", "but", "not", "all", "can", "has", "have"];
 

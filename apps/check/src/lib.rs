@@ -127,9 +127,12 @@ fn run(args: &[String], tastes: Vec<raea_core_brief::Taste>) -> R<(String, bool)
 /// raea's floor on a video (`args` as raea check takes them) as Findings, printed and kept nowhere: `raea check
 /// EDIT.tsx` runs it on the composition's newest render beside its other checks (apps/direction, DR4). `held`: the
 /// rules of the named checks it measures on the video itself (loudness, still-max), each its form, value and line.
-pub fn floor(args: &[String], held: &[(&'static str, f64, String)]) -> R<Vec<Finding>> {
+/// `without`: its own rules that a named check holds there instead (`reading`, which text-read holds against when
+/// a text can be read, not when it's on: DR28).
+pub fn floor(args: &[String], held: &[(&'static str, f64, String)], without: &[&str]) -> R<Vec<Finding>> {
     let held = held.iter().map(|(form, value, line)| Taste { form: *form, value: *value, line: line.clone() }).collect();
-    let (_, issues, _, fps) = measured(args, held)?;
+    let (_, mut issues, _, fps) = measured(args, held)?;
+    issues.retain(|i| without.iter().all(|w| *w != i.rule));
     Ok(findings_of(issues, Vec::new(), fps))
 }
 

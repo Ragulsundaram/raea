@@ -5,6 +5,7 @@
 
 mod covers;
 mod page;
+mod pixels;
 mod renders;
 mod scene;
 mod source;

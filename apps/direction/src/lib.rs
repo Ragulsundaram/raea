@@ -15,3 +15,5 @@ pub mod findings;
 pub mod check;
 pub mod systems;
 pub mod ts;
+// text-read: each text's reading time held to when it can be read, and what OCR reads of it (DR28)
+pub mod read;

@@ -11,8 +11,8 @@ components, so one check reads the same for any of them. It finds entities, meas
 thing that breaks its line; it never prints. A rule in a project's controller names it by its path, with its values,
 and [`raea check`](../cli/check.md) runs it on every composition, on the frames it says it ranges over. A check that
 reads what only a render has (`needs: "render"`) waits for one, and says so. raea's own checks are the same thing
-written in Rust, under the names `text-hold`, `text-above`, `text-below`, `text-margin`, `loudness`, `still-max` and
-`floor`.
+written in Rust, under the names `text-hold`, `text-above`, `text-below`, `text-margin`, `loudness`, `still-max`,
+`text-read` and `floor`.
 
 ```ts
 // controllers/rules.ts holds the rule:
@@ -37,7 +37,7 @@ export default check({ id: "caption", text: "a caption clears the platform's but
 import { check, declared, found, runChecks } from "raea/check"
 ```
 
-`raea/check` exports 5 functions, 1 class, 31 types. Source: [sdk/raea/src/check.ts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/check.ts).
+`raea/check` exports 5 functions, 1 class, 32 types. Source: [sdk/raea/src/check.ts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/check.ts).
 
 ## Functions
 
@@ -270,6 +270,12 @@ type Medium = "2d-type" | "2d-graphic" | "3d" | "footage" | "page"
 
 ```ts
 type Mix = { lufs?: number, peak?: number, }
+```
+
+### `Ocr`
+
+```ts
+type Ocr = { words: string, share: number, }
 ```
 
 ### `Onset`

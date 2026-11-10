@@ -276,9 +276,15 @@ impl Vision for AppleVision {
 /// of the frame, from the top left, unrounded): no language correction (captions aren't prose), lines at least 1.5% of
 /// the frame high.
 pub fn text_lines(rgba: &[u8], w: usize, h: usize) -> Result<Vec<(String, f32, [f64; 4])>, String> {
+    text_lines_at(rgba, w, h, false)
+}
+
+/// text_lines, or with Vision's fast recognition (`fast`): a tenth of the time, for a crop that holds one line of
+/// clean type, where reading it at all is the question (DR28's reading check reads fast first, accurately after).
+pub fn text_lines_at(rgba: &[u8], w: usize, h: usize, fast: bool) -> Result<Vec<(String, f32, [f64; 4])>, String> {
     let image = cg_image(rgba, w, h)?;
     let text = VNRecognizeTextRequest::new();
-    text.setRecognitionLevel(VNRequestTextRecognitionLevel::Accurate);
+    text.setRecognitionLevel(if fast { VNRequestTextRecognitionLevel::Fast } else { VNRequestTextRecognitionLevel::Accurate });
     text.setUsesLanguageCorrection(false);
     text.setMinimumTextHeight(0.015);
     let handler = unsafe { VNImageRequestHandler::initWithCGImage_options(VNImageRequestHandler::alloc(), &image, &NSDictionary::new()) };

@@ -12,6 +12,14 @@ pub struct Contrast {
     pub ratio: f64,
 }
 
+/// What OCR reads in a text's box on this frame of the render (DR28: Apple Vision's text recognition, on the Mac): the
+/// words it read there, and the share of the text's own words among them (0 to 1).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+pub struct Ocr {
+    pub words: String,
+    pub share: f64,
+}
+
 /// The picture's light and movement: its mean luma (0 to 1) and the mean change from the frame before (0 to 1; None
 /// with no frame before it rendered). As a resource, this frame's; on a Shot, the mean over its frames rendered,
 /// counted in `frames`.
@@ -65,4 +73,4 @@ pub struct Rendered {
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize, TS)]
 pub struct Waits(pub BTreeMap<String, String>);
 
-crate::components::component!(Contrast, Picture, Onset, Covers, Mix, Rendered, Waits);
+crate::components::component!(Contrast, Ocr, Picture, Onset, Covers, Mix, Rendered, Waits);

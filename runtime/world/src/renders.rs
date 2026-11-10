@@ -2,14 +2,15 @@
 //! its manifest beside its output (render.json: what each frame showed, as laid out); the world takes the newest of
 //! the composition's renders in its project's record, or one it's given, and adds what only that render holds: each
 //! text's contrast against its pixels, the frame's and each shot's light and movement, the mix's loudness, when each
-//! cue is heard, and, from a render with --layers, which layers cover which (covers.rs). Each is measured on the
-//! output when first asked for and kept in the manifest's "measured", so asking again reads it back. A world with no
-//! render, or a frame the render didn't draw, says what waits for one (`Waits`).
+//! cue is heard, what OCR reads in each text's box (DR28, pixels.rs), and, from a render with --layers, which layers
+//! cover which (covers.rs). Each is measured on the output when first asked for and kept in the manifest's
+//! "measured", so asking again reads it back. A world with no render, or a frame the render didn't draw, says what
+//! waits for one (`Waits`).
 
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 
-use raea_core_facts::{record, Contrast, Cue, Facts, Mix, Onset, Picture, Rendered, Shot, Source, Text, Waits};
+use raea_core_facts::{record, Contrast, Cue, Facts, Mix, Ocr, Onset, Picture, Rendered, Shot, Source, Text, Waits};
 use raea_sys_measure as measure;
 use serde_json::{json, Value};
 
@@ -27,7 +28,7 @@ pub enum Render {
 }
 
 /// The components a render adds, and what each waits for when there is none.
-const FROM_A_RENDER: [&str; 5] = ["Contrast", "Picture", "Mix", "Onset", "Covers"];
+const FROM_A_RENDER: [&str; 6] = ["Contrast", "Ocr", "Picture", "Mix", "Onset", "Covers"];
 
 /// A render found: its output, its manifest, its record entry, whether the composition changed after it, and each
 /// frame's place among the frames it drew.
@@ -42,6 +43,8 @@ pub(crate) struct Found {
     dirty: bool,
     env: Option<Vec<f32>>,
     masks: Option<Option<crate::covers::Masks>>,
+    /// its frames, decoded once as they're asked for (a text's contrast, what OCR reads)
+    pixels: crate::pixels::Pixels,
 }
 
 fn secs(p: &Path) -> u64 {
@@ -73,7 +76,7 @@ pub(crate) fn find(how: &Render, tsx: &Path, size: (u32, u32, f64)) -> Option<Fo
         // another composition of the file draws another size or rate
         let same = m["width"] == size.0 && m["height"] == size.1 && m["fps"].as_f64() == Some(size.2);
         let at = m["frames"].as_array()?.iter().enumerate().filter_map(|(k, f)| Some((f["frame"].as_i64()?, k))).collect();
-        (same && out.exists()).then(|| Found { stale: secs(tsx) > made, out, path, m, record, at, dirty: false, env: None, masks: None })
+        (same && out.exists()).then(|| Found { stale: secs(tsx) > made, out, path, m, record, at, dirty: false, env: None, masks: None, pixels: Default::default() })
     })
 }
 
@@ -97,15 +100,32 @@ impl Found {
             return v.clone();
         }
         let v = make(self);
+        self.keep_as(name, key, v.clone());
+        v
+    }
+
+    fn keep_as(&mut self, name: &str, key: &str, v: Value) {
         if !self.m["measured"].is_object() {
             self.m["measured"] = json!({});
         }
         if !self.m["measured"][name].is_object() {
             self.m["measured"][name] = json!({});
         }
-        self.m["measured"][name][key] = v.clone();
+        self.m["measured"][name][key] = v;
         self.dirty = true;
-        v
+    }
+
+    /// What OCR reads of a text on the `k`th frame (`id`: the frame and the text), kept once read; where OCR can't
+    /// run, what it waits for, and nothing kept.
+    fn ocr(&mut self, k: usize, id: &str, bx: Option<[f64; 4]>, words: &str) -> Result<Option<Ocr>, String> {
+        if let Some(v) = self.m["measured"]["ocr"].get(id) {
+            return Ok(serde_json::from_value(v.clone()).ok());
+        }
+        let (file, sec) = self.picture_at(k);
+        let video = self.video();
+        let got = self.pixels.ocr((k, &file, sec, video), bx, words)?;
+        self.keep_as("ocr", id, json!(got));
+        Ok(got)
     }
 
     /// The `k`th frame's light and movement.
@@ -182,17 +202,27 @@ pub(crate) fn join(facts: &mut Facts, found: Option<&mut Found>, tree: &[El]) {
     shots(facts, r);
     let laid = r.m["frames"][k].clone();
     let mut boxed = Vec::new();
+    let (size, video, (file, sec)) = ((facts.width, facts.height), r.video(), r.picture_at(k));
     for e in facts.find(&["Text"]).iter().map(|e| e.id).collect::<Vec<_>>() {
         let (Some(t), key) = (facts.get::<Text>(e), facts.get::<Source>(e).and_then(|s| s.key)) else { continue };
+        let id = format!("{}|{}", facts.frame, key.clone().unwrap_or_else(|| t.words.clone()));
+        // what OCR reads in its box (DR28)
+        match r.ocr(k, &id, t.box_, &t.words) {
+            Ok(Some(o)) => facts.put(e, &o),
+            Ok(None) => {}
+            Err(why) => {
+                waits.insert("Ocr".into(), why);
+            }
+        }
         // its own entry by its layer key, else the one with its words
         let texts = || laid["text"].as_array().into_iter().flatten();
         let entry = texts().find(|x| key.is_some() && key_of(x) == key).or_else(|| texts().find(|x| x["text"].as_str() == Some(t.words.as_str())));
         let (Some(x), Some(bx)) = (entry, t.box_) else { continue };
         let b: Vec<f64> = x["box"].as_array().into_iter().flatten().filter_map(Value::as_f64).collect();
-        let (file, sec) = r.picture_at(k);
-        let id = format!("{}|{}", facts.frame, key.clone().unwrap_or_else(|| t.words.clone()));
-        let crop = (b.len() == 4).then(|| [b[0], b[1], b[2], b[3]].map(|v| v.max(0.0) as u32));
-        let ratio = r.kept("contrast", &id, |_| json!(crop.and_then(|c| measure::contrast(&file, sec, c, x["color"].as_str().unwrap_or("")))));
+        let crop = (b.len() == 4).then(|| [b[0], b[1], b[2], b[3]].map(|v| v.max(0.0)));
+        let color = x["color"].as_str().unwrap_or("").to_string();
+        // measured on the frame as decoded once for every text on it (raea check's ratio, raea-sys-measure)
+        let ratio = r.kept("contrast", &id, |r| json!(crop.and_then(|c| r.pixels.contrast((k, &file, sec, video), c, size, &color))));
         if let Some(ratio) = ratio.as_f64() {
             facts.put(e, &Contrast { ratio: (ratio * 10.0).round() / 10.0 });
         }

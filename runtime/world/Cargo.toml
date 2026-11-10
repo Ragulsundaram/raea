@@ -18,6 +18,10 @@ raea-runtime-page = { path = "../page" }
 raea-sys-layers = { path = "../../systems/layers" }
 # what a render's output measures, joined to the world (DR2), and its layers file read
 raea-sys-measure = { path = "../../systems/measure" }
+# the render's frames decoded once (a text's contrast, what OCR reads: DR28), its stills read, and OCR itself
+raea-io-media = { path = "../../io/media", default-features = false, features = ["apple"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+raea-sys-vision = { path = "../../systems/vision" }
 flate2 = "1"
 bevy = { version = "=0.20.0", default-features = false, features = ["std", "default_app"] }
 serde_json = "1"

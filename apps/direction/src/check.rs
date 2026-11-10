@@ -77,7 +77,9 @@ enum How {
 /// Every rule `project` is held to (`given`: `--taste`'s files), and a finding for each file of rules raea couldn't
 /// read.
 fn rules(project: &Path, given: Vec<PathBuf>, host: &Host) -> (Vec<Rule>, Vec<Finding>) {
-    let mut out = vec![Rule::named("floor", "raea's floor", Default::default(), Level::Error, "raea")];
+    // raea's own: the floor, and the reading check (DR28: its findings keep their own levels, so no rule level)
+    let read = Rule { level: None, ..Rule::named("text-read", "text can be read for as long as it needs, and OCR reads it", Default::default(), Level::Warn, "raea") };
+    let mut out = vec![Rule::named("floor", "raea's floor", Default::default(), Level::Error, "raea"), read];
     let mut bad = Vec::new();
     let name = |f: &Path| f.strip_prefix(project).unwrap_or(f).display().to_string();
     for f in tastes(project, given, host) {
@@ -164,7 +166,10 @@ fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], ho
     asked.sort();
     asked.dedup();
     // the render joins the first frame (what it is, or that there is none) and where a TS check needs it
-    let join_all = hows.iter().any(|(_, h)| matches!(h, How::File(m) if m.render && m.frames.whole()));
+    let join_all = hows.iter().any(|(_, h)| match h {
+        How::File(m) => m.render && m.frames.whole(),
+        How::Named(n) => n.render && n.frames.whole(),
+    });
     let join_on = (!join_all).then(|| hows.iter().flat_map(|(_, h)| match h { How::File(m) if m.render => if let Frames::At(v) = &m.frames { v.clone() } else { vec![] }, _ => vec![] }).chain([0]).collect());
     let render_how = match (flag(args, "--render"), args.iter().any(|a| a == "--no-render")) {
         (Some(o), _) => Render::From(o.into()),
@@ -195,6 +200,8 @@ fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], ho
                 held.push((n.name, r.number("value").unwrap_or(if n.name == "loudness" { -14.0 } else { 3.0 }), r.text.clone()));
                 bys.push(r.by.clone());
             }
+            "text-read" if rendered.is_none() => needs(&mut waits, r),
+            "text-read" => found.extend(crate::read::read(r, &worlds)),
             _ => found.extend(systems::text(r, &worlds)),
         }
     }
@@ -202,7 +209,9 @@ fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], ho
         match &rendered {
             Some(r) if is_video(r["out"].as_str().unwrap_or("")) => {
                 let a = [r["out"].as_str().unwrap_or("").to_string(), "--manifest".into(), r["manifest"].as_str().unwrap_or("").to_string()];
-                for mut f in raea_app_check::floor(&a, &held)? {
+                // where text-read runs, the floor's own reading rule (held against when a text is on) is its
+                let without: &[&str] = if hows.iter().any(|(_, h)| matches!(h, How::Named(n) if n.name == "text-read")) { &["reading"] } else { &[] };
+                for mut f in raea_app_check::floor(&a, &held, without)? {
                     match held.iter().position(|h| h.0 == f.check) {
                         Some(k) => f.by = bys[k].clone(),
                         None if !floor => continue,
@@ -211,8 +220,8 @@ fn check_one(tsx: &Path, id: Option<String>, rules: &[Rule], args: &[String], ho
                     found.push(f);
                 }
             }
-            Some(_) => waits.extend(hows.iter().filter(|(_, h)| matches!(h, How::Named(n) if n.render)).map(|(r, _)| (r.id.clone(), "a video render (its render is stills)".to_string()))),
-            None => hows.iter().filter(|(_, h)| matches!(h, How::Named(n) if n.render)).for_each(|(r, _)| needs(&mut waits, r)),
+            Some(_) => waits.extend(hows.iter().filter(|(_, h)| matches!(h, How::Named(n) if n.render && n.name != "text-read")).map(|(r, _)| (r.id.clone(), "a video render (its render is stills)".to_string()))),
+            None => hows.iter().filter(|(_, h)| matches!(h, How::Named(n) if n.render && n.name != "text-read")).for_each(|(r, _)| needs(&mut waits, r)),
         }
     }
     // the project's own checks, in one run

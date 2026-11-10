@@ -61,13 +61,14 @@ fn world(f: i64) -> Facts {
 #[test]
 fn a_render_adds_what_it_measured_and_what_it_did_not_draw_waits() {
     let (dir, tsx) = project("join");
-    let measured = json!({"picture": {"all": [[0.5, null], [0.25, 0.125]]}, "mix": {"all": [-14.2, -1.3]}, "onsets": {"0.500": 0.51}, "contrast": {"1|piece.tsx:3:5": 4.54}});
+    let measured = json!({"picture": {"all": [[0.5, null], [0.25, 0.125]]}, "mix": {"all": [-14.2, -1.3]}, "onsets": {"0.500": 0.51}, "contrast": {"1|piece.tsx:3:5": 4.54}, "ocr": {"1|piece.tsx:3:5": {"words": "SALE", "share": 1.0}}});
     rendered(&tsx, &dir.join("v.mp4"), (1920, 1080, 30.0), &[0, 1], measured, "20261110-110000");
     let mut r = find(&Render::Newest, &tsx, (1920, 1080, 30.0)).unwrap();
     let mut w = world(1);
     join(&mut w, Some(&mut r), &[]);
     let get = |w: &Facts, c: &str| w.find(&[c]).first().map(|e| e.components[c].clone());
     assert_eq!(get(&w, "Contrast"), Some(json!({"ratio": 4.5})));
+    assert_eq!(get(&w, "Ocr"), Some(json!({"words": "SALE", "share": 1.0})), "what OCR read, kept");
     assert_eq!(w.resources["Picture"], json!({"luma": 0.25, "motion": 0.125, "frames": null}));
     assert_eq!(get(&w, "Picture"), Some(json!({"luma": 0.375, "motion": 0.125, "frames": 2})), "the shot's mean over the frames drawn");
     assert_eq!(w.resources["Mix"], json!({"lufs": -14.2, "peak": -1.3}));
@@ -87,10 +88,10 @@ fn a_render_adds_what_it_measured_and_what_it_did_not_draw_waits() {
     assert_eq!(far.resources["Waits"]["Contrast"], "a render of frame 20");
     // what was read is kept; nothing new to write back
     assert!(!r.dirty);
-    // no render: all five wait for one
+    // no render: all six wait for one
     let mut none = world(1);
     join(&mut none, None, &[]);
-    assert_eq!(none.resources["Waits"].as_object().map(|o| o.len()), Some(5));
+    assert_eq!(none.resources["Waits"].as_object().map(|o| o.len()), Some(6));
     assert!(none.find(&["Onset"]).is_empty(), "a cue isn't heard because it was placed");
 }
 
@@ -105,4 +106,7 @@ fn a_still_has_no_mix_to_measure() {
     assert_eq!(w.resources["Waits"]["Mix"], "a video render");
     assert_eq!(w.resources["Waits"]["Onset"], "a video render");
     assert_eq!(w.find(&["Contrast"])[0].components["Contrast"]["ratio"], 1.2, "a low contrast is said as measured");
+    // a still that can't be read: OCR says what it waits for, and keeps nothing
+    assert!(w.resources["Waits"]["Ocr"].as_str().is_some_and(|w| w.contains("s.png")), "{}", w.resources["Waits"]);
+    assert!(w.find(&["Ocr"]).is_empty() && r.m["measured"].get("ocr").is_none());
 }

@@ -78,11 +78,12 @@ pub fn named() -> Vec<Named> {
         n("loudness", true, Frames::Once, "the mix is at its loudness"),
         n("still-max", true, Frames::Once, "the picture is never still for too long"),
         n("floor", true, Frames::Once, "raea's floor: what every finished piece must meet"),
+        n("text-read", true, Frames::All, "text on screen can be read for as long as it needs, and OCR reads what can be read (read.rs)"),
     ]
 }
 
 /// A text's identity across frames: its layer key, else its words.
-fn ident(f: &Facts, e: u32, t: &Text) -> (String, Option<String>) {
+pub(crate) fn ident(f: &Facts, e: u32, t: &Text) -> (String, Option<String>) {
     let key = f.get::<Source>(e).and_then(|s| s.key);
     (key.clone().unwrap_or_else(|| t.words.clone()), key)
 }
@@ -127,7 +128,7 @@ fn runs(worlds: &[Facts], bad: impl Fn(&Facts, &Text) -> Option<f64>, worse: fn(
     done
 }
 
-fn quote(s: &str) -> String {
+pub(crate) fn quote(s: &str) -> String {
     let s: String = s.split_whitespace().collect::<Vec<_>>().join(" ");
     if s.chars().count() > 40 { format!("\"{}…\"", s.chars().take(39).collect::<String>()) } else { format!("\"{s}\"") }
 }

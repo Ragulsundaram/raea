@@ -15138,8 +15138,10 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "flate2",
+ "image",
  "raea-core-facts",
  "raea-core-scene",
+ "raea-io-media",
  "raea-runtime-bake",
  "raea-runtime-bundle",
  "raea-runtime-page",
@@ -15147,6 +15149,7 @@ dependencies = [
  "raea-runtime-scene",
  "raea-sys-layers",
  "raea-sys-measure",
+ "raea-sys-vision",
  "serde_json",
  "sha2 0.10.9",
 ]

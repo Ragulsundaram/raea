@@ -7,7 +7,7 @@ pub mod components;
 pub use components::*;
 
 pub mod words;
-pub use words::transcript_words;
+pub use words::{transcript_words, word_key};
 
 pub mod finding;
 pub use finding::{About, Finding, Level, Measure};

@@ -101,6 +101,8 @@ export type Line = { text: string, from: number, to?: number, words: Array<Word>
 
 export type Contrast = { ratio: number, };
 
+export type Ocr = { words: string, share: number, };
+
 export type Picture = { luma: number, motion?: number, frames?: number, };
 
 export type Onset = { at?: number, late_ms?: number, };

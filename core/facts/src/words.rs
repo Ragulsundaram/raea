@@ -22,6 +22,12 @@ pub fn transcript_words(v: &Value, fps: f64) -> Vec<Word> {
         .collect()
 }
 
+/// A word as raea matches words (a caption's against what is said, what OCR read against a text's): its letters and
+/// digits, lower case.
+pub fn word_key(s: &str) -> String {
+    s.chars().filter(|c| c.is_alphanumeric()).collect::<String>().to_lowercase()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
