@@ -1169,7 +1169,7 @@ The props of [`Loop`](#loop), tabled there.
 | `volume` | `VolumeProp` | linear gain, 1 being unity (0.5 is about -6 dB, 1.78 about +5 dB), or a function of the media's own frame |
 | `gainDb` | `VolumeProp` | ours: the gain in decibels (or a function of the media's own frame returning it); wins over volume |
 | `fadeIn` | `number` | ours: seconds to ramp the sound in from silence at its start (applied by the renderer at the audio's rate) |
-| `fadeOut` | `number` | ours: seconds to ramp the sound out to silence at its end |
+| `fadeOut` | `number` | ours: seconds to ramp the sound out to silence by its end: the end of its Sequence or Loop pass, or endAt, whichever comes first (one removed some other way fades out after it's gone) |
 | `playbackRate` | `number` | how fast it plays (1): 2 is double speed |
 | `muted` | `boolean` | play no sound |
 | `loop` | `boolean` | start again from `startFrom` when it reaches `endAt` |
