@@ -122,10 +122,11 @@ impl LiveScene {
     /// What the camera row changes, of the columns a render keys (cam_keyed): the camera's tuple, or None.
     pub(crate) fn camera_diff(sent: &mut BTreeMap<String, V>, cam: &BTreeMap<String, V>) -> Option<raea_core_program::eval::Tup> {
         let mut vals = BTreeMap::new();
-        // and each frame's post-processing table and page background (RR1: render = play)
-        let keyed = |k: &str| cam_keyed(k) || matches!(k, "frame_sets" | "frame_set_i" | "bg_r" | "bg_g" | "bg_b" | "bg_a");
-        for k in cam.keys().map(String::as_str).filter(|k| keyed(k)).chain(["ambient"]) {
-            let v = cam.get(k).cloned().or_else(|| (k == "ambient" && sent.contains_key("ambient")).then_some(V::N(0.0)));
+        // and each frame's post-processing table and page background (RR1: render = play), and its shot (RR2)
+        let keyed = |k: &str| cam_keyed(k) || matches!(k, "frame_sets" | "frame_set_i" | "bg_r" | "bg_g" | "bg_b" | "bg_a" | "shot");
+        // the ambient and the shot back to 0 when the row stops holding them (no light; the first camera's shot again)
+        for k in cam.keys().map(String::as_str).filter(|k| keyed(k)).chain(["ambient", "shot"]) {
+            let v = cam.get(k).cloned().or_else(|| (matches!(k, "ambient" | "shot") && sent.contains_key(k)).then_some(V::N(0.0)));
             if let Some(v) = v {
                 if sent.get(k) != Some(&v) {
                     sent.insert(k.into(), v.clone());
@@ -412,5 +413,18 @@ mod tests {
         ls.open(Shot { scene: &text(0.5), clear: None }, 64, 64, 30.0);
         let (set, _) = ls.frame(Shot { scene: &text(1.0), clear: None });
         assert_eq!(set.iter().find(|t| t.kind == "glyph").and_then(|t| t.vals.get("opacity")), Some(&V::N(1.0)));
+    }
+
+    /// Two cameras cut between (<Camera3d is_active>): the camera row's shot is sent the frame it changes, and 0 when
+    /// the first camera is back, so a live engine draws both frames as cuts (RR2, Engine::set_rows).
+    #[test]
+    fn a_cut_back_sends_the_first_shot() {
+        let cams = |on: usize| -> Vec<Node3> { (0..2).map(|i| Node3 { kind: "PerspectiveCamera".into(), props: std::sync::Arc::new(json!({"position": [i, 1, 5], "active": i == on}).as_object().unwrap().clone()), shape: None, kids: Vec::new().into() }).collect() };
+        let shot = |set: &[raea_core_program::eval::Tup]| set.iter().find(|t| t.kind == "camera").and_then(|t| t.vals.get("shot").cloned());
+        let mut ls = LiveScene::default();
+        ls.open(Shot { scene: &cams(0), clear: None }, 64, 64, 30.0);
+        assert_eq!(shot(&ls.frame(Shot { scene: &cams(1), clear: None }).0), Some(V::N(1.0)));
+        assert_eq!(shot(&ls.frame(Shot { scene: &cams(1), clear: None }).0), None);
+        assert_eq!(shot(&ls.frame(Shot { scene: &cams(0), clear: None }).0), Some(V::N(0.0)));
     }
 }
