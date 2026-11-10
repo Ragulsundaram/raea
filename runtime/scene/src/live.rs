@@ -27,6 +27,9 @@ pub struct LiveScene {
     pub warm: bool,
     /// identity -> a panel's `src` as written when the full path last made its row (the fast path leaves it a new one)
     pub(crate) panel_srcs: std::collections::HashMap<String, String>,
+    /// what the lights' sets were made from when the full path last made them (light_sig): the fast path, which
+    /// doesn't make them, goes the full way when it differs
+    pub(crate) light_sig: String,
 }
 
 #[derive(Clone)]
@@ -57,7 +60,7 @@ pub(crate) const MORPH_COLS: [&str; 64] = ["morph0", "morph1", "morph2", "morph3
 /// The columns a frame may change, per kind (what `rows_into` and `camera` key); everything else is the first frame's.
 pub(crate) fn live_dynamic(kind: &str) -> &'static [&'static str] {
     match kind {
-        "light" => &["lux", "lumens", "x", "y", "z", "dir_x", "dir_y", "dir_z", "rot_qx", "rot_qy", "rot_qz", "rot_qw", "inner", "outer"],
+        "light" => &["lux", "lumens", "x", "y", "z", "dir_x", "dir_y", "dir_z", "rot_qx", "rot_qy", "rot_qz", "rot_qw", "inner", "outer", "frame_sets", "frame_set_i"],
         "mesh" => &["x", "y", "z", "q_x", "q_y", "q_z", "q_w", "scale_x", "scale_y", "scale_z", "visible", "col_r", "col_g", "col_b", "rough", "metal", "emissive_k", "opacity", "sh_r", "sh_g", "sh_b", "rim_k", "spec_k", "outline_w", "pass"],
         "model" => &["x", "y", "z", "q_x", "q_y", "q_z", "q_w", "scale_x", "scale_y", "scale_z", "visible", "anim_t", "mix0_t", "mix0_w", "mix1_t", "mix1_w", "mix2_t", "mix2_w", "mix3_t", "mix3_w", "morph0", "morph1", "morph2", "morph3", "morph4", "morph5", "morph6", "morph7", "morph8", "morph9", "morph10", "morph11", "morph12", "morph13", "morph14", "morph15", "morph16", "morph17", "morph18", "morph19", "morph20", "morph21", "morph22", "morph23", "morph24", "morph25", "morph26", "morph27", "morph28", "morph29", "morph30", "morph31", "morph32", "morph33", "morph34", "morph35", "morph36", "morph37", "morph38", "morph39", "morph40", "morph41", "morph42", "morph43", "morph44", "morph45", "morph46", "morph47", "morph48", "morph49", "morph50", "morph51", "morph52", "morph53", "morph54", "morph55", "morph56", "morph57", "morph58", "morph59", "morph60", "morph61", "morph62", "morph63", "g0_w", "g0_t", "g1_w", "g1_t", "g2_w", "g2_t", "g3_w", "g3_t", "g4_w", "g4_t", "g5_w", "g5_t", "g6_w", "g6_t", "g7_w", "g7_t", "g8_w", "g8_t", "g9_w", "g9_t", "g10_w", "g10_t", "g11_w", "g11_t", "g12_w", "g12_t", "g13_w", "g13_t", "g14_w", "g14_t", "g15_w", "g15_t", "look", "glitch_explode", "glitch_scramble", "glitch_jitter", "glitch_snap", "glitch_smear_x", "glitch_smear_y", "glitch_smear_z", "glitch_seed", "cloth_frame", "screen_power", "pass"],
         "panel" => &["x", "y", "z", "q_x", "q_y", "q_z", "q_w", "scale_x", "scale_y", "scale_z", "visible", "screen_power", "screen_bright", "pass", "sheet_frame", "sheet_cols", "sheet_rows", "src"],
@@ -89,9 +92,20 @@ impl LiveScene {
         // the holder's background as the clear colour; with none, Bevy's ClearColor resource (srgb 43, 44, 47 unless a
         // <BevyResource type="bevy_camera::clear_color::ClearColor"> sets it), not black (docs/control conventions C17)
         if let Some(bg) = clear.and_then(hex_of) {
+            // and keyed frame by frame (bg_r..bg_a, sRGB), as a render keys a holder's background that changes: each
+            // frame's own, where play held the first frame's (RR1: render = play)
+            if let Some(c) = rgba_of(&bg) {
+                for (k, name) in ["bg_r", "bg_g", "bg_b", "bg_a"].into_iter().enumerate() {
+                    cam.insert(name.into(), V::N(r6(c[k])));
+                }
+            }
             cam.insert("bg".into(), V::S(bg));
         }
         camera(all, p, &mut cam);
+        // its post-processing as a table, so a frame's sky, fog, grade or depth of field replaces the last whole
+        // (as_table; depth of field's aperture and focus stay keyed columns, so a pull doesn't change the set)
+        let set = frame_post(&all[0]);
+        as_table(&mut cam, |k| set.contains_key(k));
         // an <Environment>'s panoramas: every one shown so far, as a render's row lists them all (#38)
         env_shown(self.cam.get("env_srcs"), &mut cam);
         if !all[0].iter().any(|i| i.kind == "camera") {
@@ -108,7 +122,9 @@ impl LiveScene {
     /// What the camera row changes, of the columns a render keys (cam_keyed): the camera's tuple, or None.
     pub(crate) fn camera_diff(sent: &mut BTreeMap<String, V>, cam: &BTreeMap<String, V>) -> Option<raea_core_program::eval::Tup> {
         let mut vals = BTreeMap::new();
-        for k in cam.keys().map(String::as_str).filter(|k| cam_keyed(k)).chain(["ambient"]) {
+        // and each frame's post-processing table and page background (RR1: render = play)
+        let keyed = |k: &str| cam_keyed(k) || matches!(k, "frame_sets" | "frame_set_i" | "bg_r" | "bg_g" | "bg_b" | "bg_a");
+        for k in cam.keys().map(String::as_str).filter(|k| keyed(k)).chain(["ambient"]) {
             let v = cam.get(k).cloned().or_else(|| (k == "ambient" && sent.contains_key("ambient")).then_some(V::N(0.0)));
             if let Some(v) = v {
                 if sent.get(k) != Some(&v) {
@@ -124,6 +140,7 @@ impl LiveScene {
     /// by identity, with the row ids this scene keeps.
     pub(crate) fn current(&mut self, f: Shot) -> (BTreeMap<String, V>, Vec<(String, String, BTreeMap<String, V>)>) {
         let all = vec![items_of(f.scene)];
+        self.light_sig = light_sig(&all[0]);
         // the camera's own spawns (its fog, sky...) in the frame's program with the rest
         let mut p = Program::default();
         let cam = self.camera_row(&all, f.clear, &mut p);
@@ -176,6 +193,10 @@ impl LiveScene {
                 };
                 live_id.insert(lid.clone(), id.clone());
                 row.insert("id".into(), V::S(id.clone()));
+                // a light's colour, shadows and shafts as a table, so a frame's replaces the last whole (as_table)
+                if kind == "light" {
+                    as_table(&mut row, light_set_col);
+                }
                 out.push((kind.clone(), id, row));
             }
         }

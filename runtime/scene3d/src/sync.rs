@@ -298,13 +298,13 @@ pub fn sync_camera(frame: Res<FrameRows>, edit: Option<Res<Edit>>, mut placed: L
 
 /// Lights where the frame's rows put them, as bright as they say.
 #[allow(clippy::type_complexity)]
-pub fn sync_lights(frame: Res<FrameRows>, mut commands: Commands, mut q: Query<(Entity, &mut Transform, Option<&mut DirectionalLight>, Option<&mut PointLight>, Option<&mut SpotLight>, Option<&CastsShadows>, Option<&mut bevy::light::RectLight>, Has<StillSynced>)>) {
+pub fn sync_lights(frame: Res<FrameRows>, mut commands: Commands, mut q: Query<(Entity, &mut Transform, Option<&mut DirectionalLight>, Option<&mut PointLight>, Option<&mut SpotLight>, Option<&CastsShadows>, Option<&mut bevy::light::RectLight>, Has<StillSynced>, Option<&mut bevy::light::CascadeShadowConfig>)>) {
     // a dark light (a frame it isn't in: its power is 0) has its shadow maps off, so no shadow pass is drawn for it. Lit or dark,
     // every light stays shown: hiding the dark ones (so Bevy doesn't extract them) put the lit volumetric spots' shafts
     // out, as Bevy 0.19's prepare_lights indexes its spot lights past a count of point lights that the hidden ones
     // threw off. Dark with its maps on, a film's every shadow-casting light drew them on every frame of every scene
     // (the rome film: 20 lights, 4096-texel maps; 2026-10-20)
-    for (e, mut t, d, p, s, casts, rect, synced) in &mut q {
+    for (e, mut t, d, p, s, casts, rect, synced, config) in &mut q {
         if d.is_none() && p.is_none() && s.is_none() && rect.is_none() {
             continue;
         }
@@ -344,6 +344,11 @@ pub fn sync_lights(frame: Res<FrameRows>, mut commands: Commands, mut q: Query<(
             if d.shadow_maps_enabled != sh {
                 d.shadow_maps_enabled = sh;
             }
+            // the frame's <Shadows>: its cascades and biases (RR1)
+            let (mut b, mut nb) = (d.shadow_depth_bias, d.shadow_normal_bias);
+            if biases(v, &mut b, &mut nb) { (d.shadow_depth_bias, d.shadow_normal_bias) = (b, nb); }
+            let c = cascades(v);
+            if let Some(mut was) = config.filter(|was| was.bounds != c.bounds || was.overlap_proportion != c.overlap_proportion) { *was = c; }
         }
         if let Some(mut p) = p {
             let lm = num(v, "lumens", 1.0e6);
@@ -354,6 +359,8 @@ pub fn sync_lights(frame: Res<FrameRows>, mut commands: Commands, mut q: Query<(
             if p.shadow_maps_enabled != sh {
                 p.shadow_maps_enabled = sh;
             }
+            let (mut b, mut nb) = (p.shadow_depth_bias, p.shadow_normal_bias);
+            if biases(v, &mut b, &mut nb) { (p.shadow_depth_bias, p.shadow_normal_bias) = (b, nb); }
         }
         if let Some(mut r) = rect {
             let lm = num(v, "lumens", 1.0e6);
@@ -374,6 +381,8 @@ pub fn sync_lights(frame: Res<FrameRows>, mut commands: Commands, mut q: Query<(
             if s.shadow_maps_enabled != sh {
                 s.shadow_maps_enabled = sh;
             }
+            let (mut b, mut nb) = (s.shadow_depth_bias, s.shadow_normal_bias);
+            if biases(v, &mut b, &mut nb) { (s.shadow_depth_bias, s.shadow_normal_bias) = (b, nb); }
         }
     }
 }

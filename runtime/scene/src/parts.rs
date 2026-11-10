@@ -36,9 +36,9 @@ fn shader_row(id: String, it: &Item) -> BTreeMap<String, V> {
 /// lights: directional (towards its target, the origin by default), point, spot
 pub(crate) fn lights_rows(all: &[Vec<Item>], tr: &Tracks, p: &mut Program) {
     let mut li = 0;
-    // a <Shadows>, found once: every light takes its cascades and biases (looking for it per light scanned every
-    // frame's items once a light, 100 000 lights by 100 000 items)
-    let shadows = all.iter().flatten().find(|i| i.kind == "shadows");
+    // each frame's <Shadows>, found once: every light takes its cascades and biases (looking for it per light scanned
+    // every frame's items once a light, 100 000 lights by 100 000 items)
+    let shadows = FrameShadows::of(all);
     for (_, track) in &tr.lights {
         let its = filled(&track);
         let kind = its[0].kind;
@@ -77,15 +77,8 @@ pub(crate) fn lights_rows(all: &[Vec<Item>], tr: &Tracks, p: &mut Program) {
             }
         }
         let first = &its[0].props;
-        if let Some(c) = hex(first.get("color")).filter(|c| c != "#ffffff") {
-            row.insert("color".into(), V::S(c));
-        }
-        if let Some(Value::Bool(s)) = first.get("castShadow") {
-            row.insert("shadows".into(), V::N(*s as u8 as f64));
-        }
-        if first.get("volumetric") == Some(&Value::Bool(true)) {
-            row.insert("volumetric".into(), V::N(1.0));
-        }
+        // its colour, shadows and shafts, each frame's (RR1)
+        light_sets(&its, p, &mut row, &id);
         // a point or spot light the paint look draws (paint.rs)
         if kind != "directional" && first.get("paint") == Some(&Value::Bool(true)) {
             row.insert("paint".into(), V::N(1.0));
@@ -99,14 +92,8 @@ pub(crate) fn lights_rows(all: &[Vec<Item>], tr: &Tracks, p: &mut Program) {
         if let Some(r) = soft.filter(|r| *r > 0.0) {
             row.insert("soft".into(), V::N(r));
         }
-        // a <Shadows>' cascades (the sun's) and biases (every light's)
-        if let Some(sh) = shadows {
-            for (prop, col) in [("distance", "shadow_dist"), ("firstCascade", "shadow_first"), ("cascades", "shadow_cascades"), ("overlap", "shadow_overlap"), ("bias", "shadow_bias"), ("normalBias", "shadow_nbias")] {
-                if let Some(x) = num(&sh.props, prop) {
-                    row.insert(col.into(), V::N(x));
-                }
-            }
-        }
+        // each frame's <Shadows>' cascades (the sun's) and biases (every light's), RR1
+        shadows.light(p, &mut row, &id, kind, first);
         // the light's own biases (Bevy's shadow_depth_bias, shadow_normal_bias), over a <Shadows>'
         for (prop, col) in [("shadow_depth_bias", "shadow_bias"), ("shadow_normal_bias", "shadow_nbias")] {
             if let Some(x) = num(first, prop) {

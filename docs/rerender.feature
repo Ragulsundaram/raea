@@ -65,12 +65,45 @@ Feature: Re-render, don't stitch: one render changes anything per frame, redraws
 
   Rule: One render can change anything, every frame
 
+    @done
     Scenario: RR1. Every look changes per frame
+      # Status 11-10: done. A frame's post-processing is its own (post.rs frame_post: the sky, bloom, fog, grade,
+      # vignette, AO, anti-aliasing, tonemapping, exposure, volumetric fog and depth of field's kind), and sets that
+      # change go in a per-frame table (frame_sets, frame_set_i); each light's colour, shadows and shafts too
+      # (light_sets). The camera takes a group off and puts it on again when its columns change (raea-sys-post, 12
+      # groups). A draw across a cut (a set bringing or taking a sky, AO, anti-aliasing, a tonemapper, shadows or
+      # volumetric fog: tables.rs Cuts) warms up 8 updates at its frame, as a load does, in frames() and in the page
+      # path's draw: the sky's light (Bevy's generated environment map) takes three, and RR0's sunset opened 2 frames
+      # dark without them. A ramp (a value moving within one set) is no cut. Play builds its rows the same way (live.rs:
+      # tables, the page background keyed), and a seek back that makes a new engine sets play's rows on it again.
+      # Measured on this Mac with bench/rerender/rr1.sh (the 13:00 build):
+      #   the film as one composition against its six shot renders: 900/900 frames identical (it held shot 1's look)
+      #   ramp.tsx's 60-frame grade, bloom and fog ramp against 60 stills each rendered alone: 60/60 SSIM 1.000000,
+      #   its first and last frames 0.645 apart
+      #   raea play seeking to the first and middle frame of each shot: the 3D and its looks as the render draws them
+      #   12/12 (before: play held shot 1's sky, missed the page background on shots 3-5, opened without the sky's
+      #   light and never put depth of field on, SSIM 0.43-0.93); a seek back (0, 400, 350, 0) equal to the forward
+      #   seeks 2/2 (it drew the first frame's look: a plugin's clock makes a new engine from the load)
+      #   not exact: the HTML caption over the 3D (text with a 12 px blurred shadow) differs between play and render by
+      #   at most 2 levels at its edges, SSIM 0.999473-0.999999, as it did before RR1: the page's composite over the
+      #   3D, not a look, handed to the issues lane
+      # Cost, interleaved with the pre-RR1 binary under load 6-12: the film as one MP4 with its six looks in 20.4, 26.4,
+      # 34.4 and 26.3 s; the old binary's one render (shot 1's look for all 900 frames) 30.1, 34.6, 31.8 and 34.7 s.
+      # The five cuts cost 1.3-1.7 s together (0.4 s before RR1, the new shots' first frames), most of it their warm-up
+      # updates. variants.rs isn't built: preparing every look's pipelines before frame 0 would move their compiles onto
+      # the first frame, which RR10 makes 5x faster; RR10's cache takes compiles off every first use instead.
       Given the plan
         | crate             | file                          | lines | job                                                                              |
-        | raea-runtime-look | runtime/look/src/frame.rs     | 240   | the look as per-frame columns: atmosphere, bloom, fog, depth of field, every Grade field, SSAO, anti-aliasing, shadows, volumetric fog and tonemapping, as aberration already is |
-        | raea-runtime-look | runtime/look/src/apply.rs     | 260   | each frame's look applied to the camera's Bevy components; moved out of raea-runtime-scene3d (camera.rs, sync.rs), which is at its 2,000-line limit |
-        | raea-runtime-look | runtime/look/src/variants.rs  | 140   | the pipeline variants a render's looks will need (tonemapper, AA mode, shadow filter, SSAO on or off), prepared before its first frame so a switch mid-render never stalls |
+        | raea-runtime-look | runtime/look/src/post.rs      | 370   | each frame's post-processing from its own parts (atmosphere, bloom, fog, every Grade field and the vignette, SSAO, anti-aliasing, shadows, volumetric fog, tonemapping and exposure, depth of field's kind); sets that change go in a per-frame table (frame_sets, and frame_set_i keyed), as depth of field's aperture and aberration are already keyed; each light's colour, shadows and shafts as its own table (light_sets) |
+        | raea-sys-frame    | systems/frame/src/tables.rs   | 225   | the frame_looks table generalised: each frame's set laid onto its row (FrameRows::vals), for a frame look and for the post-processing; where a render's frames cut (Cuts: a set that brings or takes a mode) |
+        | raea-sys-post     | systems/post/src/camera.rs    | 233   | the post-processing on the camera by group, moved out of raea-runtime-scene3d (camera.rs), which is at its 2,000-line limit; a frame whose row changes a group takes it off and puts it on again, and MSAA goes off with AO or SMAA/FXAA and back on without them |
+        | raea-sys-post     | systems/post/src/camera/on.rs | 199   | each group put on and taken off (scene3d's code, moved) |
+        | raea-sys-fog-half | systems/fog-half/src/camera.rs | 91 | volumetric fog's group (VFOG), there because it puts on that crate's HalfFog and a system can't use another sideways: raea-runtime-scene3d hands it to raea-sys-post's apply and sync beside its own |
+        | raea-runtime-scene| runtime/scene/src/live.rs     | 405   | play's rows as a render's: each frame's post-processing and light sets as tables, the page background keyed (bg_r..bg_a) |
+        | raea-render       | engine/render/src/engine.rs   | 474   | a draw across a cut warms up as a load does (Engine::draw and output.rs frames); a seek back that makes a new engine sets play's rows on it again |
+        | raea-runtime-gpuframe | runtime/gpuframe/src/downsample.rs | 52 | a supersampled readback shrunk (RAEA_SS), moved out of raea-render to keep it under 2,000 lines |
+        | -                 | bench/rerender/rr1.sh         | 106   | the three checks below (equal, ramp, play), each writing its JSON, the frames deleted as they're compared |
+        | -                 | bench/rerender/ramp.tsx       | 37    | the 60-frame ramp: grade, bloom, fog colour and vignette moving every frame |
       Then runtime/look/src/camera.rs stops reading these "as the first frame that has each asks"
       And a value (a grade's saturation, bloom's strength, fog's colour, the focus distance) is keyframed like any prop
       And RR0's film rendered as one composition equals its six chunk renders frame for frame (SSIM 1.000000)
@@ -191,6 +224,9 @@ Feature: Re-render, don't stitch: one render changes anything per frame, redraws
       And a cold first frame of RR0's film, and of an exported game's first play, is at least 5x faster on the Mac
         and on the Windows PC, measured with the OS's own shader cache cleared
       And RR5's workers share it, so N workers don't compile N times
+      And RR1's cuts are timed again with it: the film's five cost 1.3-1.7 s together on 11-10, against 0.4 s with
+        one look (RR1 left preparing every look's pipelines before frame 0 to this cache, so the first frame isn't
+        made to pay for all of them)
 
     @needs:RR0
     Scenario: RR11. A draft tier, rendered small and upscaled

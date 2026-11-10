@@ -30,3 +30,17 @@ pub fn camera_pass(world: &mut World, e: Entity, vals: &BTreeMap<String, V>) {
     c.clear_color = clear;
     c.viewport = viewport;
 }
+
+/// A group of the camera row's columns and what it puts on the camera (raea-sys-post camera.rs's GROUPS, and a
+/// system's own given beside them, as raea-sys-fog-half's volumetric fog): `on` puts it on as the row has it (nothing,
+/// or Bevy's default, where the row has none of its columns), `off` takes off what `on` put on.
+pub struct Group {
+    pub keys: fn(&str) -> bool,
+    pub on: fn(&mut World, Entity, &BTreeMap<String, V>),
+    pub off: fn(&mut World, Entity),
+}
+
+/// A group's `off` that takes the components `B` off the camera.
+pub fn remove<B: Bundle>(world: &mut World, e: Entity) {
+    world.entity_mut(e).remove::<B>();
+}

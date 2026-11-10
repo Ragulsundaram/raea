@@ -23,9 +23,9 @@ use raea_core_program::eval::Tup;
 use raea_sys_frame::store;
 use raea_core_program::ir::{Program, V};
 
-// clips pooled on the GPU, the Blitz overlay and the NV12 readback (raea-runtime-gpuframe)
+// clips pooled on the GPU, the Blitz overlay, the NV12 readback and a supersampled one shrunk (raea-runtime-gpuframe)
 #[cfg(feature = "native")]
-use raea_runtime_gpuframe::{nv12::*, overlay::*, pool::*};
+use raea_runtime_gpuframe::{downsample::downsample, nv12::*, overlay::*, pool::*};
 mod spawn;
 pub use spawn::*;
 pub use open::Opening;
@@ -126,6 +126,13 @@ pub struct Engine {
     prestep: bool,
     /// its updates pipelined or not (raea_sys_frame::pipe)
     pipe: raea_sys_frame::pipe::Pipe,
+    /// the frame `draw` last drew (None after a load)
+    drawn: Option<i64>,
+    /// a live scene's rows changed a set structurally (set_rows): the next draw warms up as at a cut
+    warm_next: bool,
+    /// with a load to replay, a live scene's rows as set so far (set_rows, less remove_rows), merged: what a seek back
+    /// sets again on the new App, which starts from the load's (catch_up)
+    kept: BTreeMap<(String, String), BTreeMap<String, V>>,
 }
 
 /// RAEA_MEM_MARKS: one line on stderr per start-up phase, "mem_mark <ms since the first mark> <phys_footprint MB>
@@ -226,6 +233,19 @@ impl Engine {
             self.app.world_mut().resource_mut::<Error>().0 = Some(e);
         }
         self.app.world_mut().resource_mut::<Clock>().0 = f;
+        // a frame across a cut from the one drawn last (another shot's sky, fog or grade: frame_sets) warms up as a load
+        // does, 8 updates at it before its own: a new effect can take updates to come (the sky's light on the scene,
+        // Bevy's generated environment map, took three, so RR0's sunset shot opened 2 frames dark, RR1). A plugin's
+        // clock steps on the first and holds on the rest, as `frames` warms up a cut and a shot rendered alone its load
+        let cut = std::mem::take(&mut self.warm_next) || self.drawn.is_some_and(|d| self.app.world().get_resource::<raea_sys_frame::tables::Cuts>().is_some_and(|c| c.between(d, f)));
+        self.drawn = Some(f);
+        if cut {
+            self.pipe.flush(&mut self.app);
+            for _ in 0..8 {
+                plugins::arm(self.app.world_mut());
+                self.app.update();
+            }
+        }
         self.pre_step();
         plugins::arm(self.app.world_mut());
         self.pipe.flush(&mut self.app);
@@ -259,12 +279,20 @@ impl Engine {
     /// call on, every frame draws the rows' latest values instead of the timeline's. Nothing is rebuilt per frame: only
     /// the values given change, and the sync systems write only what changed onto the entities.
     pub fn set_rows(&mut self, rows: &[Tup]) -> Result<(), String> {
+        if self.replay.is_some() {
+            for t in rows {
+                self.kept.entry((t.kind.clone(), t.id.clone())).or_default().extend(t.vals.iter().map(|(k, v)| (k.clone(), v.clone())));
+            }
+        }
         let spawned = apply_rows(self.app.world_mut(), &self.dir, rows)?;
         if spawned {
             scene3d::shade_rows(self.app.world_mut(), rows)?;
         }
         // a camera's frame looks, as the timeline's are each frame (relational), so a live game's look turns on too
-        self.app.world_mut().resource_mut::<FrameRows>().parse_looks();
+        // a set that came, went or changed its kind (another shot's sky, AO coming on): the next frame warms up (draw)
+        if self.app.world_mut().resource_mut::<FrameRows>().parse_looks() {
+            self.warm_next = true;
+        }
         // a glTF model, and a panorama a live frame showed first (#38), set up before the frame that shows it draws
         if spawned { scene3d::await_models(&mut self.app)?; }
         raea_sys_post::msaa_for_3d(self.app.world_mut(), has_3d(rows) || raea_sys_sprite::has_2d(rows));
@@ -273,6 +301,7 @@ impl Engine {
 
     /// A live scene's rows dropped, by kind and id: their entities go (and the meshes and surfaces only they held).
     pub fn remove_rows(&mut self, rows: &[(String, String)]) {
+        rows.iter().for_each(|r| drop(self.kept.remove(r)));
         remove_rows_from(self.app.world_mut(), rows);
     }
 
@@ -293,7 +322,13 @@ impl Engine {
             // the old App dropped it ("Buffer ... has been destroyed" from get_mapped_range, a panic)
             #[cfg(feature = "native")]
             raea_sys_frame::pipe::wait_gpu(&self.app);
+            let kept = std::mem::take(&mut self.kept);
             *self = Engine::build(&prog, &rows, &dir, None, self.live)?;
+            // a live scene's rows as the play left them (this frame's included): the load's are its first frame's, so
+            // a seek back from another shot drew the first shot's look and anything moved since where it began (RR1)
+            if !kept.is_empty() {
+                self.set_rows(&kept.into_iter().map(|((kind, id), vals)| Tup { kind, id, vals }).collect::<Vec<_>>())?;
+            }
         }
         loop {
             let s = self.app.world().resource::<plugins::PluginClock>().stepped;

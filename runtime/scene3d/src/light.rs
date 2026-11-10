@@ -65,16 +65,7 @@ pub fn light(world: &mut World, e: Entity, vals: &BTreeMap<String, V>) {
             ));
         }
         _ => {
-            // cascades fitted to a film's scale, not Bevy's kilometre: the first ends at 8 m, the last at 150 m, and
-            // neighbours overlap by 0.3 so the seam between them doesn't show (a <Shadows> changes them)
-            let cascades = bevy::light::CascadeShadowConfigBuilder {
-                num_cascades: g("shadow_cascades", 4.0).clamp(1.0, 4.0) as usize,
-                minimum_distance: 0.1,
-                maximum_distance: g("shadow_dist", 150.0),
-                first_cascade_far_bound: g("shadow_first", 8.0).min(g("shadow_dist", 150.0)),
-                overlap_proportion: g("shadow_overlap", 0.3),
-            }
-            .build();
+            let cascades = cascades(vals);
             world.entity_mut(e).insert((
                 DirectionalLight {
                     color,
@@ -132,6 +123,68 @@ pub fn light(world: &mut World, e: Entity, vals: &BTreeMap<String, V>) {
 }
 
 /// A fog volume row: a unit box of air (Bevy's FogVolume), placed and sized by its transform.
+/// A light's colour, shadows and shafts as the frame's row has them, for a light whose row changes them (its
+/// `frame_sets`, RR1; light.rs set them once from its first frame): before sync_lights, which turns the shadow maps on
+/// and off by CastsShadows.
+#[allow(clippy::type_complexity)]
+pub fn sync_light_sets(
+    frame: Res<FrameRows>,
+    mut commands: Commands,
+    mut q: Query<(Entity, Option<&mut DirectionalLight>, Option<&mut PointLight>, Option<&mut SpotLight>, Option<&mut bevy::light::RectLight>, &mut CastsShadows, Has<bevy::light::VolumetricLight>)>,
+) {
+    if frame.looks.is_empty() {
+        return;
+    }
+    for (e, d, p, s, rect, mut casts, shafts) in &mut q {
+        if !frame.ix.get(&e).and_then(|r| frame.looks.get(r)).is_some_and(|t| t[1].is_some()) {
+            continue;
+        }
+        let Some(v) = frame.vals(e) else { continue };
+        let color = colour(v.get("color"), [1.0, 1.0, 1.0, 1.0]);
+        // the light's colour, whichever kind it is, written only when it changes (so it isn't marked changed every frame)
+        macro_rules! set_colour {
+            ($($l:ident),*) => {$(
+                if let Some(mut l) = $l.filter(|l| l.color != color) {
+                    l.color = color;
+                }
+            )*};
+        }
+        set_colour!(d, p, s, rect);
+        let volumetric = flag(&v, "volumetric", false) && !preview();
+        if volumetric != shafts {
+            if volumetric { commands.entity(e).insert(bevy::light::VolumetricLight); } else { commands.entity(e).remove::<bevy::light::VolumetricLight>(); }
+        }
+        let directional = !matches!(v.get("type"), Some(V::S(t)) if matches!(t.as_str(), "point" | "spot" | "rect"));
+        let want = (flag(&v, "shadows", directional) || volumetric) && !preview();
+        if casts.0 != want {
+            casts.0 = want;
+        }
+    }
+}
+
+/// A sun's shadow cascades, fitted to a film's scale, not Bevy's kilometre: the first ends at 8 m, the last at 150 m, and
+/// neighbours overlap by 0.3 so the seam between them doesn't show (a frame's <Shadows> changes them; sync_lights puts
+/// a frame's on).
+pub fn cascades(vals: &BTreeMap<String, V>) -> bevy::light::CascadeShadowConfig {
+    let g = |k: &str, d: f32| num(vals, k, d);
+    bevy::light::CascadeShadowConfigBuilder {
+        num_cascades: g("shadow_cascades", 4.0).clamp(1.0, 4.0) as usize,
+        minimum_distance: 0.1,
+        maximum_distance: g("shadow_dist", 150.0),
+        first_cascade_far_bound: g("shadow_first", 8.0).min(g("shadow_dist", 150.0)),
+        overlap_proportion: g("shadow_overlap", 0.3),
+    }
+    .build()
+}
+
+/// A frame's shadow biases onto a light's, where its row has them (a <Shadows>' or the light's own).
+pub fn biases(vals: &BTreeMap<String, V>, depth: &mut f32, normal: &mut f32) -> bool {
+    let (b, nb) = (vals.get("shadow_bias").map_or(*depth, |v| v.num() as f32), vals.get("shadow_nbias").map_or(*normal, |v| v.num() as f32));
+    let changed = (b, nb) != (*depth, *normal);
+    (*depth, *normal) = (b, nb);
+    changed
+}
+
 pub fn fog_volume(world: &mut World, e: Entity, id: &str, vals: &BTreeMap<String, V>) {
     let mut fv = bevy::light::FogVolume::default();
     fog_values(&mut fv, vals);

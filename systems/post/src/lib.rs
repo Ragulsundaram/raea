@@ -1,5 +1,6 @@
 //! The camera's passes after the scene is drawn, each a function of the frame: the lens (Fisheye, LensDistortion), motion
-//! blur, Bevy's depth of field and effect stack patched to keep the frame's alpha, and ink outlines.
+//! blur, Bevy's depth of field and effect stack patched to keep the frame's alpha, and ink outlines; and the camera row's
+//! post-processing (the sky, bloom, fog, the grade, AO and anti-aliasing, volumetric fog) put on the camera frame by frame.
 
 use std::collections::BTreeMap;
 
@@ -8,6 +9,7 @@ use raea_core_program::ir::V;
 use raea_sys_frame::*;
 use raea_sys_frame::bevy_api;
 
+pub mod camera;
 pub mod lens;
 pub mod views;
 pub mod motion_blur;

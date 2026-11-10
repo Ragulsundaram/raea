@@ -15,6 +15,7 @@ impl Engine {
         }
         // kept (and the frames before a frame stepped through: catch_up) only when the rows need steps (#77)
         self.replay = (plugins::active(self.app.world()) && plugins::steps(inserted)).then(|| (prog.clone(), inserted.to_vec()));
+        self.drawn = None;
         let world = self.app.world_mut();
         let g = world.resource::<Gen>().0;
         world.insert_resource(Gen(if g == 255 { 1 } else { g + 1 }));
@@ -125,6 +126,7 @@ impl Engine {
             None => std::sync::Arc::new(raea_core_program::timeline::Timeline::from_cols(prog, base)?),
         };
         world.insert_resource(Edit { prog: prog.clone(), timeline, media });
+        world.insert_resource(raea_sys_frame::tables::Cuts::of(prog));
         world.insert_resource(FrameRows::new(ix));
         let Some(cam) = camera else { return Err("the edit needs a camera: INSERT INTO camera (id, ...) VALUES (...)".into()) };
         let models = world.query::<&scene3d::Model3d>().iter(world).count();

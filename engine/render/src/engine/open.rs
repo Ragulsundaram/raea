@@ -244,7 +244,7 @@ impl Engine {
         } else {
             app.world_mut().spawn(Readback::texture(target.clone())).observe(|ev: On<ReadbackComplete>, mut out: ResMut<Out>| out.0.push(ev.data.clone()));
         }
-        let mut e = Engine { app, target, w, h, ss, dir: dir.to_path_buf(), #[cfg(feature = "native")] warm: false, #[cfg(feature = "native")] serial: std::env::var_os("RAEA_SERIAL").is_some(), nv12, packed, replay: None, live, prestep: false, pipe: Default::default() };
+        let mut e = Engine { app, target, w, h, ss, dir: dir.to_path_buf(), #[cfg(feature = "native")] warm: false, #[cfg(feature = "native")] serial: std::env::var_os("RAEA_SERIAL").is_some(), nv12, packed, replay: None, live, prestep: false, pipe: Default::default(), drawn: None, warm_next: false, kept: Default::default() };
         mem_mark("engine: target and readback made");
         e.load_shared(prog, inserted, timeline)?;
         mem_mark("engine: edit loaded into the World");
@@ -252,6 +252,8 @@ impl Engine {
             e.app.update();
             mem_mark(&format!("engine: warm-up update {i}"));
         }
+        // the warm-up drew the clock's frame: a first draw across a cut from it warms up again (Engine::draw)
+        e.drawn = Some(e.app.world().resource::<Clock>().0);
         // updates pipelined from here on (raea_sys_frame::pipe), but for a live draw's own
         e.pipe = raea_sys_frame::pipe::Pipe::new();
         // a live game's frame on one thread (lightspeed F2): its scene is small, and the multi-threaded executor's task

@@ -12,7 +12,7 @@ use raea_core_program::ir::{Program, V};
 use serde_json::{Map, Value};
 
 use raea_core_scene::*;
-pub use raea_runtime_look::{camera, column};
+pub use raea_runtime_look::{camera, column, rgba_of};
 use raea_runtime_look::*;
 
 mod parts;
@@ -223,18 +223,6 @@ pub fn items_of(scene: &[Node3]) -> Vec<Item> {
     out
 }
 
-
-/// A part's composition pass on each frame (`pass`: 0 "scene", from 1 the piece's passes), stepped.
-fn pass_column(p: &mut Program, row: &mut BTreeMap<String, V>, id: &str, its: &[Item], names: &[String]) {
-    if names.is_empty() || !its.iter().any(|i| i.props.contains_key("pass")) {
-        return;
-    }
-    let ids: Vec<f64> = its.iter().map(|i| i.props.get("pass").and_then(Value::as_str).and_then(|n| names.iter().position(|x| x == n)).map_or(0.0, |k| (k + 1) as f64)).collect();
-    row.insert("pass".into(), V::N(ids[0]));
-    if !ids.iter().all(|v| *v == ids[0]) {
-        p.keys.insert((id.to_string(), "pass".to_string()), ids.iter().enumerate().map(|(f, v)| (f as i64, *v, "step".to_string())).collect());
-    }
-}
 
 /// World position, rotation (Bevy's quaternion, q_x q_y q_z q_w: no Euler round trip, docs/control.feature FC1d) and
 /// scale of each frame; each frame's quaternion takes the sign nearer the frame before's, so keys turn the short way.

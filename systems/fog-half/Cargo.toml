@@ -8,5 +8,8 @@ description = "Volumetric fog marched at a fraction of the frame's resolution an
 
 [dependencies]
 raea-sys-frame = { path = "../frame" }
+raea-sys-fog = { path = "../fog" }
+raea-sys-compose = { path = "../compose" }
+raea-core-program = { path = "../../core/program" }
 bevy = { version = "=0.20.0", default-features = false, features = ["std", "default_app", "3d_bevy_render"] }
 wgpu = "=30.0.1"

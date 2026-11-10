@@ -41,6 +41,8 @@ use bevy::{
 
 use raea_sys_frame::bevy_api;
 
+/// the volumetric fog group of the camera's post-processing (VFOG), on and off as each frame's row has it
+pub mod camera;
 mod draw;
 pub use draw::*;
 

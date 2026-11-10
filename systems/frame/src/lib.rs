@@ -29,6 +29,8 @@ pub mod store;
 // the frame loop's own state (Stages, the frame tag, the overlay and output resources)
 mod state;
 pub use state::*;
+/// a row's per-frame tables (a frame's look, the camera's post-processing), laid onto it frame by frame
+pub mod tables;
 
 /// A model row's entity (a glTF under it), whatever its loading stage.
 #[derive(Component, Default)]
@@ -58,8 +60,8 @@ pub struct FrameRows {
     /// so each row's latest values are kept here (in the store's order), changed in place where a frame changes them,
     /// and lent to the systems as they are (no columns made, nothing copied per frame)
     pub live: Option<Vec<BTreeMap<String, V>>>,
-    /// rows whose frame look changes (the camera's `frame_looks`): that list as written, and each look's columns
-    pub looks: HashMap<usize, (String, Vec<BTreeMap<String, V>>)>,
+    /// rows with per-frame tables (tables.rs: the camera's `frame_looks`, and `frame_sets` on any row), each as parsed
+    pub looks: HashMap<usize, tables::Tables>,
     /// the edit's timeline the columns came from (which rows never change: `still`)
     pub timeline: Option<std::sync::Arc<raea_core_program::timeline::Timeline>>,
     /// each row's values this frame as `vals` makes them, made on its first ask: six of the 3D's systems read every
@@ -81,9 +83,11 @@ impl FrameRows {
     }
 
     /// Whether a row's values are the same on every frame of the edit, so a system applying them to its entity each
-    /// frame can apply them once (a live scene's rows: never, since a play changes any of them).
+    /// frame can apply them once (a live scene's rows: never, since a play changes any of them). Nor a row with a table
+    /// (tables.rs): its set is laid on by `vals`, not in the row its entity was made from, so a one-frame edit (a play's
+    /// first rows) put its sky on only at the first frame drawn, after the warm-up, and opened 2 frames dark (RR1).
     pub fn still(&self, e: Entity) -> bool {
-        self.live.is_none() && self.timeline.as_ref().zip(self.ix.get(&e)).is_some_and(|(t, r)| t.still(*r))
+        self.live.is_none() && self.timeline.as_ref().zip(self.ix.get(&e)).is_some_and(|(t, r)| !self.looks.contains_key(r) && t.still(*r))
     }
 
     /// Whether any row may have column `c` this frame (a live scene's or a frame look's rows: always), so a system
@@ -135,13 +139,13 @@ impl FrameRows {
     pub fn vals(&self, e: Entity) -> Option<std::borrow::Cow<'_, BTreeMap<String, V>>> {
         let r = *self.ix.get(&e)?;
         match &self.live {
-            // a live row as it is, unless its frame look changes: then a copy with this frame's look laid on
+            // a live row as it is, unless it has per-frame tables: then a copy with this frame's sets laid on
             Some(rows) => {
                 let row = rows.get(r)?;
                 Some(match self.looks.get(&r) {
-                    Some((_, looks)) => {
+                    Some(t) => {
                         let mut v = row.clone();
-                        frame_look_onto(&mut v, looks);
+                        tables::onto(&mut v, t);
                         std::borrow::Cow::Owned(v)
                     }
                     None => std::borrow::Cow::Borrowed(row),
@@ -150,8 +154,8 @@ impl FrameRows {
             None => {
                 let make = || {
                     let mut v = self.cols.tup(r).vals;
-                    if let Some((_, looks)) = self.looks.get(&r) {
-                        frame_look_onto(&mut v, looks);
+                    if let Some(t) = self.looks.get(&r) {
+                        tables::onto(&mut v, t);
                     }
                     v
                 };
@@ -163,92 +167,53 @@ impl FrameRows {
         }
     }
 
-    /// The rows with a `frame_looks` list (the timeline's at the clock, or a live scene's rows), parsed again only
-    /// where it changed.
-    pub fn parse_looks(&mut self) {
-        // a row's frame look is laid on as `vals` makes it
+    /// The rows with per-frame tables (the timeline's at the clock, or a live scene's rows), each list parsed again only
+    /// where it changed. True when a table came or went, a look changed, or a live row's set changed `structural`ly
+    /// (its one set, raea-runtime-look as_table): a live engine warms its next frame up as at a cut (Engine::draw).
+    pub fn parse_looks(&mut self) -> bool {
+        // a row's sets are laid on as `vals` makes it
         self.made.iter_mut().for_each(|m| drop(m.take()));
-        let found: Vec<(usize, String)> = match &self.live {
-            Some(rows) => rows.iter().enumerate().filter_map(|(r, v)| match v.get("frame_looks") {
-                Some(V::S(s)) => Some((r, s.clone())),
-                _ => None,
-            }).collect(),
-            None => {
-                let Some(col) = self.cols.cols.get("frame_looks") else {
-                    self.looks.clear();
-                    return;
+        let mut found: HashMap<usize, [Option<String>; 2]> = HashMap::new();
+        for (i, (list, _)) in tables::TABLES.iter().enumerate() {
+            match &self.live {
+                Some(rows) => {
+                    for (r, v) in rows.iter().enumerate() {
+                        if let Some(V::S(s)) = v.get(*list) {
+                            found.entry(r).or_default()[i] = Some(s.clone());
+                        }
+                    }
+                }
+                None => {
+                    let Some(col) = self.cols.cols.get(*list) else { continue };
+                    for r in 0..self.cols.len() {
+                        if let Some(V::S(s)) = col.get(r) {
+                            found.entry(r).or_default()[i] = Some(s);
+                        }
+                    }
+                }
+            }
+        }
+        let mut old = std::mem::take(&mut self.looks);
+        let mut changed = false;
+        for (r, srcs) in found {
+            let mut t = old.remove(&r).unwrap_or_default();
+            for (i, src) in srcs.into_iter().enumerate() {
+                t[i] = match src {
+                    Some(s) if t[i].as_ref().is_some_and(|x| x.src == s) => t[i].take(),
+                    Some(s) => {
+                        let new = tables::Table::parse(&s);
+                        changed |= i == 0 || t[i].as_ref().map_or(true, |o| tables::structural(o.sets.first(), new.sets.first()));
+                        Some(new)
+                    }
+                    None => {
+                        changed |= t[i].is_some();
+                        None
+                    }
                 };
-                (0..self.cols.len()).filter_map(|r| match col.get(r) {
-                    Some(V::S(s)) => Some((r, s)),
-                    _ => None,
-                }).collect()
             }
-        };
-        let mut seen = Vec::new();
-        for (r, s) in found {
-            seen.push(r);
-            if self.looks.get(&r).is_some_and(|(x, _)| *x == s) {
-                continue;
-            }
-            self.looks.insert(r, (s.clone(), parse_frame_looks(&s)));
+            self.looks.insert(r, t);
         }
-        self.looks.retain(|r, _| seen.contains(r));
-    }
-}
-
-/// `frame_looks` (scene3d's writer: a JSON list of objects, each a look's columns) as rows of columns.
-pub fn parse_frame_looks(s: &str) -> Vec<BTreeMap<String, V>> {
-    let Ok(serde_json::Value::Array(list)) = serde_json::from_str::<serde_json::Value>(s) else { return Vec::new() };
-    list.iter()
-        .map(|o| {
-            o.as_object()
-                .map(|o| {
-                    o.iter()
-                        .filter_map(|(k, v)| match v {
-                            serde_json::Value::Number(n) => Some((k.clone(), V::N(n.as_f64().unwrap_or(0.0)))),
-                            serde_json::Value::String(x) => Some((k.clone(), V::S(x.clone()))),
-                            _ => None,
-                        })
-                        .collect()
-                })
-                .unwrap_or_default()
-        })
-        .collect()
-}
-
-/// This frame's look laid onto a row: every look's columns off it, then the one `frame_look_i` names (none below 0).
-pub fn frame_look_onto(v: &mut BTreeMap<String, V>, looks: &[BTreeMap<String, V>]) {
-    let i = v.get("frame_look_i").map(V::num).unwrap_or(-1.0).round();
-    v.remove("frame_looks");
-    for l in looks {
-        for k in l.keys() {
-            v.remove(k);
-        }
-    }
-    if i >= 0.0 {
-        if let Some(l) = looks.get(i as usize) {
-            v.extend(l.iter().map(|(k, x)| (k.clone(), x.clone())));
-        }
-    }
-}
-
-#[cfg(test)]
-mod frame_look_tests {
-    use super::*;
-
-    #[test]
-    fn a_frame_takes_its_own_look_and_none_goes_plain() {
-        let looks = parse_frame_looks(r##"[{"frame_look":"paint","paint_sky_top":"#5b9497"},{"frame_look":"paint","outline":"#2b1d14"}]"##);
-        assert_eq!(looks.len(), 2);
-        let row = |i: f64| BTreeMap::from([("frame_looks".to_string(), V::S("..".into())), ("frame_look_i".to_string(), V::N(i)), ("x".to_string(), V::N(1.0))]);
-        let mut v = row(1.0);
-        frame_look_onto(&mut v, &looks);
-        assert_eq!(v.get("outline"), Some(&V::S("#2b1d14".into())));
-        assert!(!v.contains_key("paint_sky_top") && !v.contains_key("frame_looks"));
-        let mut v = row(-1.0);
-        frame_look_onto(&mut v, &looks);
-        assert!(!v.contains_key("frame_look") && !v.contains_key("outline"));
-        assert_eq!(v.get("x"), Some(&V::N(1.0)));
+        changed || old.values().any(|t| t.iter().any(Option::is_some))
     }
 }
 

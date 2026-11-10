@@ -1,5 +1,5 @@
 //! A frame on the GPU path (G8): clips decoded once into a GPU pool and composited with the Blitz overlay (pool.rs,
-//! overlay.rs), then packed to NV12 for the encoder and read back once (nv12.rs).
+//! overlay.rs), then packed to NV12 for the encoder and read back once (nv12.rs); a supersampled frame shrunk (downsample.rs).
 
 use std::collections::HashMap;
 
@@ -21,3 +21,4 @@ use crate::pool::*;
 pub mod overlay;
 pub mod pool;
 pub mod nv12;
+pub mod downsample;

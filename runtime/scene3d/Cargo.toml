@@ -16,7 +16,6 @@ raea-sys-shader = { path = "../../systems/shader" }
 raea-sys-fog = { path = "../../systems/fog" }
 raea-sys-fog-half = { path = "../../systems/fog-half" }
 raea-sys-post = { path = "../../systems/post" }
-raea-sys-compose = { path = "../../systems/compose" }
 raea-sys-look = { path = "../../systems/look" }
 raea-runtime-plugins = { path = "../plugins" }
 raea-core-program = { path = "../../core/program" }

@@ -97,26 +97,6 @@ impl Engine {
         if self.ss > 1 { downsample(&px, w, h, self.ss as usize) } else { px }
     }
 
-    /// `list` cut where the frame's look changes (the camera's keyed `frame_look_i`), in order.
-    #[cfg(feature = "native")]
-    pub(crate) fn look_runs<'a>(&self, list: &'a [i64]) -> Vec<&'a [i64]> {
-        let edit = self.app.world().resource::<Edit>();
-        let Some(keys) = edit.prog.keys.iter().find(|((_, c), _)| c == "frame_look_i").map(|(_, k)| k) else { return vec![list] };
-        let at = |f: i64| keys.iter().take_while(|(k, ..)| *k <= f).last().or(keys.first()).map(|(_, v, _)| v.round() as i64);
-        let mut runs = Vec::new();
-        let mut from = 0;
-        for i in 1..list.len() {
-            if at(list[i]) != at(list[i - 1]) {
-                runs.push(&list[from..i]);
-                from = i;
-            }
-        }
-        if from < list.len() {
-            runs.push(&list[from..]);
-        }
-        runs
-    }
-
     /// One frame, straight RGBA8 (opaque), the careful way: two tagged readbacks in a row that agree (the first frame
     /// after a load, when meshes, materials and the overlay are new to the GPU).
     #[cfg(feature = "native")]
@@ -190,11 +170,18 @@ impl Engine {
     pub fn frames(&mut self, list: &[i64], mut sink: impl FnMut(i64, Vec<u8>) -> Result<(), String>) -> Result<(), String> {
         // a frame whose look comes on, changes or goes (frame_look_i, FrameRows::vals) has new materials and cells to
         // make, which a pipelined update can read back before they draw: each run of one look starts the careful way
-        let runs = self.look_runs(list);
+        let runs = raea_sys_frame::tables::runs(&self.app.world().resource::<Edit>().prog, list);
         let many = runs.len() > 1;
         for r in runs {
             if many {
                 self.warm = false;
+            }
+            // a run after a cut warms up as a load does (8 updates): a new effect can take more updates to come than the
+            // careful way's 4 (the sky's light on the scene came 2 frames late at RR0's sunset cut, RR1)
+            if many && r.first() != list.first() {
+                self.catch_up(r[0])?;
+                self.app.world_mut().resource_mut::<Clock>().0 = r[0];
+                (0..8).for_each(|_| self.step());
             }
             // a panic drawing a frame an error naming the newest frame sent, the one drawing (#33)
             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.frames_run(r, &mut sink))).map_err(|p| raea_gpu_device::check::panicked(p, self.app.world().resource::<Clock>().0))??;

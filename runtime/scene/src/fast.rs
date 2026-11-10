@@ -25,6 +25,10 @@ impl LiveScene {
             return None;
         }
         let its = items_of(f.scene);
+        // a light's colour, shadows or shafts changed (its set, as_table): the full path, which makes them
+        if light_sig(&its) != self.light_sig {
+            return None;
+        }
         // pass 1: every part's id (as tracks_of names it on one frame), or None before anything changes
         let mut parts: Vec<(usize, &String)> = Vec::with_capacity(its.len());
         // each group's (kind, name) counts and the key, borrowed and written in place (ZeroHeap)

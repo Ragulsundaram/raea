@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2024"
 license = "FSL-1.1-ALv2"
 publish = false
-description = "The camera's post passes: lens distortion, motion blur, depth of field and the effect stack keeping alpha, and ink outlines"
+description = "The camera's post passes (lens distortion, motion blur, depth of field and the effect stack keeping alpha, ink outlines) and the camera row's post-processing put on the camera frame by frame"
 
 [dependencies]
 raea-sys-frame = { path = "../frame" }
+raea-sys-compose = { path = "../compose" }
 raea-core-program = { path = "../../core/program" }
 bevy = { version = "=0.20.0", default-features = false, features = ["std", "default_app", "3d_bevy_render"] }

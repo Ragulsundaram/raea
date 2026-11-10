@@ -15054,7 +15054,6 @@ dependencies = [
  "bevy",
  "raea-core-program",
  "raea-runtime-plugins",
- "raea-sys-compose",
  "raea-sys-compute",
  "raea-sys-fog",
  "raea-sys-fog-half",
@@ -15298,6 +15297,9 @@ name = "raea-sys-fog-half"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "raea-core-program",
+ "raea-sys-compose",
+ "raea-sys-fog",
  "raea-sys-frame",
  "wgpu",
 ]
@@ -15604,6 +15606,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "raea-core-program",
+ "raea-sys-compose",
  "raea-sys-frame",
 ]
 

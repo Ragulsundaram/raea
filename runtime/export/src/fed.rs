@@ -157,7 +157,9 @@ pub fn live_scene(world: &mut World, ls: &mut LiveScene, engine: &mut Option<rae
             *engine = Some(e);
         }
         Some(e) => {
-            let (rows, gone) = ls.frame(Shot { scene: &scene, clear: None });
+            // the frame's own clear, keyed as a render keys a background that changes (RR1)
+            let clear = scene_clear(world);
+            let (rows, gone) = ls.frame(Shot { scene: &scene, clear: clear.as_deref() });
             if !gone.is_empty() {
                 e.remove_rows(&gone);
             }

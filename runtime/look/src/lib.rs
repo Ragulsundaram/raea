@@ -10,6 +10,8 @@ use serde_json::{Map, Value};
 mod camera;
 pub use camera::*;
 mod instances;
+mod post;
+pub use post::*;
 mod parts;
 pub use parts::*;
 pub use instances::*;
@@ -165,14 +167,6 @@ pub fn look_of(props: &Map<String, Value>) -> f64 {
         Some("site") => 2.0,
         _ => 0.0,
     }
-}
-
-/// The distance the camera focuses at: its `focus`, else how far its lookAt point is.
-pub fn focus_of(c: &Item) -> f64 {
-    num(&c.props, "focus").unwrap_or_else(|| {
-        let (p, l) = (vec3(&c.props, "position", [0.0, 0.0, 5.0]), vec3(&c.props, "lookAt", [0.0, 0.0, 0.0]));
-        ((p[0] - l[0]).powi(2) + (p[1] - l[1]).powi(2) + (p[2] - l[2]).powi(2)).sqrt().max(0.01)
-    })
 }
 
 /// The paint look's keyed values on one frame (raea-render's look.rs and paint.rs read them): its tone bands, paper grain,
