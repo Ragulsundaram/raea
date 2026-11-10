@@ -412,8 +412,48 @@ Feature: Direction that holds: one world of facts, findings and rules, so a pers
   # =====================================================================================================================
   Rule: Part 2. Notes become asks and checks, and rounds hold (finding 1)
 
-    @needs:DR4
+    @needs:DR4 @done
     Scenario: DR5. A note is restated before anything changes
+      # Status 11-10: built. A note is a file, notes/<round>/n<N>.ts, whose default export is note({...}) (raea/note):
+      # the person's words as a list, the first line as sent and each later one a correction they made, kept; where it
+      # came from ("app ITEM cm-N", "session"); its round; its pin as the app sent it (moment, place, part); whether it
+      # asks for a redesign; the asks the person corrected since; and its asks (Ask: text, medium, about, not, verb,
+      # check, values, proof). Note, Ask, Pin and Proof are world facts (core/facts note.rs) and TS types
+      # (facts.gen.ts); in a project's world each note is an entity with a Note. `raea notes take` writes what was sent
+      # or said, all at once as one round, never twice; `raea notes ls` gives each note's state ("to restate" until it
+      # has asks and none is corrected; then "to check" until each ask has a check or a clip to sign, DR6) and what its
+      # restatement owes: one ask from several sentences of the note as first sent, a medium its words name that no ask
+      # asks for or turns down in its `not`, a redesign whose asks keep nothing, an ask the person corrected. `raea
+      # notes post` shows each restated note's asks on its comment through `raea show --on ITEM --working cm-N --ask
+      # TEXT...`, and posts none that still owes something. The raea app (raea-feed 4f84878, raea.app 0.1.0-dev.1109.81)
+      # shows them under the comment as "<agent> read it as:", numbered, each with Correct, and "Correct the whole
+      # note"; a correction is an inbox line ({kind: "correction", comment, ask, text}) that the next `raea notes take`
+      # writes into the note as a new line of its words ("on ask 2: ..."), with the ask in `corrected`. The verb is
+      # per ask (Ask.verb; ROUTER.md's moves say a note with three asks is three moves).
+      # Fixed in the code (DR5): "the task reads 'to restate'" is the note's state in `raea notes ls`, beside its
+      # file; the app's comment task reads working with the asks once they're posted. A correction is no new sentence
+      # of the note: a one-ask note corrected stayed flagged "one ask from 2 sentences" after it was restated, so
+      # sentences are counted on the words as first sent. `raea notes post` keeps what it showed
+      # (.raea/notes-shown.json): a second post doesn't mark a comment the agent has since settled working again, and a
+      # correction taken clears its note there, so a restatement in the same words is still shown as its answer.
+      # The proof, end to end in a copy of raea.app 0.1.0-dev.1109.81 run headless with its own state and a scratch
+      # workspace (the release raea of this commit; nothing downloaded or spent): a still shown with `raea show`; an
+      # edit comment left on it and sent through the page ("I want 2D animated text with occlusion, not 3D text
+      # extrusion. Think of how a lyric video would be."); `raea notes take` wrote notes/1/n1.ts with those words. A
+      # restatement of one ask with no medium got four flags from `raea notes ls` (one ask from 2 sentences; 2D, 3D and
+      # extruded said and not asked or turned down); two asks with their medium and `not` owed nothing. `raea notes
+      # post` put "Claude Code read it as:" with both on the comment, and a second post sent nothing. Correct on ask 2,
+      # typed in the page, wrote the correction line and showed "You: ..." under it; the next take wrote it in as "on
+      # ask 2: no, the whole line at once, on the beat" with corrected [2], ls said to restate it, post held it back,
+      # and a second take wrote nothing. Restated, post showed the new ask 2 and the page dropped the "You:" line. I
+      # looked at the page at each step (frames from its window).
+      # Proved by tests in raea-core-facts (16: five for notes, and the generated TS types match) and raea-app-notes
+      # (6: take once and by round, corrections once, ls's states and flags, post once and none owing, files in order,
+      # a note as an entity).
+      # Not seen, or left: an agent restating a note on its own (here I wrote the asks); a note pinned to a part (the
+      # comment had no pin) or a moment; a note on an item as a whole, which post can only report; and the craft
+      # verbs are named per ask but nothing checks one is in the set. `about` is the agent's word: the pin's part is
+      # carried as the app sent it, and finding it in the world is DR6's check.
       Given the plan
         | crate              | file                           | lines | job                                                                    |
         | raea-core-facts    | core/facts/src/note.rs         | 230   | Note: words, from, round, pin, asks; Ask: text, medium, about, not, check, proof |

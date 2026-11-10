@@ -66,8 +66,19 @@ redesign: go back to shaping.
 
 ## Notes
 
-People write notes in their own words. Read each one as one of a small set of moves and do that move to the part or
-moment it names:
+People write notes in their own words, and one note can hold several asks. Before anything in the work changes:
+
+1. `raea notes take` writes each note the person sent from the raea app, or said to you, to `notes/ROUND/ID.ts` in
+   the project, their words as written.
+2. Restate each note in its file as its asks: one for each separate thing it asks for; the medium where the words
+   name one (2D means 2D: a 3D scene doesn't make a title 3D); what it is about; and what it doesn't ask for (`not`),
+   so a change keeps the rest. A redesign's asks say what is kept.
+3. `raea notes ls` says what each restatement still owes. Change nothing until it owes nothing.
+4. `raea notes post` shows the asks on the person's comments in the raea app. A correction they make there comes back
+   with the next `raea notes take` as a new line of the note: restate that ask again before you go on.
+
+Each ask is one of a small set of moves: name it as the ask's `verb`, and do that move to the part or moment it
+names. A note with three asks is three moves, not one:
 
 - **quieter:** less of something (glow, motion, music, colour);
 - **bolder:** more conviction where a beat already exists;
@@ -89,15 +100,15 @@ moment it names:
 - **polish:** close out the latest critique;
 - **critique:** judge the piece honestly before you call it done.
 
-Each move has a short guide: `raea guide quieter` (and the rest). Read the one a note calls for before you act on
+Each move has a short guide: `raea guide quieter` (and the rest). Read the one an ask calls for before you act on
 it. Never show these words to the person. Answer the note in their terms.
 
 raea has no colorize, onboard, overdrive or audit move. Colour is **regrade**; more of everything is **bolder** on
 the one beat that earns it, never on all of them; an audit is `raea check` and then **critique**; a game's first
 seconds are part of its mode (`raea guide play`), not a note.
 
-A note reaches you with the move already named when the feed can tell (`{verb, part or moment, words}`). The person's
-words still come first: if they say more than the verb, do what they say.
+A note reaches you with a move already named when the feed can tell (`{verb, part or moment, words}`). The person's
+words still come first: if they say more than the verb, each more is another ask.
 
 ## Other guides
 
