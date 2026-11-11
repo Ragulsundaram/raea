@@ -1,8 +1,9 @@
 //! `raea setup godot`, `raea godot types` and `raea godot open`; `raea godot run` is godot_run.rs. raea's Godot is
 //! Godot 4.6.1 with GodotJS (github.com/godotjs/GodotJS, MIT): Godot's whole API from TypeScript, on Godot's own
 //! JavaScript engine, JavaScriptCore on the Mac and QuickJS-ng on Windows and Linux (no V8). Godot without GodotJS
-//! can't run a script, so raea uses GodotJS's editor build (the editor, headless or not, runs scripts and projects),
-//! downloaded from its GitHub release into ~/.raea/tools/godot and checked against the sha256 pinned here.
+//! can't run a script, so raea uses an editor build with GodotJS in it (the editor, headless or not, runs scripts and
+//! projects): raea's own (GD9, sdk/godot/build), from raea's release, else GodotJS's, from its GitHub release, into
+//! ~/.raea/tools/godot and checked against the sha256 pinned here.
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -10,39 +11,72 @@ use raea_app_tools::blender::own_dir;
 
 type R<T> = Result<T, String>;
 
-pub const USAGE: &str = "raea setup godot [--check]   (download Godot 4.6.1 with GodotJS, its TypeScript bindings (MIT), into ~/.raea/tools/godot: JavaScriptCore on the Mac, QuickJS on Windows and Linux; checked against its pinned sha256)\n       raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N]] [--size WxH] [--timeout S] [ARGS...]   (a TypeScript script against Godot's whole API through raea/godot: its default export gets the SceneTree and ARGS, headless unless --window; --movie writes every frame Godot draws (NAME.png numbered, or .avi) at a fixed --fps, 30 unless given; the project is DIR, else the nearest project.godot above the script, else an empty one; Godot quits when it returns)\n       raea godot types [DIR]   (the project's own TypeScript types from GodotJS: Godot's API with its scenes, resources and input actions, into DIR/typings)\n       raea godot open [DIR]   (the Godot editor on the project, GodotJS's, to edit its scenes)";
+pub const USAGE: &str = "raea setup godot [--check]   (download Godot 4.6.1 with GodotJS, its TypeScript bindings (MIT), into ~/.raea/tools/godot: JavaScriptCore on the Mac, QuickJS on Windows and Linux; raea's own build (the Mac's notarized), else GodotJS's, each checked against its pinned sha256)\n       raea godot run [SCRIPT.ts] [--project DIR] [--window] [--movie FILE [--fps N] [--frames N]] [--scene res://X.tscn] [--size WxH] [--timeout S] [ARGS...]   (a TypeScript script against Godot's whole API through raea/godot: its default export gets the SceneTree and ARGS, headless unless --window; --movie writes every frame Godot draws (NAME.png numbered, or .avi) at a fixed --fps, 30 unless given; the project is DIR, else the nearest project.godot above the script, else an empty one; Godot quits when it returns, or after --frames N; --scene plays a scene of the project under it, with no script needed; a scene in --window plays until the window is closed)\n       raea godot types [DIR]   (the project's own TypeScript types from GodotJS: Godot's API with its scenes, resources and input actions, into DIR/typings)\n       raea godot open [DIR]   (the Godot editor on the project, GodotJS's, to edit its scenes)";
 
 /// The GodotJS release raea downloads (github.com/godotjs/GodotJS/releases); sdk/godot/tools/gen.sh writes
 /// raea/godot's types from it, so the two move together.
 pub const RELEASE: &str = "v1.1.0.beta1-4.6.1";
 
-/// One platform's download: the asset, its sha256 and size, and the program inside its one top folder.
+/// raea's own builds of the same editors (GD9: sdk/godot/build's macos.sh, linux.py and windows.py, zipped by
+/// package.sh; the Mac's signed with raea's Developer ID and notarized), files of raea's release of this tag.
+pub const RAEA_RELEASE: &str = "v0.1.1";
+
+/// Where raea's builds are downloaded from; RAEA_GODOT_FROM points elsewhere (a folder as file:///..., to rehearse).
+fn raea_base() -> String {
+    std::env::var("RAEA_GODOT_FROM").unwrap_or_else(|_| format!("https://github.com/shinyobjectz/raea/releases/download/{RAEA_RELEASE}"))
+}
+
+/// One platform's download: who built it, the asset, its sha256 and size, and the program inside its one top folder.
 struct Pin {
+    by: &'static str,
     asset: &'static str,
     sha256: &'static str,
     size: u64,
     program: &'static str,
 }
 
-fn pin() -> R<Pin> {
-    pin_for(std::env::consts::OS, std::env::consts::ARCH)
+impl Pin {
+    fn url(&self) -> String {
+        match self.by {
+            "raea" => format!("{}/{}", raea_base(), self.asset),
+            _ => format!("https://github.com/godotjs/GodotJS/releases/download/{RELEASE}/{}", self.asset),
+        }
+    }
 }
 
-/// A platform GodotJS doesn't build for is told how to bring its own build (GD2), never given a stock Godot.
-fn pin_for(os: &str, arch: &str) -> R<Pin> {
+fn pins() -> R<Vec<Pin>> {
+    pins_for(std::env::consts::OS, std::env::consts::ARCH)
+}
+
+/// This platform's downloads in the order they're tried: raea's build, then GodotJS's (a release made before raea's
+/// builds are among its files still installs). Both hold the program at the same path. A platform GodotJS doesn't
+/// build for is told how to bring its own build (GD2), never given a stock Godot.
+fn pins_for(os: &str, arch: &str) -> R<Vec<Pin>> {
+    let raea = |asset, sha256, size, program| Pin { by: "raea", asset, sha256, size, program };
+    let theirs = |asset, sha256, size, program| Pin { by: "GodotJS", asset, sha256, size, program };
+    // GodotJS's Mac build: a universal app, ad-hoc signed; raea's: arm64, notarized
+    let mac = theirs("macos-editor-app-4.6.1-jsc.zip", "8a3022cb07c9740b2acc4a0b6bba6be78fb2fe46ba172b13abd51e6829cdca95", 143_940_673, "Godot.app/Contents/MacOS/Godot");
     match (os, arch) {
-        // a universal app, ad-hoc signed
-        ("macos", _) => Ok(Pin { asset: "macos-editor-app-4.6.1-jsc.zip", sha256: "8a3022cb07c9740b2acc4a0b6bba6be78fb2fe46ba172b13abd51e6829cdca95", size: 143_940_673, program: "Godot.app/Contents/MacOS/Godot" }),
-        ("linux", "x86_64") => Ok(Pin { asset: "linux-editor-4.6.1-qjs-ng.zip", sha256: "daa91d6cff5862ed9e0b3776694fbe4ea0ebb474d244f46ffb3aa5af0318989d", size: 78_737_089, program: "godot.linuxbsd.editor.x86_64" }),
-        ("windows", "x86_64") => Ok(Pin { asset: "windows-editor-4.6.1-qjs-ng.zip", sha256: "041b761a945b6a34d40f508dbd1accca462d943d2941c3a1a4568f84dd29c1d4", size: 83_915_786, program: "godot.windows.editor.x86_64.exe" }),
+        ("macos", "aarch64") => Ok(vec![raea("godot-4.6.1-raea-macos-arm64.zip", "17e66b8f99134a67db29ce82b88ace7f4c2e4ae651c80a3876ac6bd5e68a8a75", 69_132_728, "Godot.app/Contents/MacOS/Godot"), mac]),
+        ("macos", _) => Ok(vec![mac]),
+        ("linux", "x86_64") => Ok(vec![
+            raea("godot-4.6.1-raea-linux-x86_64.zip", "9c86b3e6af0f8cc8a7158685103ccbe15d10aaf246067ec47509909647726b54", 78_737_822, "godot.linuxbsd.editor.x86_64"),
+            theirs("linux-editor-4.6.1-qjs-ng.zip", "daa91d6cff5862ed9e0b3776694fbe4ea0ebb474d244f46ffb3aa5af0318989d", 78_737_089, "godot.linuxbsd.editor.x86_64"),
+        ]),
+        ("windows", "x86_64") => Ok(vec![
+            raea("godot-4.6.1-raea-windows-x86_64.zip", "cf360e7a350f04a1cdb8d1ac475ebfc81518b5b49831ab2ed693f5d8127265e5", 73_171_472, "godot.windows.editor.x86_64.exe"),
+            theirs("windows-editor-4.6.1-qjs-ng.zip", "041b761a945b6a34d40f508dbd1accca462d943d2941c3a1a4568f84dd29c1d4", 83_915_786, "godot.windows.editor.x86_64.exe"),
+        ]),
         (os, arch) => Err(format!("GodotJS has no build for {os} {arch}: build it (github.com/godotjs/GodotJS) and `git config --global raea.godot PATH`")),
     }
 }
 
-/// The release a download in own_dir came from (raea.json beside it), so a moved pin downloads again.
-fn own_release() -> Option<String> {
-    let text = std::fs::read_to_string(own_dir("godot").ok()?.join("raea.json")).ok()?;
-    serde_json::from_str::<serde_json::Value>(&text).ok()?["release"].as_str().map(str::to_string)
+/// Whether the download in own_dir is one this raea pins (raea.json beside it names its sha256), so a moved pin
+/// downloads again.
+fn own_is_pinned() -> bool {
+    let Some(text) = own_dir("godot").ok().and_then(|d| std::fs::read_to_string(d.join("raea.json")).ok()) else { return false };
+    let had = serde_json::from_str::<serde_json::Value>(&text).ok().and_then(|v| v["sha256"].as_str().map(str::to_string));
+    pins().is_ok_and(|ps| ps.iter().any(|p| had.as_deref() == Some(p.sha256)))
 }
 
 /// The Godot to use and where it came from: `git config --global raea.godot` (a GodotJS build of your own), else
@@ -52,7 +86,7 @@ pub fn find() -> Option<(PathBuf, &'static str)> {
     if let Some(p) = configured.filter(|p| p.is_file()) {
         return Some((p, "raea.godot in git config"));
     }
-    let own = own_dir("godot").ok()?.join(pin().ok()?.program);
+    let own = own_dir("godot").ok()?.join(pins().ok()?.first()?.program);
     own.is_file().then_some((own, "raea's download"))
 }
 
@@ -68,16 +102,37 @@ fn version(bin: &Path) -> R<String> {
     out.lines().map(str::trim).find(|l| l.chars().next().is_some_and(|c| c.is_ascii_digit())).map(str::to_string).ok_or_else(|| format!("{} --version printed no version", bin.display()))
 }
 
-/// Downloads the pinned GodotJS editor into ~/.raea/tools/godot and returns its program.
+/// Downloads the first pinned editor that comes and matches (raea's, then GodotJS's) into ~/.raea/tools/godot and
+/// returns its program, and which it was.
 fn download() -> R<(PathBuf, String)> {
-    let p = pin()?;
+    let mut not = Vec::new();
+    for p in pins()? {
+        match download_one(&p) {
+            Ok(program) => return Ok((program, downloaded(&p, &not))),
+            Err(e) => not.push(format!("{}'s build: {e}", p.by)),
+        }
+    }
+    Err(format!("no Godot downloaded: {}", not.join("; ")))
+}
+
+/// What `raea setup godot` says it downloaded: whose build, and why any tried before it wasn't.
+fn downloaded(p: &Pin, not: &[String]) -> String {
+    let by = if p.by == "raea" { format!("raea's build ({}, from raea's {RAEA_RELEASE} release)", p.asset) } else { format!("GodotJS's build ({}, from GodotJS {RELEASE})", p.asset) };
+    let before = if not.is_empty() { String::new() } else { format!("; {}", not.join("; ")) };
+    format!("downloaded Godot 4.6.1 with GodotJS, {by}{before}")
+}
+
+/// One pinned download, checked and unpacked into ~/.raea/tools/godot: its program.
+fn download_one(p: &Pin) -> R<PathBuf> {
     let dir = own_dir("godot")?;
     let tmp = dir.with_file_name("godot.download");
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).map_err(|e| format!("{}: {e}", tmp.display()))?;
     let file = tmp.join(p.asset);
-    let url = format!("https://github.com/godotjs/GodotJS/releases/download/{RELEASE}/{}", p.asset);
-    raea_app_tools::blender::run(Command::new("curl").args(["-fL", "--retry", "3", "-o"]).arg(&file).arg(&url), "downloading Godot with GodotJS")?;
+    let url = p.url();
+    if raea_app_tools::blender::run(Command::new("curl").args(["-fsSL", "--retry", "3", "-o"]).arg(&file).arg(&url), "downloading Godot with GodotJS").is_err() {
+        return Err(format!("{url} didn't download"));
+    }
     let size = std::fs::metadata(&file).map_err(|e| e.to_string())?.len();
     if size != p.size || raea_app_tools::blender::sha256(&file)? != p.sha256 {
         return Err(format!("{} doesn't match the sha256 raea pins ({size} bytes); nothing installed (it's in {})", p.asset, tmp.display()));
@@ -94,11 +149,12 @@ fn download() -> R<(PathBuf, String)> {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).map_err(|e| e.to_string())?;
     }
-    std::fs::write(unpacked.join("raea.json"), serde_json::json!({ "release": RELEASE, "asset": p.asset, "sha256": p.sha256 }).to_string()).map_err(|e| e.to_string())?;
+    let release = if p.by == "raea" { RAEA_RELEASE } else { RELEASE };
+    std::fs::write(unpacked.join("raea.json"), serde_json::json!({ "by": p.by, "release": release, "asset": p.asset, "sha256": p.sha256 }).to_string()).map_err(|e| e.to_string())?;
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::rename(&unpacked, &dir).map_err(|e| format!("{}: {e}", dir.display()))?;
     let _ = std::fs::remove_dir_all(&tmp);
-    Ok((dir.join(p.program), format!("downloaded GodotJS {RELEASE} ({}) from github.com/godotjs/GodotJS", p.asset)))
+    Ok(dir.join(p.program))
 }
 
 /// A zip's files into `to`, without its one top folder (every GodotJS zip has one).
@@ -129,10 +185,10 @@ fn unzip(file: &Path, to: &Path) -> R<()> {
 /// `raea setup godot [--check]`.
 pub fn setup(args: &[String]) -> R<String> {
     let check = args.iter().any(|a| a == "--check");
-    let current = own_release().as_deref() == Some(RELEASE);
+    let current = own_is_pinned();
     let (bin, from) = match find() {
         Some((p, from)) if from != "raea's download" || current => (p, from.to_string()),
-        _ if check => return Err(format!("no Godot with GodotJS {RELEASE}: raea setup godot downloads it")),
+        _ if check => return Err("no Godot with GodotJS that this raea pins: raea setup godot downloads it".into()),
         _ => download()?,
     };
     let v = version(&bin)?;
@@ -168,7 +224,9 @@ fn types(args: &[String]) -> R<String> {
 /// `raea godot open [DIR]`: the editor on the project, left running.
 fn open(args: &[String]) -> R<String> {
     let dir = project(args.get(2))?;
-    Command::new(binary()?).args(["--editor", "--path"]).arg(&dir).spawn().map_err(|e| e.to_string())?;
+    // its output isn't raea's: a caller reading raea's (the app) would otherwise wait until the editor is closed
+    let null = std::process::Stdio::null;
+    Command::new(binary()?).args(["--editor", "--path"]).arg(&dir).stdin(null()).stdout(null()).stderr(null()).spawn().map_err(|e| e.to_string())?;
     Ok(format!("APPLIED  the Godot editor (GodotJS) is opening {}", dir.display()))
 }
 
@@ -187,21 +245,46 @@ mod tests {
     use super::*;
 
     #[test]
-    fn this_platform_has_a_pin_with_a_full_digest() {
-        if let Ok(p) = pin() {
-            assert_eq!(p.sha256.len(), 64);
-            assert!(p.sha256.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
-            assert!(p.asset.ends_with(".zip") && p.size > 50_000_000);
+    fn every_pin_has_a_full_digest() {
+        for (os, arch) in [("macos", "aarch64"), ("macos", "x86_64"), ("linux", "x86_64"), ("windows", "x86_64")] {
+            for p in pins_for(os, arch).unwrap() {
+                assert_eq!(p.sha256.len(), 64);
+                assert!(p.sha256.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
+                assert!(p.asset.ends_with(".zip") && p.size > 50_000_000);
+            }
         }
+    }
+
+    #[test]
+    fn raeas_build_is_tried_first_and_godotjss_after() {
+        for (os, arch) in [("macos", "aarch64"), ("linux", "x86_64"), ("windows", "x86_64")] {
+            let ps = pins_for(os, arch).unwrap();
+            assert_eq!(ps.iter().map(|p| p.by).collect::<Vec<_>>(), ["raea", "GodotJS"], "{os}");
+            assert_eq!(ps[0].program, ps[1].program, "{os}: both hold the program at one path");
+            assert!(ps[1].url().starts_with("https://github.com/godotjs/GodotJS/releases/download/v1.1.0.beta1-4.6.1/"));
+        }
+        let mac = pins_for("macos", "aarch64").unwrap();
+        if std::env::var_os("RAEA_GODOT_FROM").is_none() {
+            assert_eq!(mac[0].url(), "https://github.com/shinyobjectz/raea/releases/download/v0.1.1/godot-4.6.1-raea-macos-arm64.zip");
+        }
+        // raea builds the Mac editor for arm64 only: an Intel Mac gets GodotJS's universal app
+        assert_eq!(pins_for("macos", "x86_64").unwrap().iter().map(|p| p.by).collect::<Vec<_>>(), ["GodotJS"]);
+    }
+
+    #[test]
+    fn setup_says_whose_build_and_why_not_the_one_before() {
+        let ps = pins_for("linux", "x86_64").unwrap();
+        assert_eq!(downloaded(&ps[0], &[]), "downloaded Godot 4.6.1 with GodotJS, raea's build (godot-4.6.1-raea-linux-x86_64.zip, from raea's v0.1.1 release)");
+        let not = ["raea's build: https://x/godot-4.6.1-raea-linux-x86_64.zip didn't download".to_string()];
+        assert_eq!(downloaded(&ps[1], &not), "downloaded Godot 4.6.1 with GodotJS, GodotJS's build (linux-editor-4.6.1-qjs-ng.zip, from GodotJS v1.1.0.beta1-4.6.1); raea's build: https://x/godot-4.6.1-raea-linux-x86_64.zip didn't download");
     }
 
     #[test]
     fn a_platform_godotjs_doesnt_build_for_is_told_to_bring_its_own() {
         for (os, arch) in [("linux", "aarch64"), ("windows", "aarch64"), ("freebsd", "x86_64")] {
-            let e = pin_for(os, arch).err().unwrap_or_default();
+            let e = pins_for(os, arch).err().unwrap_or_default();
             assert!(e.contains("github.com/godotjs/GodotJS") && e.contains("git config --global raea.godot PATH"), "{os} {arch}: {e}");
         }
-        assert!(pin_for("macos", "aarch64").is_ok() && pin_for("linux", "x86_64").is_ok() && pin_for("windows", "x86_64").is_ok());
     }
 
     #[test]

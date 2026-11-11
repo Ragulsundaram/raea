@@ -26,3 +26,9 @@ strip -S "$B" 2>/dev/null || true
 mkdir -p "$W/out" && cp "$B" "$W/out/" && (cd "$W/out" && shasum -a 256 godot.macos.editor.arm64 | tee godot.sha256)
 echo "  size: $(stat -f %z "$W/out/godot.macos.editor.arm64")"
 "$W/out/godot.macos.editor.arm64" --headless --version 2>&1 | tail -1
+# the editor as Godot.app, made from Godot's own template as its official Mac builds are (package.sh signs it with
+# the template's editor entitlements: JavaScriptCore's JIT needs allow-jit under the hardened runtime)
+rm -rf "$W/out/Godot.app" && cp -R misc/dist/macos_tools.app "$W/out/Godot.app" && mkdir -p "$W/out/Godot.app/Contents/MacOS"
+cp "$B" "$W/out/Godot.app/Contents/MacOS/Godot" && chmod +x "$W/out/Godot.app/Contents/MacOS/Godot"
+cp misc/dist/macos/editor.entitlements "$W/out/editor.entitlements"
+echo "  $W/out/Godot.app"

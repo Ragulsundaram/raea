@@ -10,7 +10,9 @@ H=$W/home; rm -rf "$H" "$W/types-ours" "$W/types-theirs"; mkdir -p "$H" "$W/type
 for d in ours theirs; do printf 'config_version=5\n\n[application]\nconfig/name="t"\n' > "$W/types-$d/project.godot"; done
 printf '[raea]\n\tgodot = %s\n' "$E" > "$H/.gitconfig"
 echo "[1] smoke on our build"
-(cd "$(dirname "$0")/../../.." && HOME=$H "$RAEA" godot run sdk/godot/test/scripts/smoke.ts alpha --beta 2>&1 | tail -3)
+smoke=$(cd "$(dirname "$0")/../../.." && HOME=$H "$RAEA" godot run sdk/godot/test/scripts/smoke.ts alpha --beta 2>&1 | tail -3)
+echo "$smoke"
+grep -q 'PASS raea/godot' <<<"$smoke" || { echo "FAIL the smoke script didn't pass on $E"; exit 1; }
 echo "[2] types from our build, then from GodotJS's"
 (HOME=$H "$RAEA" godot types "$W/types-ours" 2>&1 | tail -1)
 ("$RAEA" godot types "$W/types-theirs" 2>&1 | tail -1)
