@@ -68,6 +68,7 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
     Scenario: GD7d. Paths: Godot runs in the project's folder; raea/godot's resolve(path) names one where raea ran
       Then RAEA_CWD is the folder `raea godot run` ran from, cwd() reads it, and a relative path read through
         resolve() is found there
+    @done
     Scenario: GD8. A clean machine on each platform (macOS, Windows, Linux) runs a TypeScript script through raea/godot
       Given an empty HOME, `raea setup godot` then `raea godot run smoke.ts`
       Then the script prints its PASS line, and the download size and the libraries a clean Linux needs are recorded
@@ -79,7 +80,10 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
         are off. Setup checks the download with coreutils' sha256sum there (a slim Debian has no shasum)
       And 11-11, Windows 11 (x86_64): GodotJS's QuickJS-ng editor zip (83 915 786 bytes, raea's pinned sha256,
         178 MB installed) reports 4.6.1.stable and starts and quits headless with exit 0
-      And still to run: raea's own Windows and Linux builds of this lane, which come with v0.1.1's release builds
+      And 11-11, raea's own v0.1.1-rc4 builds: on Linux (debian:trixie-slim on Modal) setup installed GodotJS's
+        editor (155 MB) and smoke.ts printed its PASS line; on Windows 11, from the release zip in an empty home,
+        setup installed it (178 MB) and smoke.ts printed "PASS raea/godot: 3 boxes, the last 4.000 m out, in Godot
+        4.6.1-stable (gh)"
 
   Rule: The guide teaches it
     @done
@@ -90,6 +94,7 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
         SKILL.md (raea-skills 7497067, unpushed until the v0.1.1 go; raea-verbs gains godot with a v0.1.1 snapshot)
 
   Rule: GodotJS is ours to build
+    @done
     Scenario: GD9. GodotJS's source is vendored at the release's tag, and raea builds the JavaScriptCore and QuickJS-ng editors itself
       Then `raea setup godot` downloads raea's own builds, and the typings are generated from them
       And sdk/godot/build holds the builds, from source as GodotJS's CI builds its release (Godot 4.6.1-stable 14d1969,
@@ -117,6 +122,10 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
         are uploaded to v0.1.1's release with its other files. RAEA_GODOT_FROM=URL installs from elsewhere (file://DIR
         too): setup from a folder of the zips installed raea's build, which passed the smoke; with no override, before
         the upload, the download failed and setup installed GodotJS's build and said why (apps/engines, unit tests)
+      And 11-11, Windows 11 under raea's v0.1.1-rc4 build: the Windows zip's sha256 matched its pin, the editor reports
+        4.6.1.stable.raea.14d19694e, and smoke.ts printed "PASS raea/godot: 3 boxes, the last 4.000 m out, in Godot
+        4.6.1-stable (raea)". Its 18 typing files hold the same text as GodotJS's build's; 4 differ in bytes only
+        because GodotJS's Windows build writes those with CRLF line ends and raea's, cross-built on Linux, with LF
 
   Rule: Godot in a raea project: a shot drawn by Godot, a scene sent to Godot and its changes read back, its scenes taken in
     Shane, 2026-11-11: "how do we get blender and godot full integrated", then "lets do all this and make sure it ends

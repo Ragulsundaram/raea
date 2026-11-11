@@ -193,7 +193,9 @@ fn addon(bin: &Path, check: bool) -> R<String> {
         return Ok("MCP add-on not installed: it comes from uv's uvx (install uv: https://docs.astral.sh/uv/getting-started/installation/, then raea setup blender again)".into());
     };
     let dir = py(bin, ADDONS_DIR, "RAEA_ADDONS=")?;
-    run(Command::new(&uvx).args(["mcp-for-blender", "install-addon", "--addons-dir", &dir]), "uvx mcp-for-blender install-addon")?;
+    // its installer prints arrows, which Python can't encode for Windows' cp1252 console: it threw and setup failed
+    // (11-11), so it writes UTF-8
+    run(Command::new(&uvx).args(["mcp-for-blender", "install-addon", "--addons-dir", &dir]).env("PYTHONIOENCODING", "utf-8").env("PYTHONUTF8", "1"), "uvx mcp-for-blender install-addon")?;
     enable(bin, "blender_mcp", &dir, "MCP for Blender")?;
     Ok(format!("MCP add-on installed now ({dir})"))
 }

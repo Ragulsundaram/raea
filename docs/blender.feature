@@ -196,6 +196,7 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
         two bugs, both fixed: Blender 5.2 gives a timer the window but no area, so view3d operators had no 3D view; and
         a slot freed by garbage collection was freed before the read an await had queued for it, in headless runs too
         (test/bridge.test.ts forces that race)
+    @done
     Scenario: BL29. A clean machine on each platform (macOS, Windows, Linux) runs a TypeScript script through raea/blender
       Given an empty HOME, `raea setup blender` then `raea blender run smoke.ts`
       Then the script prints its PASS line, and the download size and the libraries a clean Linux needs are recorded
@@ -211,8 +212,14 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
       And 11-11, Windows 11 (x86_64): Blender 5.2.4's Windows zip (406 MB download, sha256 as blender.org
         lists it, 901 MB installed) needs nothing more, and smoke.ts run under Bun 1.4.2 through raea/blender printed
         its PASS line
-      And still to run: raea's own Windows and Linux builds of this lane (`raea setup blender`, then `raea blender run
-        smoke.ts`), which come with v0.1.1's release builds
+      And 11-11, raea's own v0.1.1-rc4 builds: on Linux (debian:trixie-slim on Modal) setup installed Blender (1.2 GB)
+        and smoke.ts printed its PASS line in Blender 5.2.4 LTS; on Windows 11, from the release zip in an empty home,
+        setup installed it (911 MB) and `raea blender run smoke.ts alpha --beta` printed "PASS raea/blender: 3 cubes
+        made (6 objects), the last 4.000 m out, volume 1.000, in Blender 5.2.4 LTS"
+      And on that Windows, with uv on PATH, setup exited 1: the MCP add-on's installer (uvx mcp-for-blender
+        install-addon) prints an arrow that Python can't encode for the cp1252 console, and threw. Setup now runs it
+        with PYTHONIOENCODING=utf-8 and PYTHONUTF8=1 (apps/tools blender.rs); so run there, it installed the add-on
+        and exited 0
 
   Rule: Blender in a raea project: a shot drawn by Blender, a scene sent to Blender and its changes read back
     Shane, 2026-11-11: "how do we get blender and godot full integrated", then "lets do all this and make sure it ends
