@@ -1,13 +1,17 @@
 // raea cloud's server (docs/cloud.feature CL4-CL8): raea and an ACP agent behind one port and one token.
 //
 //   GET  /healthz                       "ok", no token (platform health checks)
-//   GET  /v1/health                     {raea, agent, agents, workspace}
+//   GET  /v1/health                     {raea, agent, agents, workspace, device, offload, jobs}: device says whether
+//                                       raea renders on a GPU here, and which (gpu.ts)
 //   GET  /v1/files?path=P               a file in the workspace, or a folder's entries as JSON
 //   PUT  /v1/files?path=P               writes the body to P, making its folders
 //   POST /v1/run {args, cwd?}           `raea ARGS` in the workspace: NDJSON {out} and {err} lines, then {exit}
 //   POST /v1/login?agent=ID             an agent's terminal sign-in: {url, code, state, output}; GET says where it is
 //   WS   /v1/acp?agent=ID               one agent process per socket: a text frame is one ACP message to its stdin,
 //                                       each line it prints is one frame back
+//   POST /v1/jobs?args=JSON             a render job: a folder in (tar.zst), `raea ARGS` on it, followed with
+//   GET  /v1/jobs/ID?from=N             short requests, and the files it made back from /out (jobs.ts); how a CPU
+//   GET  /v1/jobs/ID/out                box hands renders to a GPU worker (offload.ts)
 //
 // Every route but /healthz needs RAEA_CLOUD_TOKEN: `Authorization: Bearer TOKEN`, or ?token= (a browser's WebSocket
 // can't set headers). The agent and raea get the container's environment without the token or the state keys.
@@ -19,6 +23,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import path from "node:path"
 import { WebSocketServer } from "ws"
 import { installed, spawnFor } from "./agents.ts"
+import { device } from "./gpu.ts"
+import * as jobs from "./jobs.ts"
 import { login, loginState } from "./login.ts"
 import { Outside, resolve, WORK } from "./workspace.ts"
 
@@ -109,10 +115,39 @@ const server = createServer(async (req, res) => {
           return null
         }
       })()
-      return json(res, { raea: raeaVersion(), agent: def, agents: installed().map((a) => ({ id: a.id, version: a.version })), workspace: WORK })
+      const gpu = process.env.RAEA_CLOUD_GPU_URL
+      return json(res, {
+        raea: raeaVersion(),
+        agent: def,
+        agents: installed().map((a) => ({ id: a.id, version: a.version })),
+        workspace: WORK,
+        device: device(childEnv()),
+        offload: gpu ? { url: gpu, commands: (process.env.RAEA_CLOUD_GPU_COMMANDS ?? "render").split(/\s+/).filter(Boolean) } : null,
+        jobs: jobs.held(),
+      })
     }
     if (url.pathname === "/v1/files" && (req.method === "GET" || req.method === "PUT")) return await files(req, res, url)
     if (url.pathname === "/v1/run" && req.method === "POST") return await run(req, res)
+    if (url.pathname === "/v1/jobs" && req.method === "POST") {
+      const args = jobs.readArgs(url.searchParams.get("args"))
+      // a job runs raea here, never handed on again
+      const env = childEnv()
+      delete env.RAEA_CLOUD_GPU_URL
+      delete env.RAEA_CLOUD_GPU_TOKEN
+      return json(res, { id: jobs.start(args, await body(req), RAEA, env).id })
+    }
+    const job = /^\/v1\/jobs\/([0-9a-f-]{36})(\/out)?$/.exec(url.pathname)
+    if (job && req.method === "GET") {
+      if (job[2]) {
+        const as = jobs.packing(url.searchParams.get("as"))
+        const tar = jobs.out(job[1], as)
+        if (!tar) return json(res, { error: "no finished job with that id" }, 404)
+        const type = { zst: "application/zstd", gz: "application/gzip", tar: "application/x-tar" }[as]
+        return res.writeHead(200, { "content-type": type, "content-length": tar.length }).end(tar)
+      }
+      const f = await jobs.follow(job[1], Number(url.searchParams.get("from") ?? 0))
+      return f ? json(res, f) : json(res, { error: "no job with that id" }, 404)
+    }
     if (url.pathname === "/v1/login") {
       const a = spawnFor(url.searchParams.get("agent") ?? undefined)
       return json(res, req.method === "POST" ? await login(a, childEnv()) : loginState(a.id))
@@ -152,4 +187,10 @@ server.on("upgrade", (req, socket, head) => {
 })
 
 mkdirSync(WORK, { recursive: true })
-server.listen(PORT, () => console.log(`raea-cloud: :${PORT}, workspace ${WORK}, agents ${installed().map((a) => a.id).join(", ") || "none"}, raea ${raeaVersion()}`))
+server.listen(PORT, () => {
+  const d = device(childEnv())
+  const gpu = process.env.RAEA_CLOUD_GPU_URL
+  console.log(
+    `raea-cloud: :${PORT}, workspace ${WORK}, agents ${installed().map((a) => a.id).join(", ") || "none"}, raea ${raeaVersion()}, renders on ${d.renders === "gpu" ? `the GPU (${d.name})` : `the CPU (${d.name})`}${gpu ? `, renders handed to ${gpu}` : ""}`,
+  )
+})

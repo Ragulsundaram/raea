@@ -9,6 +9,8 @@
 //   await s.prompt("Make card/edit.tsx a 3 s title card that says hello", (u) => console.log(u.sessionUpdate))
 //   const mp4 = await cloud.read("card/card.mp4")
 //   s.close()
+//   const { exit, files } = await cloud.job(["render", "edit.tsx", "-o", "out/a.mp4"], projectTar)   // a render job:
+//                                          // a project in as a tar, what the render made back as one (CL14)
 
 import { Session, type Permission } from "./session.ts"
 
@@ -19,6 +21,17 @@ export interface Health {
   agent: string | null
   agents: { id: string; version: string }[]
   workspace: string
+  /** where raea renders on this server: a GPU (and which) or the CPU */
+  device: { renders: "gpu" | "cpu"; name: string; gpus: { name: string; type: string; driver: string; vendor: string }[]; nvidia?: string[] }
+  /** the GPU worker this server hands its renders to, when it has one */
+  offload: { url: string; commands: string[] } | null
+  jobs: { id: string; running: boolean }[]
+}
+
+export interface JobLog {
+  log: ({ out: string } | { err: string })[]
+  next: number
+  exit?: number
 }
 
 export interface Entry {
@@ -89,6 +102,45 @@ export class RaeaCloud {
       }
     }
     throw new Error("raea's run ended without an exit code")
+  }
+
+  /** Starts `raea ARGS` on a folder sent as a tar (zstd, gzip or none), in a folder of its own on the server (a
+   *  render job): its id. */
+  async startJob(args: string[], folder: Uint8Array, signal?: AbortSignal): Promise<string> {
+    const r = await this.call(`/v1/jobs?args=${encodeURIComponent(JSON.stringify(args))}`, { method: "POST", body: new Blob([folder as BlobPart]), headers: { "content-type": "application/octet-stream" }, signal })
+    return ((await r.json()) as { id: string }).id
+  }
+
+  /** A job's output since line `from`; the server holds the request up to 20 s for more. `exit` once it's done. */
+  followJob(id: string, from = 0, signal?: AbortSignal): Promise<JobLog> {
+    return this.call(`/v1/jobs/${id}?from=${from}`, { signal }).then((r) => r.json())
+  }
+
+  /** A finished job's files: the ones its run made or changed, as a tar (zstd unless `as` says gz or tar). The server
+   *  drops the job after. */
+  async jobFiles(id: string, as: "zst" | "gz" | "tar" = "zst"): Promise<Uint8Array> {
+    return new Uint8Array(await (await this.call(`/v1/jobs/${id}/out?as=${as}`)).arrayBuffer())
+  }
+
+  /** A job from start to end: its output to onOutput as it comes; its exit code and the files it made or changed. A
+   *  dropped follow request (a platform's proxy, a cold start) is tried again, up to five times in a row. */
+  async job(args: string[], folder: Uint8Array, o: { onOutput?: (text: string, stream: "out" | "err") => void; signal?: AbortSignal; as?: "zst" | "gz" | "tar" } = {}): Promise<{ exit: number; files: Uint8Array }> {
+    const id = await this.startJob(args, folder, o.signal)
+    let from = 0
+    for (let misses = 0; ; ) {
+      let f: JobLog
+      try {
+        f = await this.followJob(id, from, o.signal)
+        misses = 0
+      } catch (e) {
+        if (o.signal?.aborted || ++misses > 5) throw e
+        await new Promise((ok) => setTimeout(ok, 1000 * misses))
+        continue
+      }
+      for (const l of f.log) "out" in l ? o.onOutput?.(l.out, "out") : o.onOutput?.(l.err, "err")
+      from = f.next
+      if (f.exit !== undefined) return { exit: f.exit, files: await this.jobFiles(id, o.as) }
+    }
   }
 
   /** Starts an agent's terminal sign-in (Kimi Code's device code): open `url` and enter `code` once; the sign-in is

@@ -5,8 +5,9 @@
 #   kubectl apply -f deploy/k8s.yaml
 #   kubectl port-forward svc/raea-cloud 8080:8080        # or put an Ingress in front of the Service
 #
-# Agents' keys go in the same Secret (--from-literal=ANTHROPIC_API_KEY=...). For a GPU node, uncomment the GPU lines:
-# NVIDIA's device plugin hands the container the GPU, and NVIDIA_DRIVER_CAPABILITIES=all its Vulkan driver.
+# Agents' keys go in the same Secret (--from-literal=ANTHROPIC_API_KEY=...). This server renders on its CPU; to render
+# on a GPU, add deploy/k8s.gpu.yaml: a GPU worker this one hands its renders to (CL15), or give this Deployment the GPU
+# itself with `nvidia.com/gpu: 1` under limits (CL13).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -45,7 +46,10 @@ spec:
             - secretRef: { name: raea-cloud }
           env:
             - { name: RAEA_AGENT, value: kimi-code }
-            # - { name: NVIDIA_DRIVER_CAPABILITIES, value: all }
+            # with deploy/k8s.gpu.yaml applied, renders go to the GPU worker:
+            # - { name: RAEA_CLOUD_GPU_URL, value: "http://raea-cloud-gpu:8080" }
+            # - name: RAEA_CLOUD_GPU_TOKEN
+            #   valueFrom: { secretKeyRef: { name: raea-cloud-gpu, key: RAEA_CLOUD_TOKEN } }
           volumeMounts:
             - { name: home, mountPath: /home/raea }
           readinessProbe:
@@ -54,7 +58,6 @@ spec:
           resources:
             requests: { cpu: "2", memory: 4Gi }
             limits: { memory: 8Gi }
-            #   nvidia.com/gpu: 1
       terminationGracePeriodSeconds: 60
       volumes:
         - name: home

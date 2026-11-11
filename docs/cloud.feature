@@ -7,6 +7,9 @@ Feature: raea cloud: raea and an ACP agent on a server of your own (sdk/cloud)
   with a TypeScript client. The cloud node image (apps/site/api/container) proved raea renders in a Linux container
   on Mesa's llvmpipe. sdk/cloud makes them one module a developer deploys on their own account, wherever they run
   containers. raea sells no cloud compute: the server, the GPU and the agent's subscription are the developer's.
+  Shane, later that day: "i mean the point is we provide a way to deploy raea to gpu and cpu". So one image runs on
+  either and says which it's using, a GPU is a deploy target proven on a real NVIDIA card, and a cheap always-on CPU
+  box (the agent's) hands its renders to a GPU worker that sleeps when idle.
 
   Background:
     Given one image, raea-cloud: Node 24 on Debian trixie, raea's Linux release (x86_64, checked against its .sha256),
@@ -31,7 +34,8 @@ Feature: raea cloud: raea and an ACP agent on a server of your own (sdk/cloud)
   Rule: one port, one token
     Scenario: CL4. The server answers on :8080
       Then GET /healthz is "ok" without a token, for platform health checks
-      And GET /v1/health says raea's version, the default agent, the installed agents and the workspace
+      And GET /v1/health says raea's version, the default agent, the installed agents, the workspace, the device raea
+        renders on (CL13), the GPU worker it hands renders to (CL15) and the render jobs it holds (CL14)
       And every other route refuses a request without the token (Authorization: Bearer, or ?token= for a browser's
         WebSocket) with 401, compared in constant time, and the server won't start without one
     Scenario: CL5. Files go in and out of the workspace
@@ -54,20 +58,49 @@ Feature: raea cloud: raea and an ACP agent on a server of your own (sdk/cloud)
       Then deploy/compose.yaml runs it with the home folder on a named volume, and deploy/compose.gpu.yaml adds an
         NVIDIA GPU (graphics capability, so Vulkan sees it)
     Scenario: CL10. The platforms
-      Then deploy/ has a Fly Machines app (a volume, stopped when idle, woken by a request), Kubernetes manifests
-        (a PersistentVolumeClaim, a Secret, a Deployment and a Service), and a Cloudflare Container (a Worker in
-        front, the container asleep when idle)
-      And where the disk doesn't outlive the container (Cloudflare), RAEA_CLOUD_STATE names an S3-compatible object
-        (R2, S3) the home folder is restored from on start and saved to on stop
+      Then deploy/ has a Fly Machines app (a volume, stopped when idle, woken by a request) and Kubernetes manifests
+        (a PersistentVolumeClaim, a Secret, a Deployment and a Service)
+      And where the disk doesn't outlive the container (Cloudflare Containers, Cloud Run), RAEA_CLOUD_STATE names an
+        S3-compatible object (R2, S3) the home folder is restored from on start and saved to on stop
+    Scenario: CL10b. Cloudflare Containers
+      Then deploy/ has a Cloudflare Container config: a Worker in front, the container asleep when idle, its home in R2
     Scenario: CL11. The TypeScript client
       Then `new RaeaCloud({ url, token })` from sdk/cloud/src has health, read, write, list, run, login and session;
         a session is ACP: prompt(text, onUpdate) resolves with the stop reason, permission requests go to
         onPermission (allowed once by default: the container is the sandbox)
       And it runs on Node 22+, Bun and in a browser (fetch and WebSocket only)
 
+  Rule: it renders on a GPU or a CPU
+    Scenario: CL13. One image for both, and it says which
+      Given a container given an NVIDIA GPU (Compose's gpu overlay, Kubernetes' nvidia.com/gpu, Modal), an AMD card in
+        /dev/dri, or none
+      Then the entrypoint opens NVIDIA's Vulkan driver when the host passed one in (the host's ICD file, else the
+        image's, naming the library the NVIDIA runtime mounts), and raea renders on it; otherwise on Mesa (radv for
+        an AMD card, llvmpipe on the CPU)
+      And RAEA_CLOUD_DEVICE=gpu makes a GPU that doesn't open an error at start, never a quiet fall back to the CPU;
+        RAEA_CLOUD_DEVICE=cpu keeps raea on llvmpipe
+      And /v1/health's device says where renders run (gpu or cpu), on which device, and NVIDIA's own report
+      And test/gpu/edit.tsx (576 lit, shadowed blocks, 1920x1080, 90 frames) times the same render on the GPU and on
+        the CPU of one server
+    Scenario: CL14. A render job, and a GPU that sleeps when idle
+      Then POST /v1/jobs?args=JSON takes a project as a tar (zstd, gzip or none) and runs `raea ARGS` on it in a folder
+        of its own; GET /v1/jobs/ID?from=N follows its output in requests of 20 s at most (a serverless platform's
+        proxy cuts longer ones); GET /v1/jobs/ID/out returns the files it made or changed, and the job is dropped
+      And deploy/modal/raea_cloud.py runs the image on a Modal GPU (an L4, else an A10G, else a T4, unless
+        RAEA_CLOUD_GPU names others or none), one container that starts on a request and stops after five idle
+        minutes, the token in a Modal secret
+    Scenario: CL15. A CPU box hands its renders to a GPU worker
+      Given RAEA_CLOUD_GPU_URL and RAEA_CLOUD_GPU_TOKEN on a CPU box (the agent's, always on, cheap)
+      Then `raea render` there, from the agent, its shell or /v1/run, sends the render's project to the worker as a
+        job and lands what it made back in the project; its paths are made relative to the project, an output outside
+        it is moved to its place after, and an input outside it renders on the box with a line saying why
+      And a worker that can't be reached fails the render unless RAEA_CLOUD_GPU_FALLBACK=cpu
+      And every other raea command runs on the box
+
   Rule: it is proven end to end
     Scenario: CL12. A stand-in agent, then a real one
-      Then test/smoke.sh builds the image, starts it, and checks CL4-CL7 with test/echo-agent.mjs (a scripted ACP
-        agent): the token refused, a path escape refused, a frame rendered by /v1/run, an ACP turn round-tripped
+      Then test/smoke.sh builds the image, starts it, and checks CL4-CL7, CL14 and CL15 with test/echo-agent.mjs (a
+        scripted ACP agent): the token refused, a path escape refused, a frame rendered by /v1/run, a render job's file
+        back, a second container handing its render to the first, an ACP turn round-tripped
       And with Kimi Code signed in, one real turn renders a title card with raea in the container, and the file
         comes back through /v1/files
