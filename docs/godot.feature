@@ -77,6 +77,8 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
       And 11-11, Linux (debian:trixie-slim, x86_64, on Modal): GodotJS's QuickJS-ng editor (a 79 MB download, 155 MB
         installed) needs no library a slim Debian lacks and starts headless; without libfontconfig1 it says system fonts
         are off. Setup checks the download with coreutils' sha256sum there (a slim Debian has no shasum)
+      And 11-11, Windows 11 (x86_64): GodotJS's QuickJS-ng editor zip (83 915 786 bytes, raea's pinned sha256,
+        178 MB installed) reports 4.6.1.stable and starts and quits headless with exit 0
       And still to run: raea's own Windows and Linux builds of this lane, which come with v0.1.1's release builds
 
   Rule: The guide teaches it
