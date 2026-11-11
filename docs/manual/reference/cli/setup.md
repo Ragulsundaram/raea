@@ -19,6 +19,7 @@ raea setup blender
 
 ```sh
 raea setup blender [--check] [--download]   (find Blender or download the LTS into ~/.raea/tools/blender, and install its MCP add-on)
+raea setup godot [--check]   (download Godot 4.6.1 with GodotJS, its TypeScript bindings (MIT), into ~/.raea/tools/godot: JavaScriptCore on the Mac, QuickJS on Windows and Linux; checked against its pinned sha256)
 ```
 
 Headless: it needs nothing running and opens no window. Takes up to 1 argument besides its flags.

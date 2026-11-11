@@ -6,6 +6,8 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use raea_app_tools::blender::own_dir;
+
 type R<T> = Result<T, String>;
 
 pub const USAGE: &str = "raea setup godot [--check]   (download Godot 4.6.1 with GodotJS, its TypeScript bindings (MIT), into ~/.raea/tools/godot: JavaScriptCore on the Mac, QuickJS on Windows and Linux; checked against its pinned sha256)\n       raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N]] [--size WxH] [--timeout S] [ARGS...]   (a TypeScript script against Godot's whole API through raea/godot: its default export gets the SceneTree and ARGS, headless unless --window; --movie writes every frame Godot draws (NAME.png numbered, or .avi) at a fixed --fps, 30 unless given; the project is DIR, else the nearest project.godot above the script, else an empty one; Godot quits when it returns)\n       raea godot types [DIR]   (the project's own TypeScript types from GodotJS: Godot's API with its scenes, resources and input actions, into DIR/typings)\n       raea godot open [DIR]   (the Godot editor on the project, GodotJS's, to edit its scenes)";
@@ -32,14 +34,9 @@ fn pin() -> R<Pin> {
     }
 }
 
-/// Where raea keeps the Godot it downloads.
-fn own_dir() -> R<PathBuf> {
-    Ok(raea_app_tools::agent_mcp::user_home()?.join(".raea/tools/godot"))
-}
-
 /// The release a download in own_dir came from (raea.json beside it), so a moved pin downloads again.
 fn own_release() -> Option<String> {
-    let text = std::fs::read_to_string(own_dir().ok()?.join("raea.json")).ok()?;
+    let text = std::fs::read_to_string(own_dir("godot").ok()?.join("raea.json")).ok()?;
     serde_json::from_str::<serde_json::Value>(&text).ok()?["release"].as_str().map(str::to_string)
 }
 
@@ -50,7 +47,7 @@ pub fn find() -> Option<(PathBuf, &'static str)> {
     if let Some(p) = configured.filter(|p| p.is_file()) {
         return Some((p, "raea.godot in git config"));
     }
-    let own = own_dir().ok()?.join(pin().ok()?.program);
+    let own = own_dir("godot").ok()?.join(pin().ok()?.program);
     own.is_file().then_some((own, "raea's download"))
 }
 
@@ -69,7 +66,7 @@ fn version(bin: &Path) -> R<String> {
 /// Downloads the pinned GodotJS editor into ~/.raea/tools/godot and returns its program.
 fn download() -> R<(PathBuf, String)> {
     let p = pin()?;
-    let dir = own_dir()?;
+    let dir = own_dir("godot")?;
     let tmp = dir.with_file_name("godot.download");
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).map_err(|e| format!("{}: {e}", tmp.display()))?;
@@ -156,7 +153,10 @@ fn types(args: &[String]) -> R<String> {
         let tail: Vec<&str> = log.lines().rev().take(12).collect::<Vec<_>>().into_iter().rev().collect();
         return Err(format!("GodotJS's codegen failed on {}:\n{}", dir.display(), tail.join("\n")));
     }
-    let n = std::fs::read_dir(dir.join("typings")).map(|d| d.flatten().filter(|e| e.path().to_string_lossy().ends_with(".d.ts")).count()).unwrap_or(0);
+    let mut n = 0;
+    for e in std::fs::read_dir(dir.join("typings")).into_iter().flatten().flatten() {
+        n += e.file_name().to_string_lossy().ends_with(".d.ts") as usize;
+    }
     Ok(format!("APPLIED  {n} typings files in {} (Godot's API with the project's scenes, resources and input actions); a tsconfig that includes them types `import ... from \"godot\"`", dir.join("typings").display()))
 }
 

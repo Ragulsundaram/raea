@@ -137,11 +137,11 @@ fn project_size(project_godot: &str) -> (u32, u32) {
         if l.starts_with('[') {
             display = l == "[display]";
         } else if display {
-            let num = |k: &str| l.strip_prefix(k).and_then(|v| v.trim().parse::<u32>().ok());
-            if let Some(w) = num("window/size/viewport_width=") {
-                size.0 = w;
-            } else if let Some(h) = num("window/size/viewport_height=") {
-                size.1 = h;
+            let Some((key, v)) = l.split_once('=') else { continue };
+            match (key.trim(), v.trim().parse::<u32>()) {
+                ("window/size/viewport_width", Ok(w)) => size.0 = w,
+                ("window/size/viewport_height", Ok(h)) => size.1 = h,
+                _ => {}
             }
         }
     }

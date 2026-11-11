@@ -13,14 +13,14 @@ pub const USAGE: &str = "raea setup blender [--check] [--download]   (find Blend
 /// ships a new LTS (blender.org/download/lts).
 const LTS: &str = "5.2";
 
-/// Where raea keeps the Blender it downloads.
-fn own_dir() -> R<PathBuf> {
-    Ok(crate::agent_mcp::user_home()?.join(".raea/tools/blender"))
+/// Where raea keeps a tool it downloads, ~/.raea/tools/NAME: Blender here, Godot in apps/engines.
+pub fn own_dir(name: &str) -> R<PathBuf> {
+    Ok(crate::agent_mcp::user_home()?.join(".raea/tools").join(name))
 }
 
 /// The Blender binary inside raea's own download, per platform.
 fn own_binary() -> R<PathBuf> {
-    let d = own_dir()?;
+    let d = own_dir("blender")?;
     Ok(if cfg!(target_os = "macos") { d.join("Blender.app/Contents/MacOS/Blender") } else if cfg!(windows) { d.join("blender.exe") } else { d.join("blender") })
 }
 
@@ -104,7 +104,7 @@ fn download() -> R<(PathBuf, String)> {
     let listing = run(Command::new("curl").args(["-fsSL", &base]), "curl")?;
     let v = newest(&listing).ok_or_else(|| format!("no Blender {LTS} release listed at {base}"))?;
     let name = asset(&v)?;
-    let dir = own_dir()?;
+    let dir = own_dir("blender")?;
     let tmp = dir.with_file_name("blender.download");
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).map_err(|e| format!("{}: {e}", tmp.display()))?;
@@ -176,7 +176,7 @@ pub fn setup(args: &[String]) -> R<String> {
     let fresh = args.iter().any(|a| a == "--download");
     let (bin, from) = match find().filter(|_| !fresh) {
         Some((b, f)) => (b, f.to_string()),
-        None if check => return Ok(format!("CHECKED  no Blender found (raea.blender, {}, PATH): raea setup blender downloads Blender {LTS} LTS", own_dir()?.display())),
+        None if check => return Ok(format!("CHECKED  no Blender found (raea.blender, {}, PATH): raea setup blender downloads Blender {LTS} LTS", own_dir("blender")?.display())),
         None => {
             let (b, f) = download()?;
             run(Command::new("git").args(["config", "--global", "raea.blender"]).arg(&b), "git config")?;

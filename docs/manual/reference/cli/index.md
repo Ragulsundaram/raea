@@ -100,13 +100,14 @@ Music read, foley and instruments made on this machine.
 
 ## Generate and 3D tools
 
-Generated media, physics bakes and Blender.
+Generated media, physics bakes, Blender and Godot.
 
 | Verb | What it does |
 | --- | --- |
 | [`raea gen`](gen.md) | Generate images, video, music, sound, speech, 3D models and text through made.app, fal, Replicate, OpenRouter, Modal or ComfyUI. |
 | [`raea physics`](physics.md) | Make the bakes <Physics> and <Goo> play: rigid bodies, soft goo, and parts cut out of a .glb. |
 | [`raea blender`](blender.md) | Run a Blender Python script headless, with raea's library of mesh scripts: convert, decimate, repair, split, bake, rig, cloth. |
+| [`raea godot`](godot.md) | Run a TypeScript script against Godot's whole API in a headless Godot with GodotJS, record what it draws as frames, or open the editor on the project. |
 
 ## Agents and setup
 
