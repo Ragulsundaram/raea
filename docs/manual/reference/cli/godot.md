@@ -20,8 +20,8 @@ person. The guide is `raea guide bevy/godot`.
 ## Usage
 
 ```sh
-raea setup godot [--check]   (download Godot 4.6.1 with GodotJS, its TypeScript bindings (MIT), into ~/.raea/tools/godot: JavaScriptCore on the Mac, QuickJS on Windows and Linux; checked against its pinned sha256)
-raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N]] [--size WxH] [--timeout S] [ARGS...]   (a TypeScript script against Godot's whole API through raea/godot: its default export gets the SceneTree and ARGS, headless unless --window; --movie writes every frame Godot draws (NAME.png numbered, or .avi) at a fixed --fps, 30 unless given; the project is DIR, else the nearest project.godot above the script, else an empty one; Godot quits when it returns)
+raea setup godot [--check]   (download Godot 4.6.1 with GodotJS, its TypeScript bindings (MIT), into ~/.raea/tools/godot: JavaScriptCore on the Mac, QuickJS on Windows and Linux; raea's own build (the Mac's notarized), else GodotJS's, each checked against its pinned sha256)
+raea godot run [SCRIPT.ts] [--project DIR] [--window] [--movie FILE [--fps N] [--frames N]] [--scene res://X.tscn] [--size WxH] [--timeout S] [ARGS...]   (a TypeScript script against Godot's whole API through raea/godot: its default export gets the SceneTree and ARGS, headless unless --window; --movie writes every frame Godot draws (NAME.png numbered, or .avi) at a fixed --fps, 30 unless given; the project is DIR, else the nearest project.godot above the script, else an empty one; Godot quits when it returns, or after --frames N; --scene plays a scene of the project under it, with no script needed; a scene in --window plays until the window is closed)
 raea godot types [DIR]   (the project's own TypeScript types from GodotJS: Godot's API with its scenes, resources and input actions, into DIR/typings)
 raea godot open [DIR]   (the Godot editor on the project, GodotJS's, to edit its scenes)
 ```
