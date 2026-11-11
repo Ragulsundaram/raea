@@ -167,13 +167,16 @@ The master: every sound in the composition brought to `lufs` integrated loudness
 
 ### `Nudge`
 
-Moves its child by (x, y): an element gets the move in front of its own transform; a component, whose box it
-can't reach, moves inside a full-frame layer.
+Places its child: an element gets the move in front of its own transform and the fade times its own opacity; a
+component, whose box it can't reach, is placed inside a full-frame layer.
 
 | Prop | Type | What it does |
 | --- | --- | --- |
 | `x` | `number` | how far to move it, in the composition's pixels |
 | `y` | `number` | how far to move it down, in the composition's pixels |
+| `scale` | `number` | how much bigger (2) or smaller (0.5), about its centre |
+| `rotate` | `number` | a turn, in degrees, about its centre |
+| `opacity` | `number` | 0 (gone) to 1 (as it was), times its own opacity |
 | `children` | `ReactNode` | the part it places: an element, or a component, which moves inside a full-frame layer |
 
 ### `Overlay`
