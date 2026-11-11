@@ -53,7 +53,7 @@ export interface Api {
 
 /** bmesh.types.BMDeformVert */
 export interface BMDeformVert {
-  readonly [index: number]: any;
+  readonly [index: number]: H.Ref<number>;
   /**
    * Return the group indices used by this vertex
    * (matching Python's dict.keys() functionality).
@@ -124,7 +124,6 @@ export interface BMDeformVertClass {
  * bmesh.types.BMEdge
  */
 export interface BMEdge {
-  readonly [index: number]: any;
   /**
    * Set the selection.
    * This is different from the *select* attribute because it updates the selection state of associated geometry.
@@ -444,8 +443,8 @@ export interface BMEditSelIterClass {
 }
 
 /** bmesh.types.BMEditSelSeq */
-export interface BMEditSelSeq extends AsyncIterable<any> {
-  readonly [index: number]: any;
+export interface BMEditSelSeq extends AsyncIterable<P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace> {
+  readonly [index: number]: H.Ptr<P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace>;
   /** Ensures all elements in the selection history are selected. */
   validate(...args: any[]): H.Ref<void>;
   /** Empties the selection history. */
@@ -510,8 +509,8 @@ export interface BMEditSelSeqClass {
  *
  * bmesh.types.BMElemSeq
  */
-export interface BMElemSeq extends AsyncIterable<any> {
-  readonly [index: number]: any;
+export interface BMElemSeq extends AsyncIterable<P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace | P.bmesh_types.BMLoop> {
+  readonly [index: number]: H.Ptr<P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace | P.bmesh_types.BMLoop>;
   /**
    * Initialize the index values of this sequence.
    *
@@ -547,7 +546,6 @@ export interface BMElemSeqClass {
  * bmesh.types.BMFace
  */
 export interface BMFace {
-  readonly [index: number]: any;
   /**
    * Set the selection.
    * This is different from the *select* attribute because it updates the selection state of associated geometry.
@@ -1059,8 +1057,8 @@ export interface BMLayerAccessVertClass {
  *
  * bmesh.types.BMLayerCollection
  */
-export interface BMLayerCollection extends AsyncIterable<any> {
-  readonly [index: number]: any;
+export interface BMLayerCollection extends AsyncIterable<P.bmesh_types.BMLayerItem> {
+  readonly [index: number]: H.Ptr<P.bmesh_types.BMLayerItem>;
   /**
    * Create a new layer or return an existing active layer
    * @returns The newly created layer, or the existing active layer.
@@ -1195,7 +1193,6 @@ export interface BMLayerItemClass {
  * bmesh.types.BMLoop
  */
 export interface BMLoop {
-  readonly [index: number]: any;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
@@ -1382,7 +1379,6 @@ export interface BMLoopUVClass {
  * bmesh.types.BMVert
  */
 export interface BMVert {
-  readonly [index: number]: any;
   /**
    * Set the selection.
    * This is different from the *select* attribute because it updates the selection state of associated geometry.

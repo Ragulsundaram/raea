@@ -800,7 +800,7 @@ export interface GPUShaderCreateInfo {
    * to be performed.
    * @param value Depth write value. :UNCHANGED: disables depth write in a fragment shader and execution of the fragments can be optimized away. :ANY: enables depth write in a fragment shader for any fragments :GREATER: enables depth write in a fragment shader for depth values that are greater than the depth value in the output buffer. :LESS: enables depth write in a fragment shader for depth values that are less than the depth value in the output buffer.
    */
-  depth_write(value: H.In<"UNCHANGED" | "ANY" | "GREATER" | "LESS">): any;
+  depth_write(value: H.In<"UNCHANGED" | "ANY" | "GREATER" | "LESS">): H.Ref<void>;
   /**
    * Specify a depth write behavior when modifying gl_FragDepth.
    *
@@ -826,7 +826,7 @@ export interface GPUShaderCreateInfo {
      * :LESS: enables depth write in a fragment shader for depth values that are less than the depth value in the output buffer.
      */
     value: H.In<"UNCHANGED" | "ANY" | "GREATER" | "LESS">;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify a fragment output corresponding to a framebuffer target slot.
    * @param slot The attribute index.
@@ -836,7 +836,7 @@ export interface GPUShaderCreateInfo {
   fragment_out(slot: H.In<number>, type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>, kw?: {
     /** Dual Source Blending Index. */
     blend?: H.In<"NONE" | "SRC_0" | "SRC_1">;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify a fragment output corresponding to a framebuffer target slot.
    * @param slot The attribute index.
@@ -852,14 +852,14 @@ export interface GPUShaderCreateInfo {
     name: H.In<string>;
     /** Dual Source Blending Index. */
     blend?: H.In<"NONE" | "SRC_0" | "SRC_1">;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify a uniform variable whose type can be one of those declared in :meth:`gpu.types.GPUShaderCreateInfo.typedef_source`.
    * @param slot The uniform variable index.
    * @param type_name Name of the data type. It can be a struct type defined in the source passed through the :meth:`gpu.types.GPUShaderCreateInfo.typedef_source`.
    * @param name The uniform variable name.
    */
-  uniform_buf(slot: H.In<number>, type_name: H.In<string>, name: H.In<string>): any;
+  uniform_buf(slot: H.In<number>, type_name: H.In<string>, name: H.In<string>): H.Ref<void>;
   /**
    * Specify a uniform variable whose type can be one of those declared in :meth:`gpu.types.GPUShaderCreateInfo.typedef_source`.
    * @param slot The uniform variable index.
@@ -873,7 +873,7 @@ export interface GPUShaderCreateInfo {
     type_name: H.In<string>;
     /** The uniform variable name. */
     name: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify an image resource used for arbitrary load and store operations.
    * @param slot The image resource index.
@@ -931,7 +931,7 @@ export interface GPUShaderCreateInfo {
    * @param name Name of the constant.
    * @param size If not zero, indicates that the constant is an array with the specified size.
    */
-  push_constant(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>, size?: H.In<number>): any;
+  push_constant(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>, size?: H.In<number>): H.Ref<void>;
   /**
    * Specify a global access constant.
    * @param type The data type of the constant.
@@ -941,7 +941,7 @@ export interface GPUShaderCreateInfo {
   push_constant(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>, kw: {
     /** If not zero, indicates that the constant is an array with the specified size. */
     size?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify a global access constant.
    * @param type The data type of the constant.
@@ -955,7 +955,7 @@ export interface GPUShaderCreateInfo {
     name: H.In<string>;
     /** If not zero, indicates that the constant is an array with the specified size. */
     size?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Vertex shader source code written in GLSL.
    *

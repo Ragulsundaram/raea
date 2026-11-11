@@ -67,7 +67,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new enumerator property definition.
    * @returns Opaque type used for registration.
@@ -132,7 +132,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new enumerator property definition.
    * @returns Opaque type used for registration.
@@ -223,7 +223,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   readonly ExportHelper: ExportHelperClass;
   readonly ImportHelper: ImportHelperClass;
   /**
@@ -305,7 +305,7 @@ export interface Api {
      * so only disable this flag if it's not likely to cause performance issues.
      */
     search_options?: H.In<Set<string>>;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Each argument is an axis
    * where the first 2 are a source and the second 2 are the target.

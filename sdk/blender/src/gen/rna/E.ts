@@ -265,7 +265,7 @@ export interface EditBone extends R.bpy_struct {
    *
    * .. note:: Takes ``O(len(bones))`` time.
    */
-  get children(): any;
+  get children(): H.Ref<any[]>;
   /**
    * Align this bone to another by moving its tail and settings its roll
    * the length of the other bone is not used.

@@ -55,27 +55,38 @@ function value(v: string): string {
   return /^(nullptr|NULL|0)?$/.test(v) ? "" : UNKNOWN;
 }
 // a C function's body: the one type all its returns give
-const BODY = /^(?:static\s+)?PyObject\s*\*\s*(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)^\}/gm;
+const BODY = /^(?:static\s+)?PyObject\s*\*\s*(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)^\}/gm;
 const RET = /\bPy_RETURN_(NONE|TRUE|FALSE)\b|\breturn\b([^;]*);/g;
-function kindOf(body: string): string {
+function kindOf(params: string, body: string): string {
   const kinds = new Set<string>();
   for (const m of body.matchAll(RET)) {
-    const k = m[1] ? (m[1] === "NONE" ? "None" : "bool") : value((m[2] ?? "").trim());
+    const v = (m[2] ?? "").trim();
+    const k = m[1] ? (m[1] === "NONE" ? "None" : "bool") : /^\w+$/.test(v) && value(v) === UNKNOWN ? local(params, body, v) : value(v);
     if (k) kinds.add(k);
   }
   return kinds.size === 1 ? [...kinds][0] : UNKNOWN;
 }
+// a local the function returns (`ret = Py_None;` ... `return ret;`, libraries.write): what all its assignments give;
+// unknown for a parameter, or one whose address is passed (something else may set it)
+function local(params: string, body: string, name: string): string {
+  if (new RegExp(`\\b${name}\\b`).test(params) || new RegExp(`&\\s*${name}\\b`).test(body)) return UNKNOWN;
+  const kinds = new Set<string>();
+  for (const a of body.matchAll(new RegExp(`(?<![\\w.>])${name}\\s*=(?!=)\\s*([^;]*);`, "g"))) kinds.add(value(a[1].trim()));
+  kinds.delete(""); // nullptr: an error
+  return kinds.size === 1 ? [...kinds][0] : UNKNOWN;
+}
 // a method or property entry, in a table or a definition of its own: the Python name, the C function (the getter),
-// however it's cast, and the rest, where a method has its METH_ flags; any other entry is taken as a property's
-// (a name some other kind of table also has only disagrees, and is left unknown)
-const ENTRY = /\{\s*(?:\(char\s*\*\)\s*)?"(\w+)"\s*,\s*(?:\w+_cast<[^>]+>\(\s*(\w+)\s*\)|\(\s*\w+\s*\)\s*(?:\(\s*void\s*\*\s*\)\s*)?(\w+)|(\w+))([^}]*)\}/g;
+// however it's cast (gpu.types.GPUShaderCreateInfo's `(PyCFunction)(void *)(name)` too), and the rest, where a method
+// has its METH_ flags; any other entry is taken as a property's (a name some other kind of table also has only
+// disagrees, and is left unknown)
+const ENTRY = /\{\s*(?:\(char\s*\*\)\s*)?"(\w+)"\s*,\s*(?:\w+_cast<[^>]+>\(\s*(\w+)\s*\)|\(\s*\w+\s*\)\s*(?:\(\s*void\s*\*\s*\)\s*)?\(?\s*(\w+)\s*\)?|(\w+))([^}]*)\}/g;
 
 type Family = { methods: Record<string, string>; getters: Record<string, string> };
 const result: Record<string, Family> = {};
 for (const [family, dir] of Object.entries(FAMILIES)) {
   const files = sources(join(root, dir));
   const kinds = new Map<string, string>();
-  for (const src of files) for (const m of src.matchAll(BODY)) kinds.set(m[1], kindOf(m[2]));
+  for (const src of files) for (const m of src.matchAll(BODY)) kinds.set(m[1], kindOf(m[2], m[3]));
   const methods = new Map<string, Set<string>>();
   const getters = new Map<string, Set<string>>();
   for (const src of files) {

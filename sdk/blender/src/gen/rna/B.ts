@@ -1743,7 +1743,7 @@ export interface BlendDataLibraries {
     fake_user?: H.In<boolean>;
     /** When True, write a compressed blend file. */
     compress?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Write data-blocks into a blend file.
    *
@@ -1770,7 +1770,7 @@ export interface BlendDataLibraries {
     fake_user?: H.In<boolean>;
     /** When True, write a compressed blend file. */
     compress?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**
@@ -4031,7 +4031,7 @@ export interface BoneCollection extends R.bpy_struct {
     bone: R.AnyType;
   }): H.Ref<boolean>;
   /** A set of all bones assigned to this bone collection and its child collections. */
-  get bones_recursive(): any;
+  get bones_recursive(): H.Ref<Set<any>>;
 }
 
 /**

@@ -12,31 +12,9 @@ export interface Api {
   readonly AutoKeying: AutoKeyingClass;
   /** BakeOptions(only_selected: bool, do_pose: bool, do_object: bool, do_visual_keying: bool, do_constraint_clear: bool, do_parents_clear: bool, do_clean: bool, do_location: bool, do_rotation: bool, do_scale: bool, do_bbone: bool, do_custom_props: bool) */
   readonly BakeOptions: BakeOptionsClass;
-  /**
-   * Built-in immutable sequence.
-   *
-   * If no argument is given, the constructor returns an empty tuple.
-   * If iterable is specified the tuple is initialized from iterable's items.
-   *
-   * If the argument is a tuple, the return value is the same object.
-   */
-  FCurveKey(iterable?: readonly any[]): any;
-  /** Deprecated alias to collections.abc.Iterable. */
-  Iterable(...args: any[]): any;
   /** A buffer for keyframe Co unpacked values per ``FCurveKey``. ``FCurveKeys`` are added using */
   readonly KeyframesCo: KeyframesCoClass;
-  /**
-   * Built-in mutable sequence.
-   *
-   * If no argument is given, the constructor creates a new empty list.
-   * The argument must be an iterable if specified.
-   */
-  ListKeyframes(iterable?: readonly any[]): any;
-  /** A Mapping is a generic container for associating key/value */
-  readonly Mapping: MappingClass;
   readonly PoseBone: PoseBoneClass;
-  /** All the operations on a read-only sequence. */
-  readonly Sequence: SequenceClass;
   /**
    * Ensure a layer and a keyframe strip exists, then ensure that strip has a channelbag for the slot.
    * @returns The channelbag for *slot* in the first keyframe strip.
@@ -232,32 +210,6 @@ export interface Api {
     /** Options for baking. */
     bake_options: P.bpy_extras_anim_utils.BakeOptions;
   }): H.Ref<any[]>;
-  /**
-   * Add dunder methods based on the fields defined in the class.
-   *
-   * Examines PEP 526 __annotations__ to determine fields.
-   *
-   * If init is true, an __init__() method is added to the class. If repr
-   * is true, a __repr__() method is added. If order is true, rich
-   * comparison dunder methods are added. If unsafe_hash is true, a
-   * __hash__() method is added. If frozen is true, fields may not be
-   * assigned to after instance creation. If match_args is true, the
-   * __match_args__ tuple is added. If kw_only is true, then by default
-   * all fields are keyword-only. If slots is true, a new class with a
-   * __slots__ attribute is returned.
-   */
-  dataclass(kw?: {
-    init?: boolean;
-    repr?: boolean;
-    eq?: boolean;
-    order?: boolean;
-    unsafe_hash?: boolean;
-    frozen?: boolean;
-    match_args?: boolean;
-    kw_only?: boolean;
-    slots?: boolean;
-    weakref_slot?: boolean;
-  }): any;
   rna_idprop_value_to_python(value: any): any;
   rna_idprop_value_to_python(kw: { value: any }): any;
 }
@@ -591,99 +543,13 @@ export interface KeyframesCoClass {
   (): H.Own<KeyframesCo>;
 }
 
-/**
- * A Mapping is a generic container for associating key/value
- * pairs.
- *
- * This class provides concrete generic implementations of all
- * methods except for __getitem__, __iter__, and __len__.
- *
- * bpy_extras.anim_utils.Mapping
- */
-export interface Mapping {
-  readonly [index: number]: any;
-  /** D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None. */
-  get(key: any, default_?: any): any;
-  /** D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None. */
-  get(key: any, kw: { default?: any }): any;
-  /** D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None. */
-  get(kw: { key: any; default?: any }): any;
-  /** D.keys() -> a set-like object providing a view on D's keys */
-  keys(): any;
-  /** D.items() -> a set-like object providing a view on D's items */
-  items(): any;
-  /** D.values() -> an object providing a view on D's values */
-  values(): any;
-}
-/** The class bpy_extras.anim_utils.Mapping: called, a new one. */
-export interface MappingClass {
-  /**
-   * A Mapping is a generic container for associating key/value
-   * pairs.
-   *
-   * This class provides concrete generic implementations of all
-   * methods except for __getitem__, __iter__, and __len__.
-   */
-  (): H.Own<Mapping>;
-}
-
 /** bpy_extras.anim_utils.PoseBone */
 export interface PoseBone {
-  get children(): any;
+  get children(): H.Ref<any[]>;
 }
 /** The class bpy_extras.anim_utils.PoseBone: called, a new one. */
 export interface PoseBoneClass {
   (...args: any[]): H.Own<PoseBone>;
   /** = <bpy_struct, Struct("PoseBone")> */
   readonly bl_rna: H.Ref<any>;
-}
-
-/**
- * All the operations on a read-only sequence.
- *
- * Concrete subclasses must override __new__ or __init__,
- * __getitem__, and __len__.
- *
- * bpy_extras.anim_utils.Sequence
- */
-export interface Sequence extends AsyncIterable<any> {
-  readonly [index: number]: any;
-  /**
-   * S.index(value, [start, [stop]]) -> integer -- return first index of value.
-   * Raises ValueError if the value is not present.
-   *
-   * Supporting start and stop arguments is optional, but
-   * recommended.
-   */
-  index(value: any, start?: number, stop?: any): any;
-  /**
-   * S.index(value, [start, [stop]]) -> integer -- return first index of value.
-   * Raises ValueError if the value is not present.
-   *
-   * Supporting start and stop arguments is optional, but
-   * recommended.
-   */
-  index(value: any, kw: { start?: number; stop?: any }): any;
-  /**
-   * S.index(value, [start, [stop]]) -> integer -- return first index of value.
-   * Raises ValueError if the value is not present.
-   *
-   * Supporting start and stop arguments is optional, but
-   * recommended.
-   */
-  index(kw: { value: any; start?: number; stop?: any }): any;
-  /** S.count(value) -> integer -- return number of occurrences of value */
-  count(value: any): any;
-  /** S.count(value) -> integer -- return number of occurrences of value */
-  count(kw: { value: any }): any;
-}
-/** The class bpy_extras.anim_utils.Sequence: called, a new one. */
-export interface SequenceClass {
-  /**
-   * All the operations on a read-only sequence.
-   *
-   * Concrete subclasses must override __new__ or __init__,
-   * __getitem__, and __len__.
-   */
-  (): H.Own<Sequence>;
 }

@@ -71,7 +71,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new vector boolean property definition.
    * @returns Opaque type used for registration.
@@ -134,7 +134,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new collection property definition.
    * @returns Opaque type used for registration.
@@ -153,7 +153,7 @@ export interface Api {
     override?: H.In<Set<string>>;
     /** Enumerator of tags that are defined by parent class. */
     tags?: H.In<Set<string>>;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new collection property definition.
    * @returns Opaque type used for registration.
@@ -174,7 +174,7 @@ export interface Api {
     override?: H.In<Set<string>>;
     /** Enumerator of tags that are defined by parent class. */
     tags?: H.In<Set<string>>;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new enumerator property definition.
    * @returns Opaque type used for registration.
@@ -239,7 +239,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new enumerator property definition.
    * @returns Opaque type used for registration.
@@ -330,7 +330,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new float (single precision) property definition.
    * @returns Opaque type used for registration.
@@ -405,7 +405,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new vector float property definition.
    * @returns Opaque type used for registration.
@@ -482,7 +482,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new int property definition.
    * @returns Opaque type used for registration.
@@ -553,7 +553,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new vector int property definition.
    * @returns Opaque type used for registration.
@@ -626,7 +626,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new pointer property definition.
    *
@@ -816,6 +816,38 @@ export interface Api {
      * so only disable this flag if it's not likely to cause performance issues.
      */
     search_options?: H.In<Set<string>>;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
+  /** Intermediate storage for properties before registration. */
+  readonly _PropertyDeferred: _PropertyDeferredClass;
 }
 
+/**
+ * Intermediate storage for properties before registration.
+ *
+ * .. note::
+ *
+ *    This is not part of the stable API and may change between releases.
+ *
+ * bpy.props._PropertyDeferred
+ */
+export interface _PropertyDeferred {
+  /** Call self as a function. */
+  (...args: any[]): any;
+  /** The property registration function (e.g. :func:`bpy.props.IntProperty`). */
+  get function(): any;
+  set function(v: any);
+  /** The keyword arguments passed to the property registration function. */
+  get keywords(): H.Ref<Map<string, any>>;
+  set keywords(v: H.In<H.DictIn<any>>);
+}
+/** The class bpy.props._PropertyDeferred: called, a new one. */
+export interface _PropertyDeferredClass {
+  /**
+   * Intermediate storage for properties before registration.
+   *
+   * .. note::
+   *
+   *    This is not part of the stable API and may change between releases.
+   */
+  (): H.Own<_PropertyDeferred>;
+}

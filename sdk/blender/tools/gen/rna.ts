@@ -127,9 +127,11 @@ function pyMembers(s: Struct, n: Names, skip: Set<string>): string[] {
   for (const p of s.pyprops ?? []) {
     if (skip.has(p.id)) continue;
     const d = readDoc(p.doc);
-    const t = d.type ? pyType(d.type, { names: n, role: "out", self }) : { ts: "any", kind: "any" as const };
+    // no :type:: what the getter's own source returns (tools/returns.py), else any
+    const type = d.type ?? p.ret;
+    const t = type ? pyType(type, { names: n, role: "out", self }) : { ts: "any", kind: "any" as const };
     const get = `${jsdoc(d.text)}  get ${key(p.id)}(): ${direct(t)};`;
-    out.push(p.ro ? get : `${get}\n  set ${key(p.id)}(v: ${d.type ? input(pyType(d.type, { names: n, role: "in", self })) : "any"});`);
+    out.push(p.ro ? get : `${get}\n  set ${key(p.id)}(v: ${type ? input(pyType(type, { names: n, role: "in", self })) : "any"});`);
   }
   for (const f of [...(s.pyfuncs ?? []), ...(s.cfuncs ?? []).map((c) => ({ ...c, sig: null, static: false }))]) {
     if (skip.has(f.id)) continue;

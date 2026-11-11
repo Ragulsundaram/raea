@@ -16,6 +16,7 @@ import _rna_info as rna_info
 
 sys.path.insert(0, __import__("os").path.dirname(__import__("os").path.abspath(__file__)))
 from refine import refine  # noqa: E402 (beside this file)
+from returns import returns  # noqa: E402
 
 
 def prop(p):
@@ -124,11 +125,21 @@ def returns_none(fn):
 
 def written(fn, d):
     """Marks a function written in Python (`py`: what it returns is read from its own source, never tools/cret.json's
-    reading of C), and `none` when that source returns no value."""
+    reading of C): `none` when that source returns no value, else `ret`, the type its returns show (tools/returns.py)."""
     if inspect.isfunction(fn):
         d["py"] = True
         if returns_none(fn):
             d["none"] = True
+        else:
+            shown(fn, d)
+    return d
+
+
+def shown(fget, d):
+    """`ret`: the type a Python function or property getter's own returns show, when they show one."""
+    t = returns(fget) if inspect.isfunction(fget) else None
+    if t and t != "None":
+        d["ret"] = t
     return d
 
 
@@ -153,7 +164,7 @@ def struct(s):
     pyprops = []
     for name, attr in s.get_py_properties():
         if name in s.py_class.__dict__:
-            pyprops.append({"id": name, "doc": doc(attr), "ro": attr.fset is None})
+            pyprops.append(shown(attr.fget, {"id": name, "doc": doc(attr), "ro": attr.fset is None}))
     pyfuncs = [pyfunc(n, py.__dict__.get(n, a)) for n, a in s.get_py_functions() if n in py.__dict__]
     cfuncs = [{"id": n, "doc": doc(a)} for n, a in s.get_py_c_functions() if n in py.__dict__]
     if pyprops:
@@ -187,6 +198,7 @@ def member(name, obj, depth):
                 m["value"] = value(a)
             if kind == "property" and isinstance(a, property):
                 m["ro"] = a.fset is None
+                shown(a.fget, m)
             own.append(m)
         bases = [b.__module__ + "." + b.__qualname__ for b in obj.__bases__ if b is not object]
         return {"id": name, "kind": "class", "doc": doc(obj), "sig": sig(obj), "bases": bases, "members": own}
@@ -195,10 +207,24 @@ def member(name, obj, depth):
     return {"id": name, "kind": "data", "type": type(obj).__name__, "value": value(obj), "doc": ""}
 
 
+STDLIB = sys.stdlib_module_names - {"builtins"}  # Blender's C types say "builtins"
+
+
+def python_own(obj):
+    """Python's own, imported into a Blender module (bpy_extras.anim_utils): a typing alias (FCurveKey =
+    tuple[float, float], Iterable), or a class or function of the standard library (Mapping, dataclass)."""
+    if isinstance(obj, (types.GenericAlias, types.UnionType)) or type(obj).__module__ == "typing":
+        return True
+    named = inspect.isclass(obj) or inspect.isfunction(obj)
+    return named and (getattr(obj, "__module__", None) or "").split(".")[0] in STDLIB
+
+
 def members(mod, depth=0):
     out = []
+    # a private class the module's functions say they return is part of its API (bpy.props' _PropertyDeferred)
+    said = {n for f in vars(mod).values() if callable(f) for n in re.findall(r":rtype: :class:`(_[A-Za-z]\w*)`", doc(f))}
     for name in sorted(dir(mod)):
-        if name.startswith("_"):
+        if name.startswith("_") and name not in said:
             continue
         try:
             obj = getattr(mod, name)
@@ -206,6 +232,8 @@ def members(mod, depth=0):
             continue
         if isinstance(obj, types.ModuleType) and not obj.__name__.startswith(getattr(mod, "__name__", "")):
             continue  # an import, not a submodule
+        if python_own(obj):
+            continue
         out.append(member(name, obj, depth))
     return out
 

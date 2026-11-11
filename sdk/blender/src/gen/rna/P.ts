@@ -2318,7 +2318,7 @@ export interface PoseBone extends R.bpy_struct {
     /** Apply roll and curve offsets from bone properties */
     offsets?: H.In<boolean>;
   }): H.Ref<[M.Vector, number, M.Vector, number]>;
-  get children(): any;
+  get children(): H.Ref<any[]>;
 }
 
 /**

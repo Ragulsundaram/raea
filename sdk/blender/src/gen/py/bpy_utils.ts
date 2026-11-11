@@ -171,7 +171,7 @@ export interface Api {
   keyconfig_set(filepath: H.In<string>, kw?: {
     /** An optional callable for reporting errors. */
     report?: any;
-  }): any;
+  }): H.Ref<boolean>;
   /**
    * Load and activate a key configuration from a file.
    * @param filepath The file path to the key configuration preset.
@@ -181,7 +181,7 @@ export interface Api {
     filepath: H.In<string>;
     /** An optional callable for reporting errors. */
     report?: any;
-  }): any;
+  }): H.Ref<boolean>;
   /** Load scripts and run each modules register function. */
   load_scripts(kw?: {
     /**
@@ -527,9 +527,9 @@ export interface Api {
     use_system_environment?: H.In<boolean>;
   }): H.Ref<string[]>;
   /** Returns a list of user preference script directories. */
-  script_paths_pref(): any;
+  script_paths_pref(): H.Ref<any[]>;
   /** Returns a list of system script directories from environment variables. */
-  script_paths_system_environment(): any;
+  script_paths_system_environment(): H.Ref<any[]>;
   /**
    * Returns an SMPTE formatted string from the *frame*:
    * ``HH:MM:SS:FF``.

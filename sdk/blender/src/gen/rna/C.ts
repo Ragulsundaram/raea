@@ -6075,7 +6075,7 @@ export interface CyclesPreferences extends R.AddonPreferences {
    */
   get kernel_optimization_level(): H.Ref<"OFF" | "INTERSECT" | "FULL">;
   set kernel_optimization_level(v: H.In<"OFF" | "INTERSECT" | "FULL">);
-  default_device(): any;
+  default_device(): H.Ref<number>;
   draw(context: any): H.Ref<void>;
   draw(kw: { context: any }): H.Ref<void>;
   draw_impl(layout: any, context: any): H.Ref<void>;
@@ -6085,18 +6085,18 @@ export interface CyclesPreferences extends R.AddonPreferences {
   get_compute_device_type(): any;
   get_device_list(compute_device_type: any): any;
   get_device_list(kw: { compute_device_type: any }): any;
-  get_device_types(context: any): any;
-  get_device_types(kw: { context: any }): any;
+  get_device_types(context: any): H.Ref<any[][]>;
+  get_device_types(kw: { context: any }): H.Ref<any[][]>;
   get_devices(compute_device_type?: string): H.Ref<void>;
   get_devices(kw: { compute_device_type?: string }): H.Ref<void>;
-  get_devices_for_type(compute_device_type: any, device_list?: any): any;
-  get_devices_for_type(compute_device_type: any, kw: { device_list?: any }): any;
-  get_devices_for_type(kw: { compute_device_type: any; device_list?: any }): any;
-  get_num_gpu_devices(): any;
-  has_active_device(): any;
-  has_multi_device(): any;
-  has_oidn_gpu_devices(): any;
-  has_optixdenoiser_gpu_devices(): any;
+  get_devices_for_type(compute_device_type: any, device_list?: any): H.Ref<any[]>;
+  get_devices_for_type(compute_device_type: any, kw: { device_list?: any }): H.Ref<any[]>;
+  get_devices_for_type(kw: { compute_device_type: any; device_list?: any }): H.Ref<any[]>;
+  get_num_gpu_devices(): H.Ref<number>;
+  has_active_device(): H.Ref<boolean>;
+  has_multi_device(): H.Ref<boolean>;
+  has_oidn_gpu_devices(): H.Ref<boolean>;
+  has_optixdenoiser_gpu_devices(): H.Ref<boolean>;
   refresh_devices(): H.Ref<void>;
   update_device_entries(device_list: any): H.Ref<void>;
   update_device_entries(kw: { device_list: any }): H.Ref<void>;

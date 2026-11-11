@@ -64,7 +64,8 @@ export interface Struct {
   props: Prop[];
   funcs: Func[];
   nested?: string;
-  pyprops?: { id: string; doc: string; ro: boolean }[];
+  /** ret: what the getter's own source returns (tools/returns.py), where its docstring has no :type: */
+  pyprops?: { id: string; doc: string; ro: boolean; ret?: string }[];
   pyfuncs?: { id: string; sig: string | null; doc: string; static: boolean; py?: boolean; none?: boolean; ret?: string }[];
   cfuncs?: { id: string; doc: string; none?: boolean; ret?: string }[];
 }

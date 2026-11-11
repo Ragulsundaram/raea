@@ -72,7 +72,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new enumerator property definition.
    * @returns Opaque type used for registration.
@@ -163,7 +163,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Returns a new vector float property definition.
    * @returns Opaque type used for registration.
@@ -240,7 +240,7 @@ export interface Api {
      * .. note:: The callback is responsible to ensure that value limits (min/max, length...) are respected. Otherwise a ValueError exception is raised.
      */
     set_transform?: any;
-  }): any;
+  }): H.Ptr<P.bpy_props._PropertyDeferred>;
   /**
    * Return a matrix using the operator settings and view context.
    * @returns the matrix from the context and settings.

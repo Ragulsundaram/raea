@@ -1426,7 +1426,7 @@ export interface Mesh extends R.ID {
   count_selected_items(): H.Arr<number>;
   /** Edge crease values for subdivision surface, corresponding to the "crease_edge" attribute. */
   get edge_creases(): any;
-  get edge_keys(): any;
+  get edge_keys(): H.Ref<any[]>;
   /** Vertex crease values for subdivision surface, corresponding to the "crease_vert" attribute. */
   get vertex_creases(): any;
   /** Mask values for sculpting and painting, corresponding to the ".sculpt_mask" attribute. */
@@ -1847,7 +1847,7 @@ export interface MeshLoopTriangle extends R.bpy_struct {
   get use_smooth(): H.Ref<boolean>;
   /** The midpoint of the face. */
   get center(): any;
-  get edge_keys(): any;
+  get edge_keys(): H.Ref<any[]>;
 }
 
 /**
@@ -1926,7 +1926,7 @@ export interface MeshPolygon extends R.bpy_struct {
   get index(): H.Ref<number>;
   /** Invert winding of this face (flip its normal) */
   flip(): H.Ref<void>;
-  get edge_keys(): any;
+  get edge_keys(): H.Ref<any[]>;
   get loop_indices(): any;
 }
 

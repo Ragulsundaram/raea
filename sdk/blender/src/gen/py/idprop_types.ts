@@ -31,7 +31,7 @@ export interface Api {
  * idprop.types.IDPropertyArray
  */
 export interface IDPropertyArray {
-  readonly [index: number]: any;
+  readonly [index: number]: H.Ref<number | boolean>;
   /**
    * Return the array as a list.
    * @returns The array as a list.
@@ -56,8 +56,7 @@ export interface IDPropertyArrayClass {
  *
  * idprop.types.IDPropertyGroup
  */
-export interface IDPropertyGroup extends AsyncIterable<any> {
-  readonly [index: number]: any;
+export interface IDPropertyGroup extends AsyncIterable<string> {
   /**
    * Remove an item from the group, returning a Python representation.
    *

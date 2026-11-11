@@ -28,6 +28,32 @@ function propertyMember(m: PyMember, n: Names, self: string, mod: string): strin
 
 const dataMember = (m: PyMember): string => `${jsdoc(m.doc || (m.value ? `= ${m.value}` : ""))}  readonly ${key(m.id)}: H.Ref<${PYTYPE[m.type ?? ""] ?? "any"}>;`;
 
+/**
+ * What a class's `[i]` (`at`) and iteration (`each`) give where its name doesn't say (BMVertSeq's are BMVert's), as
+ * Blender 5.2's C gives them. `at` null: its `[]` takes no number (BMVert[layer], IDPropertyGroup["name"] through `$`).
+ * gpu.types.Buffer stays any: its item is a number or, in a buffer of more dimensions, a Buffer.
+ */
+const ELEM = "P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace";
+const ITEMS: Record<string, { at: string | null; each: string }> = {
+  // bmesh_py_types_select.cc bpy_bmeditselseq_subscript_int: the history's vertex, edge or face
+  "bmesh.types.BMEditSelSeq": { at: `H.Ptr<${ELEM}>`, each: ELEM },
+  // bmesh_py_types.cc bpy_bmelemseq_subscript_int: BPy_BMElem_CreatePyObject, any element (a face's loops too)
+  "bmesh.types.BMElemSeq": { at: `H.Ptr<${ELEM} | P.bmesh_types.BMLoop>`, each: `${ELEM} | P.bmesh_types.BMLoop` },
+  // bmesh_py_types_customdata.cc: subscript_int and iter give BMLayerItems
+  "bmesh.types.BMLayerCollection": { at: "H.Ptr<P.bmesh_types.BMLayerItem>", each: "P.bmesh_types.BMLayerItem" },
+  // bmesh_py_types_meshdata.cc bpy_bmdeformvert_subscript: a vertex group's weight
+  "bmesh.types.BMDeformVert": { at: "H.Ref<number>", each: "any" },
+  // bmesh_py_types.cc bpy_bmelem_subscript: keyed by a BMLayerItem
+  "bmesh.types.BMVert": { at: null, each: "any" },
+  "bmesh.types.BMEdge": { at: null, each: "any" },
+  "bmesh.types.BMFace": { at: null, each: "any" },
+  "bmesh.types.BMLoop": { at: null, each: "any" },
+  // idprop_py_api.cc BPy_IDArray_GetItem: float, double, int or bool
+  "idprop.types.IDPropertyArray": { at: "H.Ref<number | boolean>", each: "number | boolean" },
+  // idprop_py_api.cc: a group is keyed by name (BPy_IDGroup_Map_GetItem), and iterates its keys (BPy_IDGroup_iter)
+  "idprop.types.IDPropertyGroup": { at: null, each: "string" },
+};
+
 /** A class: its instance interface and its class interface (Name, NameClass). */
 function emitClass(c: PyMember, mod: string, n: Names, classes: Set<string>): string {
   const self = n.py.get(`${mod}.${c.id}`)!;
@@ -40,15 +66,18 @@ function emitClass(c: PyMember, mod: string, n: Names, classes: Set<string>): st
     if (t?.kind === "obj" && t.ts.startsWith("P.")) ext.push(t.ts);
   }
   const elemName = c.id.endsWith("Seq") ? c.id.slice(0, -3) : null;
-  const elem = elemName && classes.has(elemName) ? elemName : null;
+  const named = elemName && classes.has(elemName) ? elemName : null;
+  const items = ITEMS[`${mod}.${c.id}`];
+  const at = items ? items.at : named ? `H.Ptr<${named}>` : "any";
+  const each = items ? items.each : named ?? "any";
   for (const m of c.members ?? []) {
     if (m.id === "__init__" || m.id === "__len__") continue;
     if (m.id === "__getitem__") {
-      inst.push(`  readonly [index: number]: ${elem ? `H.Ptr<${elem}>` : "any"};`);
+      if (at) inst.push(`  readonly [index: number]: ${at};`);
       continue;
     }
     if (m.id === "__iter__") {
-      ext.push(`AsyncIterable<${elem ?? "any"}>`);
+      ext.push(`AsyncIterable<${each}>`);
       continue;
     }
     if (m.id === "__call__") {
