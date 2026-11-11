@@ -47,8 +47,8 @@ workspace, while the indexing runs on your own computers.
 
 ## Free, Pro and Team
 
-On Free, your libraries and their index stay on your computer. On Pro and Team, they're kept in raea's storage, so every
-computer you link, and every teammate, searches the same media.
+On Free, your libraries and their index stay on your computer. On Pro and Team, they're kept in raea's storage, so you
+can search them on raea.io too, and on Team every teammate searches the same media.
 
 That's the last tutorial. The rest of the docs go deeper: [How an agent should use raea](../start/agents.md) for the
 loop, and the [CLI](../reference/cli/index.md) and [SDK](../reference/sdk/index.md) references.
