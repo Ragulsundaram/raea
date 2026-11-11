@@ -106,6 +106,13 @@ since=${RAEA_SINCE:-$(git describe --tags --abbrev=0 --match 'v*' "$ref" 2>/dev/
 case $platform in
   linux-x86_64)
     cp "$bin/raea" "$bin/libraea_bundle.so" "$bin/raea-perceive" "$bin/raea-rune-host" "$bin/raea-page-host" "$stage/bin/"
+    # each loses its debug info and local symbols (#88: rc2's raea was 2.67 GB, 491 MB stripped), kept in
+    # dist/NAME-symbols/FILE.debug, which the stripped file names (gdb and addr2line find it); never shipped
+    mkdir -p "$out/$name-symbols"
+    for f in "$stage"/bin/*; do
+      d="$out/$name-symbols/$(basename "$f").debug"
+      objcopy --only-keep-debug "$f" "$d" && strip --strip-debug --discard-all "$f" && objcopy --add-gnu-debuglink="$d" "$f"
+    done
     # what a Linux machine needs beside it: the bundled Noto Sans JP is a Latin subset, so kanji and kana come from the
     # system, as on a Mac (raea warns once a character when no font has it)
     printf '%s\n' "raea $version for Linux x86_64 (glibc 2.39 or newer, Vulkan: a GPU driver or Mesa's llvmpipe).
@@ -121,7 +128,13 @@ loader (Debian and Ubuntu: apt install libxkbcommon-x11-0 libxcursor1 libxi6 lib
     printf '%s\r\n' "raea $version for Windows x86_64 (Windows 10 or 11, a DirectX 12 or Vulkan GPU driver; with no GPU, Mesa's lavapipe and WGPU_BACKEND=vulkan)." \
       "It needs the Microsoft Visual C++ Redistributable (x64), which most machines already have:" \
       "https://aka.ms/vs/17/release/vc_redist.x64.exe" > "$stage/README.txt" ;;
-  *) cp "$bin/raea" "$bin/libraea_bundle.dylib" "$bin/raea-perceive" "$bin/raea-rune-host" "$bin/raea-page-host" "$stage/bin/" ;;
+  *) cp "$bin/raea" "$bin/libraea_bundle.dylib" "$bin/raea-perceive" "$bin/raea-rune-host" "$bin/raea-page-host" "$stage/bin/"
+    # stripped as they linked (tools/link-jit.sh, #88); a binary that still holds its debug map is a build from before
+    for f in raea raea-page-host raea-rune-host raea-perceive; do
+      [ "$(nm -a "$stage/bin/$f" 2>/dev/null | awk '$2 == "-"' | head -2 | wc -l)" -lt 2 ] || echo "release.sh: $f isn't stripped (a dist build strips it as it links; RAEA_KEEP_SYMBOLS=1 keeps them)" >&2
+    done
+    # their dSYMs, which link-jit.sh made, kept beside the archive (never shipped)
+    if [ -d "$bin/symbols" ]; then mkdir -p "$out/$name-symbols" && cp -R "$bin/symbols/." "$out/$name-symbols/"; fi ;;
 esac
 # the packages sdk/tsconfig.base.json lists (@raea/<name>: its sources and package.json), which the bundlers resolve by it
 pkgs=()
