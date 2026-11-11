@@ -14,6 +14,9 @@ raea-io-home = { path = "../../io/home" }
 raea-runtime-bundle = { path = "../../runtime/bundle" }
 raea-runtime-export = { path = "../../runtime/export" }
 raea-runtime-calls = { path = "../../runtime/calls" }
+# a composition's 3D as scene.json, a Godot project from it, and changes read back (raea scene export, raea godot export|back,
+# raea blender open|back)
+raea-app-interchange = { path = "../interchange" }
 serde_json = "1"
 # Godot with GodotJS, unpacked from its release zip (`raea setup godot`), and the script path the bundler imports
 zip = { version = "9", default-features = false, features = ["deflate-flate2"] }

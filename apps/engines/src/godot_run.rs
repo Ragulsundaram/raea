@@ -1,4 +1,5 @@
-//! `raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N]] [--size WxH] [--timeout S] [ARGS...]`:
+//! `raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N] [--frames N]] [--scene res://X.tscn] [--size WxH]
+//! [--timeout S] [ARGS...]`:
 //! a TypeScript script against Godot's whole API (raea/godot, sdk/godot). raea's bundler makes one CommonJS file of the
 //! script, with GodotJS's modules ("godot", "godot.annotations", ...) aliased to sdk/godot/src/shim's stand-ins, which
 //! read GodotJS's own when the script runs. It goes into the project's .godot/raea/<pid>/ as run.js, beside
@@ -26,14 +27,20 @@ struct Opts {
     movie: Option<PathBuf>,
     fps: u32,
     size: Option<String>,
+    /// Godot quits after this many frames (--quit-after), not when the script returns: a shot's length (GD11)
+    frames: Option<u32>,
+    /// a scene of the project added to the tree before the script runs, playing as it would in the game (GD11)
+    scene: Option<String>,
     rest: Vec<String>,
 }
 
 fn opts(args: &[String]) -> R<Opts> {
-    let script = args.get(2).ok_or("raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N]] [--size WxH] [--timeout S] [ARGS...]")?;
-    let script = PathBuf::from(script).canonicalize().map_err(|e| format!("{script}: {e}"))?;
-    let mut o = Opts { script, project: None, window: false, timeout: 3600.0, movie: None, fps: 30, size: None, rest: Vec::new() };
-    let mut it = args[3..].iter();
+    let script = args.get(2).ok_or("raea godot run SCRIPT.ts [--project DIR] [--window] [--movie FILE [--fps N] [--frames N]] [--scene res://X.tscn] [--size WxH] [--timeout S] [ARGS...]")?;
+    // no script, only flags: the project's --scene plays with nothing of yours added (sdk/godot/src/host/none.ts)
+    let bare = script.starts_with("--");
+    let script = if bare { raea_io_home::home().join("sdk/godot/src/host/none.ts") } else { PathBuf::from(script).canonicalize().map_err(|e| format!("{script}: {e}"))? };
+    let mut o = Opts { script, project: None, window: false, timeout: 3600.0, movie: None, fps: 30, size: None, frames: None, scene: None, rest: Vec::new() };
+    let mut it = args[if bare { 2 } else { 3 }..].iter();
     while let Some(a) = it.next() {
         match a.as_str() {
             "--project" => o.project = Some(PathBuf::from(it.next().ok_or("--project needs a folder")?)),
@@ -41,6 +48,8 @@ fn opts(args: &[String]) -> R<Opts> {
             "--timeout" => o.timeout = it.next().and_then(|s| s.parse().ok()).ok_or("--timeout needs seconds")?,
             "--movie" => o.movie = Some(std::path::absolute(it.next().ok_or("--movie needs a file (frames.png or film.avi)")?).map_err(|e| e.to_string())?),
             "--fps" => o.fps = it.next().and_then(|s| s.parse().ok()).filter(|n| *n > 0).ok_or("--fps needs frames a second")?,
+            "--frames" => o.frames = Some(it.next().and_then(|s| s.parse().ok()).filter(|n| *n > 0).ok_or("--frames needs a number of frames")?),
+            "--scene" => o.scene = Some(it.next().filter(|s| s.starts_with("res://")).ok_or("--scene needs a scene of the project, res://PATH.tscn")?.clone()),
             "--size" => {
                 let s = it.next().filter(|s| s.split_once('x').is_some_and(|(w, h)| w.parse::<u32>().is_ok() && h.parse::<u32>().is_ok()));
                 o.size = Some(s.ok_or("--size needs WxH")?.clone());
@@ -49,6 +58,9 @@ fn opts(args: &[String]) -> R<Opts> {
             "--" => o.rest.extend(it.by_ref().cloned()),
             _ => o.rest.push(a.clone()),
         }
+    }
+    if bare && o.scene.is_none() {
+        return Err("raea godot run without a script plays a scene: give --scene res://PATH.tscn (and --project DIR)".into());
     }
     Ok(o)
 }
@@ -219,6 +231,13 @@ pub fn run(args: &[String]) -> R<String> {
         }
         if let Some(s) = &o.size {
             cmd.arg("--resolution").arg(s);
+        }
+        // a set length: Godot stops after it, and main.js doesn't quit when the script returns
+        if let Some(n) = o.frames {
+            cmd.arg("--quit-after").arg(n.to_string()).env("RAEA_GODOT_HOLD", "1");
+        }
+        if let Some(sc) = &o.scene {
+            cmd.env("RAEA_GODOT_SCENE", sc);
         }
         cmd.arg("--path").arg(&project).arg("--script").arg(format!("res://.godot/raea/{pid}/main.js")).arg("--").args(&o.rest);
         cmd.env("RAEA_GODOT_LOADED", work.join("loaded"));

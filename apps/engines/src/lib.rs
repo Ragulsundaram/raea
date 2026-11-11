@@ -10,6 +10,10 @@ pub mod blender_ts;
 pub mod godot;
 /// `raea godot run SCRIPT.ts`: a TypeScript script in Godot through GodotJS
 pub mod godot_run;
+/// `raea blender shot`, `raea godot shot`: a shot's frames drawn by Blender or Godot (<BlenderShot>, <GodotShot>)
+pub mod shot;
+/// `raea scene export`, `raea godot export|back`, `raea blender open|back`: a raea scene sent to Blender or Godot and back
+pub mod round;
 
 use raea_app_tools::blender;
 
@@ -22,6 +26,13 @@ pub fn cli(args: &[String]) -> Option<R<String>> {
         ("setup", Some("blender")) => blender::setup(&args[2..]),
         ("setup", Some("godot")) => godot::setup(&args[2..]),
         ("blender", Some("run")) if args.get(2).is_some_and(|s| blender_bridge::is_ts(s)) => blender_ts::run(args),
+        ("blender", Some("shot")) => shot::blender(args),
+        ("godot", Some("shot")) => shot::godot(args),
+        ("scene", Some("export")) => round::scene_export(args),
+        ("godot", Some("export")) => round::godot_export(args),
+        ("godot", Some("back")) => round::godot_back(args),
+        ("blender", Some("open")) => round::blender_open(args),
+        ("blender", Some("back")) => round::blender_back(args),
         ("blender", _) => blender::blender(args),
         ("godot", _) => godot::godot(args),
         _ => return None,

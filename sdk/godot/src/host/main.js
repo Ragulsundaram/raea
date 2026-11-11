@@ -40,12 +40,29 @@ const report = (e) => {
   console.error(`error: ${text}`);
 };
 
+// `--scene res://X.tscn`: that scene playing in the tree before the script runs; `--frames N`: Godot stops after N
+// frames (--quit-after), so the script returning doesn't end the run (a shot, GD11); a scene in a window (--window)
+// plays until the window is closed
+const scenePath = godot.OS.get_environment("RAEA_GODOT_SCENE");
+const hold = godot.OS.get_environment("RAEA_GODOT_HOLD") === "1" || (scenePath !== "" && godot.DisplayServer.get_name() !== "headless");
+
 class RaeaMain extends godot.SceneTree {
   _initialize() {
+    if (scenePath) {
+      const packed = godot.ResourceLoader.load(scenePath);
+      if (!(packed instanceof godot.PackedScene)) {
+        report(new Error(`${scenePath}: not a scene this project has`));
+        this.quit(1);
+        return;
+      }
+      this.root.add_child(packed.instantiate());
+    }
     Promise.resolve()
       .then(() => (typeof main === "function" ? main(this, userArgs()) : undefined))
       .then(
-        () => this.quit(0),
+        () => {
+          if (!hold) this.quit(0);
+        },
         (e) => {
           report(e);
           this.quit(1);

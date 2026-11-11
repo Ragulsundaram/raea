@@ -13652,6 +13652,7 @@ name = "raea-app-engines"
 version = "0.1.0"
 dependencies = [
  "dunce",
+ "raea-app-interchange",
  "raea-app-tools",
  "raea-io-home",
  "raea-runtime-bundle",
@@ -13678,6 +13679,18 @@ dependencies = [
  "serde_json",
  "twox-hash",
  "winit",
+]
+
+[[package]]
+name = "raea-app-interchange"
+version = "0.1.0"
+dependencies = [
+ "raea-core-scene",
+ "raea-core-shape",
+ "raea-runtime-bundle",
+ "raea-runtime-export",
+ "raea-runtime-scene",
+ "serde_json",
 ]
 
 [[package]]

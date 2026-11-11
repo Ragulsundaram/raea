@@ -163,6 +163,7 @@ members = [
     "apps/ci",
     "apps/tools",
     "apps/engines",
+    "apps/interchange",
     "apps/judge",
     "apps/solid",
     "apps/media",

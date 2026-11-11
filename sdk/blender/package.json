@@ -9,7 +9,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./mathutils": "./src/mathutils/index.ts",
-    "./types": "./src/types.ts"
+    "./types": "./src/types.ts",
+    "./shot": "./src/shot.tsx",
+    "./shoot": "./src/shoot.ts"
   },
   "files": ["src", "python", "tools", "README.md"]
 }
