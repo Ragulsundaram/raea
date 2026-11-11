@@ -13602,6 +13602,7 @@ name = "raea-app-capcut"
 version = "0.1.0"
 dependencies = [
  "image",
+ "raea-core-scene",
  "raea-io-alpha",
  "raea-io-capcut",
  "raea-io-home",

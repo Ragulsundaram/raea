@@ -47,6 +47,9 @@ Feature: A composition handed to CapCut, ready in its timeline, and transparent 
       And the footage's own sound stays on its clip at the composition's gain when the manifest plays it there (its
         sound clip of the same file over the same frames from the same time); otherwise the clip is muted, and any
         other sound of the file is an audio clip (CC2c), so nothing plays twice
+      And each file is the one the render drew: a staticFile path (/media/x) in the edit's media/, then the
+        project's media/ and assets/, as the renderer finds it (on 11-11 the export read /media/x as a file at the disk's
+        root and refused every project that used staticFile)
 
     Scenario: CC2b. What raea draws is transparent overlay clips above the footage, and under it what's under it
       Given the composition rendered again with its footage hidden, --alpha (RAEA_HIDE_MEDIA=1), the backgrounds of

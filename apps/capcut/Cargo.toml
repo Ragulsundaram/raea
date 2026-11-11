@@ -12,5 +12,7 @@ raea-io-capcut = { path = "../../io/capcut" }
 raea-io-alpha = { path = "../../io/alpha" }
 raea-io-media = { path = "../../io/media", default-features = false, features = ["soft-audio", "apple"] }
 raea-io-home = { path = "../../io/home" }
+# the renderer's own lookup of a staticFile path (/media/x), so the export finds the files the render drew
+raea-core-scene = { path = "../../core/scene" }
 serde_json = "1"
 image = { version = "0.25", default-features = false, features = ["jpeg"] }

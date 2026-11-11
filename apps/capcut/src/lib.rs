@@ -193,15 +193,15 @@ fn export(args: &[String]) -> R<String> {
     };
     let count = |k: Kind, n: &str| tl.tracks.iter().filter(|t| t.kind == k && t.name.starts_with(n)).map(|t| t.clips.len()).sum::<usize>();
     let mut said = format!(
-        "APPLIED  CapCut draft \"{name}\" at {}: {} tracks, {} footage clips, {} overlay clips ({}, {:.1} MB){}, {} sounds; {:.2} s at {fps} fps, {w}x{h}; {listed}; markers from {}\n         the reference render and the movies raea drew: {}",
+        "APPLIED  CapCut draft \"{name}\" at {}: {} tracks, {}, {} ({}, {:.1} MB){}, {}; {:.2} s at {fps} fps, {w}x{h}; {listed}; markers from {}\n         the reference render and the movies raea drew: {}",
         written.dir.display(),
         tl.tracks.len(),
-        count(Kind::Video, "") - count(Kind::Video, "raea "),
-        count(Kind::Video, "raea overlay"),
+        many(count(Kind::Video, "") - count(Kind::Video, "raea "), "footage clip"),
+        many(count(Kind::Video, "raea overlay"), "overlay clip"),
         codec.name(),
         made.bytes as f64 / 1e6,
-        under.as_ref().map_or(String::new(), |(_, m)| format!(", {} clips under the footage ({:.1} MB)", count(Kind::Video, "raea under"), m.bytes as f64 / 1e6)),
-        count(Kind::Audio, ""),
+        under.as_ref().map_or(String::new(), |(_, m)| format!(", {} under the footage ({:.1} MB)", many(count(Kind::Video, "raea under"), "clip"), m.bytes as f64 / 1e6)),
+        many(count(Kind::Audio, ""), "sound"),
         written.duration_us as f64 / 1e6,
         markers.from.as_deref().map_or("CapCut 8.5.0 (no draft CapCut made is in the store)".to_string(), |d| format!("the draft \"{d}\" CapCut made")),
         work.display()
@@ -210,6 +210,11 @@ fn export(args: &[String]) -> R<String> {
         said.push_str(&format!("\n  note  {n}"));
     }
     Ok(said)
+}
+
+/// "1 clip", "4 clips"
+fn many(k: usize, what: &str) -> String {
+    if k == 1 { format!("1 {what}") } else { format!("{k} {what}s") }
 }
 
 /// Where CapCut's project list is copied before a draft is entered in it: the person's own folder, ~/.raea/capcut/backups

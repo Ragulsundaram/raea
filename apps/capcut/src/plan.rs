@@ -174,9 +174,9 @@ pub fn lay(kind: Kind, name: &str, clips: Vec<Clip>) -> Vec<Track> {
     tracks
 }
 
-/// A file the manifest names, as a path: relative to the composition's folder unless it's absolute.
+/// A file the manifest names, as a path, found as the renderer finds it: a staticFile path (/media/x) in the edit's
+/// media/, then the project's media/ and assets/; else absolute; else relative to the composition's folder.
 pub fn resolve(dir: &Path, src: &str) -> PathBuf {
-    let p = Path::new(src);
-    let p = if p.is_absolute() { p.to_path_buf() } else { dir.join(p) };
+    let p = raea_core_scene::media_path(dir, src);
     p.canonicalize().unwrap_or(p)
 }

@@ -69,3 +69,17 @@ fn clips_go_on_as_few_tracks_as_hold_them() {
     let t = lay(Kind::Audio, "sound", vec![c(0, 90), c(10, 5), c(15, 10), c(90, 5)]);
     assert_eq!(t.iter().map(|t| (t.name.as_str(), t.clips.len())).collect::<Vec<_>>(), [("sound", 2), ("sound 2", 2)]);
 }
+
+/// staticFile("x.mp4") is "/media/x.mp4" in the manifest: the export finds it where the render did, in media/ beside
+/// the edit, as it finds a relative path; an absolute path stays as it is
+#[test]
+fn a_static_file_is_found_in_the_edits_media_folder() {
+    let dir = std::env::temp_dir().join(format!("raea-capcut-resolve-{}", std::process::id()));
+    std::fs::create_dir_all(dir.join("media")).unwrap();
+    std::fs::write(dir.join("media/a.mp4"), "").unwrap();
+    let want = dir.join("media/a.mp4").canonicalize().unwrap();
+    assert_eq!(resolve(&dir, "/media/a.mp4"), want);
+    assert_eq!(resolve(&dir, "media/a.mp4"), want);
+    assert_eq!(resolve(&dir, want.to_str().unwrap()), want);
+    std::fs::remove_dir_all(&dir).unwrap();
+}
