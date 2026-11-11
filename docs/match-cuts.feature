@@ -43,7 +43,14 @@ Feature: Match cuts on the thirds: a piece's cuts planned as a chain of hooks, c
 
   Rule: The guide teaches the planner
 
+    @done
     Scenario: MC1. `raea guide match-cuts`: planning cuts as a chain of hooks on the thirds
+      # Status 11-10: built. The guide is sdk/guides/craft/motion/match-cuts.md (178 lines). The router's plan step, the
+      # story, pitch and explain modes and motion.md's index route to it, and tools/skills.sh copies it and
+      # craft/match-cuts into the skill. raea-skills PR #39 (d0e5e8d) carries the copies, stacked on #38. MC5's fresh
+      # sessions found two wrong lines (the id --only takes, and where the rule's controller sits) and eight gaps, all
+      # now in it: slideTo, names matched by prefix, a shot's progress over frames - 1, the bridge's sound name, a pass
+      # seen to fail once, and the limits for a many-part hook, a hook's size and a hard cut's hooks.
       Given the plan
         | crate | file                                  | lines | job |
         | -     | sdk/guides/craft/motion/match-cuts.md | 200   | the chain, choosing hooks (shape, motion direction, colour, light, sound), the action that carries the eye, when a hard cut beats a match; graphic, motion, eye-trace on a beat, FULL wipe, J and L bridges, a montage's hand-off and a loop, each with how it is checked; the render check's limits |
