@@ -33,16 +33,11 @@ fn log(a: &[String]) -> Result<Ret, String> {
     Ok(Ret::Undefined)
 }
 
-/// Every native call a composition's thread answers: the calls crate's, the page's and the scene's. `raea types` writes
-/// sdk/raea/src/native-calls.ts from the same list, so a call registered here is typed there.
+/// Every native call a composition's thread answers; `raea types` types this same list (sdk/raea/src/native-calls.ts).
 pub fn register_natives() {
-    native::register();
     raea_native::register("page.viewBox", "{}", "[number, number, number, number] | null", "the box (x, y, w, h in frame px) a camera in a page element draws its view in, as last laid out; null when it draws under the whole frame (3D picking in the box, docs/sdk.feature S3a)", |_| Ok(serde_json::json!(*VIEW_BOX.lock().unwrap())));
-    // matchmove.solve (scene/track.rs), physics.* for <Physics> and <Goo> (systems/bake), scene.bounds and facing
-    // (scene/contact.rs), blender.shot and godot.shot (runtime/shots)
-    for register in [scene::track::register, scene::physics::register, raea_runtime_shots::register, scene::register_scene] {
-        register();
-    }
+    // the calls crate's, matchmove.solve (scene/track.rs), physics.* (systems/bake), scene.* (scene/contact.rs), *.shot (runtime/shots)
+    [native::register, scene::track::register, scene::physics::register, raea_runtime_shots::register, scene::register_scene].iter().for_each(|r| r());
 }
 
 /// The JS thread: the prelude, the shims, the bundle, then timers and Bevy's events. Both engines run promise jobs as
