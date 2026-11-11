@@ -66,6 +66,17 @@ impl BlitzPage {
                 if let (Some(b), true) = (rect(n), a > 0.01) {
                     let at = node.attr(LocalName::from("data-raea-at")).and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
                     let mut v = json!({"src": src, "at": at, "box": [r(b.x), r(b.y), r(b.width), r(b.height)], "opacity": (a * 100.0).round() / 100.0});
+                    // how the picture fills its box (the CapCut export places a clip by it, docs/capcut.feature CC2a)
+                    if let Some(s) = node.primary_styles() {
+                        use style::computed_values::object_fit::T as Fit;
+                        v["fit"] = json!(match s.clone_object_fit() {
+                            Fit::Contain => "contain",
+                            Fit::Cover => "cover",
+                            Fit::Fill => "fill",
+                            Fit::None => "none",
+                            Fit::ScaleDown => "scale-down",
+                        });
+                    }
                     stamps(n, &mut v);
                     videos.push(v);
                 }

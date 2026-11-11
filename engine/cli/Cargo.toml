@@ -65,6 +65,7 @@ raea-app-media = { path = "../../apps/media" }
 # `raea app run|check|bundle` and `raea rune` on either target (docs/targets.feature T0b)
 raea-app-targets = { path = "../../apps/targets" }
 raea-app-game = { path = "../../apps/game" }
+raea-app-capcut = { path = "../../apps/capcut" }
 raea-app-play = { path = "../../apps/play", features = ["ml"] }
 raea-bevy-plugins = { path = "../../engine/bevy-plugins", optional = true }
 # raea-bevy-sdk's reflection of the plugin build's App: the type registry, a one-camera program, the animation type

@@ -211,6 +211,11 @@ fn heard(frames: &[(i64, Frame)], tones: &[raea_sys_mix::ToneCue], cx: &Ctx, fps
             if let Some(b) = &s.bus {
                 c["bus"] = json!(b);
             }
+            // its playback rate and fades, when it has them (the CapCut export's audio clips take them)
+            let extras = [("rate", Some(s.rate).filter(|r| *r != 1.0)), ("fadeIn", s.fade_in.filter(|v| *v > 0.0)), ("fadeOut", s.fade_out.filter(|v| *v > 0.0))];
+            for (k, v) in extras.into_iter().filter_map(|(k, v)| v.map(|v| (k, v))) {
+                c[k] = json!(v);
+            }
             // a generated sound's key is model|prompt|seconds
             if let Some(k) = made.get(&s.src) {
                 let (model, rest) = k.split_once('|').unwrap_or((k, ""));

@@ -25,7 +25,7 @@ const verbs: Verb[] = JSON.parse(run(["help", "--json"])).verbs
 
 // the index's groups, in the order a reader meets them; every verb is in one
 const GROUPS: [string, string, string[]][] = [
-  ["Make", "Render, play and package what you wrote.", ["render", "play", "export-game", "bundle", "app", "run"]],
+  ["Make", "Render, play and package what you wrote.", ["render", "play", "export-game", "export", "bundle", "app", "run"]],
   ["Projects", "The workspace, its projects and what a project holds.", ["init", "workspace", "project", "controller", "spec", "part", "add", "brand", "library"]],
   ["Check", "What's wrong before anyone watches it.", ["check", "judge", "findings", "scene", "world", "solid", "next", "doctor", "hook", "traces"]],
   ["Footage", "Takes, cuts and the camera, from your own media.", ["media", "cut", "frame", "track", "splat", "mezz", "neural"]],

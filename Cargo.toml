@@ -68,6 +68,8 @@ members = [
     "io/ffmpeg",
     "io/apple",
     "io/apple-coding",
+    "io/alpha",
+    "io/capcut",
     "io/shell",
     "gpu/device",
     "core/k",
@@ -166,6 +168,7 @@ members = [
     "apps/media",
     "apps/targets",
     "apps/game",
+    "apps/capcut",
     "apps/play",
     "tools/sdk-props",
 ]

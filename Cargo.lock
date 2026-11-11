@@ -13598,6 +13598,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "019b4b213425016d7d84a153c4c73afb0946fbb4840e4eece7ba8848b9d6da22"
 
 [[package]]
+name = "raea-app-capcut"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "raea-io-alpha",
+ "raea-io-capcut",
+ "raea-io-home",
+ "raea-io-media",
+ "raea-runtime-bundle",
+ "serde_json",
+]
+
+[[package]]
 name = "raea-app-check"
 version = "0.1.0"
 dependencies = [
@@ -13998,6 +14011,7 @@ name = "raea-cli"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "raea-app-capcut",
  "raea-app-check",
  "raea-app-ci",
  "raea-app-direction",
@@ -14185,6 +14199,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-io-alpha"
+version = "0.1.0"
+dependencies = [
+ "block2 0.6.2",
+ "image",
+ "objc2 0.6.5",
+ "objc2-av-foundation",
+ "objc2-core-foundation",
+ "objc2-core-media",
+ "objc2-core-video",
+ "objc2-foundation 0.3.2",
+ "objc2-video-toolbox",
+ "png 0.17.16",
+ "raea-io-apple",
+ "serde_json",
+]
+
+[[package]]
 name = "raea-io-apple"
 version = "0.1.0"
 dependencies = [
@@ -14241,6 +14273,13 @@ dependencies = [
  "raea-io-soft",
  "rav1d",
  "rav1e",
+]
+
+[[package]]
+name = "raea-io-capcut"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
@@ -14863,6 +14902,7 @@ dependencies = [
  "raea-core-review",
  "raea-core-scene",
  "raea-gpu-device",
+ "raea-io-alpha",
  "raea-io-assets",
  "raea-io-media",
  "raea-io-net",

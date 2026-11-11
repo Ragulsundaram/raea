@@ -35,6 +35,7 @@ Render, play and package what you wrote.
 | [`raea render`](render.md) | Render a composition to an MP4, a PNG or a folder of frames, on the GPU and headless. |
 | [`raea play`](play.md) | Play a game live in a window, or headless with scripted keys, snapshots and a timing report. |
 | [`raea export-game`](export-game.md) | Package a game as a program of its own: a Mac app or a command-line program. |
+| [`raea export`](export.md) | The composition as a CapCut draft ready in its timeline: its footage and sounds as clips of their own files at their trims and gains, everything raea draws as transparent overlay clips above them. |
 | [`raea bundle`](bundle.md) | Bundle a composition into one JavaScript file that render_bundle draws, on the Mac or the iPhone. |
 | [`raea app`](app.md) | Run, check headless and package a desktop app written as one TSX file on @raea/ui. |
 | [`raea run`](run.md) | Run a TypeScript program on the engine, headless, and print what it prints. |
