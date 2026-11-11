@@ -52,7 +52,14 @@ Feature: Match cuts on the thirds: a piece's cuts planned as a chain of hooks, c
 
   Rule: The render is checked at every cut
 
+    @done
     Scenario: MC3. thirds.ts: at each cut the hooked part sits at its thirds place on the frame before and the frame after
+      # Status 11-10: built. landsOnThirds(chain) reads raea world's facts on the cut frames only, with no render. A part
+      # is measured by its world box through the frame's camera, which is aimed with lookingAt or a rotation; a text by its
+      # laid-out box. On the bench's graybox it finds nothing, and it finds each of the nine cheats above. It runs from a
+      # note's ask (--only n1.1) or a controller's rule (--only and the check file's name: morning). The whole bench,
+      # plan, render and board, runs in 9 s. What it can't see: a part hidden behind another, a camera rolled about its
+      # view, the eye's way inside a shot, and a 2D graphic that isn't text.
       Given the plan
         | crate | file                                      | lines | job |
         | -     | sdk/guides/craft/match-cuts/thirds.ts     | 260   | landsOnThirds(chain): a raea/check system on the chain's cut frames; each hooked part projected through the frame's camera (or a text's box) and held to its place within a tolerance, FULL to a share of the frame; each chain cut a cut in the composition; J and L bridges' cues; the plan checks after the frames |
