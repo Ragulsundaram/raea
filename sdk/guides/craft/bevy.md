@@ -31,6 +31,8 @@ pieces; then write the file. Each file's example is a complete composition you c
 | an asset to fix in Blender first (scale, pivot, heavy mesh, FBX/OBJ, rig, bake); never a whole scene | `bevy/blender` |
 | a real scene or object from footage as gaussian splats, and animating them (assemble, disperse, morph...) | `bevy/splats` |
 | liquids and goo: coffee dumped from a mug, a tap's stream, honey, things melting | `bevy/liquids` |
+| water: seas, lakes and pools; waves, reflection, refraction, absorption, caustics, foam | `bevy/water` |
+| ray-traced light (Solari): what it lights and traces, glowing lamps, rooms that don't leak, cuts, metering | `bevy/solari` |
 | bloom, fog, tone mapping, exposure, fisheye and lens distortion, motion blur | `bevy/post` |
 | how much the scene can hold, what isn't there yet | `bevy/limits` |
 
