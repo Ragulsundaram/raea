@@ -39,7 +39,7 @@ const BY_PARENT: [(&str, &str); 19] = [("AmbientLight", "ambient"), ("Bloom", "b
     ("AmbientOcclusion", "ssao"), ("AntiAliasing", "aa"), ("Shadows", "shadows"), ("Look", "framelook"), ("Outline", "outline"), ("Fisheye", "fisheye"), ("LensDistortion", "distortion"), ("MotionBlur", "mblur"), ("BevyResource", "resource")];
 
 fn walk(n: &Node3, parent: Mat4, out: &mut Vec<Item>) {
-    let item = |kind: &'static str, world: Mat4, material: Option<Node3>| Item { kind, props: n.props.clone(), shape: n.shape.clone(), material, world };
+    let item = |kind: &'static str, world: Mat4, material: Option<Node3>| Item { kind, props: n.props.clone(), shape: n.shape.clone(), at: n.at.clone(), material, world };
     match &*n.kind {
         "Group" => {
             let w = parent * local(&n.props);

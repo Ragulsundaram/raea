@@ -25,8 +25,9 @@ pub struct LiveScene {
     pub(crate) cam: BTreeMap<String, V>,
     /// frame 0 was stepped when play opened (live.rs), and nothing since
     pub warm: bool,
-    /// identity -> a panel's `src` as written when the full path last made its row (the fast path leaves it a new one)
-    pub(crate) panel_srcs: std::collections::HashMap<String, String>,
+    /// identity -> a panel's `src`, or an <Instances>' placements (its shared data-at), as the full path last made its row
+    /// (the fast path leaves it a new one)
+    pub(crate) panel_srcs: std::collections::HashMap<String, std::sync::Arc<str>>,
     /// what the lights' sets were made from when the full path last made them (light_sig): the fast path, which
     /// doesn't make them, goes the full way when it differs
     pub(crate) light_sig: String,
@@ -148,7 +149,10 @@ impl LiveScene {
         let tr = Tracks::of(&all);
         rows_into_of(&all, &tr, &mut p);
         for (key, src) in tr.panels.iter().filter_map(|(k, t)| Some((k, t[0].as_ref()?.props.get("src")?.as_str()?))) {
-            self.panel_srcs.insert(key.clone(), src.to_string());
+            self.panel_srcs.insert(key.clone(), src.into());
+        }
+        for (key, at) in tr.meshes.iter().chain(&tr.models).filter_map(|(k, t)| Some((k, t[0].as_ref()?.at.clone()?))) {
+            self.panel_srcs.insert(key.clone(), at);
         }
         // each local row (this frame's tracks, numbered as rows_into numbers them) by its identity
         let mut local: std::collections::HashMap<String, &String> = std::collections::HashMap::new();
@@ -384,7 +388,7 @@ mod tests {
     use serde_json::json;
 
     fn model(props: Value) -> Node3 {
-        Node3 { kind: "Model".into(), props: std::sync::Arc::new(props.as_object().unwrap().clone()), shape: None, kids: Vec::new().into() }
+        Node3 { kind: "Model".into(), props: std::sync::Arc::new(props.as_object().unwrap().clone()), shape: None, at: None, kids: Vec::new().into() }
     }
 
     fn person(who: &str) -> Vec<Node3> {
@@ -408,7 +412,7 @@ mod tests {
     /// A glyph faded in (`reveal`: 0, 0.5, 1) is opaque once done, not left at its last fade (#38: bevy/text3d's tag).
     #[test]
     fn a_faded_glyph_is_opaque_once_done() {
-        let text = |o: f64| vec![Node3 { kind: "RichText".into(), props: std::sync::Arc::new(json!({"spans": [{"t": "a"}], "glyphs": [{"at": 0, "span": 0, "ch": "a", "o": o}]}).as_object().unwrap().clone()), shape: None, kids: Vec::new().into() }];
+        let text = |o: f64| vec![Node3 { kind: "RichText".into(), props: std::sync::Arc::new(json!({"spans": [{"t": "a"}], "glyphs": [{"at": 0, "span": 0, "ch": "a", "o": o}]}).as_object().unwrap().clone()), shape: None, at: None, kids: Vec::new().into() }];
         let mut ls = LiveScene::default();
         ls.open(Shot { scene: &text(0.5), clear: None }, 64, 64, 30.0);
         let (set, _) = ls.frame(Shot { scene: &text(1.0), clear: None });
@@ -419,7 +423,7 @@ mod tests {
     /// the first camera is back, so a live engine draws both frames as cuts (RR2, Engine::set_rows).
     #[test]
     fn a_cut_back_sends_the_first_shot() {
-        let cams = |on: usize| -> Vec<Node3> { (0..2).map(|i| Node3 { kind: "PerspectiveCamera".into(), props: std::sync::Arc::new(json!({"position": [i, 1, 5], "active": i == on}).as_object().unwrap().clone()), shape: None, kids: Vec::new().into() }).collect() };
+        let cams = |on: usize| -> Vec<Node3> { (0..2).map(|i| Node3 { kind: "PerspectiveCamera".into(), props: std::sync::Arc::new(json!({"position": [i, 1, 5], "active": i == on}).as_object().unwrap().clone()), shape: None, at: None, kids: Vec::new().into() }).collect() };
         let shot = |set: &[raea_core_program::eval::Tup]| set.iter().find(|t| t.kind == "camera").and_then(|t| t.vals.get("shot").cloned());
         let mut ls = LiveScene::default();
         ls.open(Shot { scene: &cams(0), clear: None }, 64, 64, 30.0);

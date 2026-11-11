@@ -47,7 +47,7 @@ mod tests {
         if let Some(a) = active {
             props.insert("active".into(), Value::Bool(a));
         }
-        Item { kind: "camera", props: std::sync::Arc::new(props), shape: None, material: None, world: bevy::math::Mat4::IDENTITY }
+        Item { kind: "camera", props: std::sync::Arc::new(props), shape: None, material: None, at: None, world: bevy::math::Mat4::IDENTITY }
     }
 
     #[test]

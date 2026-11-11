@@ -148,7 +148,7 @@ mod tests {
     /// cells (the grid was the first frame's: 0.1.1's showreel, 11-10).
     #[test]
     fn a_sheets_grid_is_keyed() {
-        let plane = |grid: [u32; 2], frame: u32| Item { kind: "panel", props: std::sync::Arc::new(serde_json::json!({"grid": grid, "frame": frame}).as_object().unwrap().clone()), shape: None, material: None, world: Default::default() };
+        let plane = |grid: [u32; 2], frame: u32| Item { kind: "panel", props: std::sync::Arc::new(serde_json::json!({"grid": grid, "frame": frame}).as_object().unwrap().clone()), shape: None, material: None, at: None, world: Default::default() };
         let (mut p, mut row) = (Program::default(), BTreeMap::new());
         sheet(&mut p, &mut row, "plane0", &[plane([2, 1], 0), plane([1, 2], 1)]);
         let keyed = |c: &str| p.keys.get(&("plane0".to_string(), c.to_string())).map(|k| k.iter().map(|(f, v, _)| (*f, *v)).collect::<Vec<_>>());

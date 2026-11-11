@@ -61,9 +61,9 @@ impl LiveScene {
                     return None;
                 }
                 // a panel showing another picture (`current` kept the last): the full path, which sends the new src
-                if it.kind == "panel" && self.panel_srcs.get(key.as_str()).map(String::as_str) != it.props.get("src").and_then(Value::as_str) { return None }
+                if it.kind == "panel" && self.panel_srcs.get(key.as_str()).map(|s| &**s) != it.props.get("src").and_then(Value::as_str) { return None }
                 // an <Instances> placed elsewhere (`current` sent its list): the full path, which sends the new one (#85)
-                if self.rows[id].sent.contains_key("inst") && { let mut r = BTreeMap::new(); instances_column(&mut Program::default(), &mut r, id, std::slice::from_ref(it)); r.get("inst") != self.rows[id].sent.get("inst") } { return None }
+                if let Some(at) = &it.at && self.panel_srcs.get(key.as_str()).is_none_or(|s| !std::sync::Arc::ptr_eq(s, at) && s != at) { return None }
                 parts.push((i, id));
             }
         }

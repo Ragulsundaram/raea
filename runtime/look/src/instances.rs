@@ -23,23 +23,36 @@ fn packed(at: &[Value]) -> Option<String> {
     Some(nums.join(" "))
 }
 
+/// An item's placements as its text: its data-at (#84, shared across frames while unchanged), or an `at` prop written
+/// out (a tree from before data-at). Two frames' lists are the same when their texts are.
+fn at_text(it: &Item) -> Option<std::borrow::Cow<'_, str>> {
+    match (&it.at, it.props.get("at")) {
+        (Some(t), _) => Some(std::borrow::Cow::Borrowed(&**t)),
+        (None, Some(a @ Value::Array(_))) => Some(std::borrow::Cow::Owned(a.to_string())),
+        _ => None,
+    }
+}
+
 /// The `inst` column of a mesh or model row whose part is an <Instances>: its first frame's placements. When they change
 /// over the shot (#85), every list it shows goes in `inst_all` ("|" between lists) and which one each frame shows is keyed
 /// as `inst_k`, as a panel's pictures are (src_k): the engine moves its copies to the frame's (scene3d sync_instances).
 /// The count is the first frame's: a frame with another count holds the list before it.
 pub fn instances_column(p: &mut Program, row: &mut BTreeMap<String, V>, id: &str, its: &[Item]) {
-    let Some(Value::Array(at)) = its[0].props.get("at") else { return };
-    let Some(first) = packed(at) else { return };
-    // each frame's list against the one before it only (a frame's list is the frame before's object when React kept it)
-    let (mut lists, mut k, mut before, mut recounted) = (vec![first], Vec::with_capacity(its.len()), at, false);
+    let parse = |t: &str| serde_json::from_str::<Vec<Value>>(t).ok();
+    let Some(first_text) = at_text(&its[0]) else { return };
+    let Some(at) = parse(&first_text) else { return };
+    let Some(first) = packed(&at) else { return };
+    // each frame's list against the one before it only, by its text (the same Arc when React kept it): parsed only
+    // when it differs (a frame without one holds the one before)
+    let (mut lists, mut k, mut before, mut recounted) = (vec![first], Vec::with_capacity(its.len()), first_text, false);
     for it in its {
-        let a = match it.props.get("at") { Some(Value::Array(a)) => a, _ => before };
-        if !std::ptr::eq(a, before) && a != before {
-            if a.len() == at.len() && let Some(s) = packed(a) {
-                lists.push(s);
-                before = a;
-            } else {
-                recounted = true;
+        if let Some(t) = at_text(it).filter(|t| *t != before) {
+            match parse(&t).filter(|a| a.len() == at.len()).and_then(|a| packed(&a)) {
+                Some(s) => {
+                    lists.push(s);
+                    before = t;
+                }
+                None => recounted = true,
             }
         }
         k.push((lists.len() - 1) as f64);
@@ -71,7 +84,7 @@ mod tests {
 
     fn part(x: f64) -> Item {
         let at = serde_json::json!({"at": [x, 0, 0, 0, 0, 0, 1, 1, 1, x + 1.0, 0, 0, 0, 0, 0, 1, 1, 1]});
-        Item { kind: "mesh", props: std::sync::Arc::new(at.as_object().unwrap().clone()), shape: None, material: None, world: Default::default() }
+        Item { kind: "mesh", props: std::sync::Arc::new(at.as_object().unwrap().clone()), shape: None, material: None, at: None, world: Default::default() }
     }
 
     // #85: a video drew the first frame's placements on every frame
