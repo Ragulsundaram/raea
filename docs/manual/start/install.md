@@ -7,6 +7,9 @@ sources: ["apps/site/public/install", "apps/site/public/install.ps1", "engine/cl
 
 After this page you will have the `raea` command on your PATH and the raea skill installed for your coding agent.
 
+This page installs the engine. The desktop app, where you make video and games with your AI, downloads from
+[raea.io](https://raea.io) for the Mac, Windows and Linux, and tells you when a new version is out.
+
 ## Install
 
 On macOS with Apple Silicon, or on Linux on x86_64:
@@ -56,13 +59,13 @@ Then see what changed in [What's new](../whats-new/index.md).
 Set `RAEA_VERSION` to install a particular release instead of the newest:
 
 ```sh
-RAEA_VERSION=0.1.0-canary.3 curl -fsSL https://raea.io/install | sh
+RAEA_VERSION=0.1.1 curl -fsSL https://raea.io/install | sh
 ```
 
 On Windows:
 
 ```powershell
-$env:RAEA_VERSION = "0.1.0-canary.3"; irm https://raea.io/install.ps1 | iex
+$env:RAEA_VERSION = "0.1.1"; irm https://raea.io/install.ps1 | iex
 ```
 
 ## Installer settings
