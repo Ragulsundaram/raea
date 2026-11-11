@@ -8,6 +8,9 @@ the project run headless to check it, and what it draws recorded as frames a com
 Godot's whole API (Godot 4.6.1, through GodotJS, MIT), typed: tsc refuses a class or member that isn't there and a
 wrong argument type before Godot runs anything.
 
+A Godot project's scenes and meshes as `.glb` models for a raea scene, and which open Godot demos and kits may be
+used, are `bevy/godot-projects`.
+
 ## Setting it up — HEADLESS
 
 - `raea setup godot` downloads Godot 4.6.1 with GodotJS into `~/.raea/tools/godot` (JavaScriptCore on the Mac,
@@ -105,6 +108,45 @@ export default class Turn extends SceneTree {
 
 A composition shows frame `f` of the recording with
 ``<Img src={staticFile(`turn/f${String(f).padStart(8, "0")}.png`)} />`` (`staticFile` names a file in `media/`).
+
+`--frames N` stops after N frames and `--scene res://PATH.tscn` adds a scene to the tree before the script runs. The
+script can be left out, so a project's own scene records as it is: `raea godot run --project KIT --scene
+res://level.tscn --movie media/level/f.png --frames 120`.
+
+## Godot's frames in a composition: `<GodotShot>` — HEADLESS (a window opens)
+
+The recording above, made and kept for you. Frame N of the composition (or its Sequence) shows frame N of the shot:
+
+```tsx
+import { GodotShot } from "raea/godot/shot";
+
+<Sequence from={0} durationInFrames={120}>
+  <GodotShot project="kit" scene="res://level.tscn" />   {/* or script="godot/turn.ts", with or without a project */}
+</Sequence>
+```
+
+- Paths are the composition folder's. The shot takes the composition's size, fps and length unless given; with a
+  project, raea sets the project's window size for the run and puts it back after.
+- It is recorded once and kept in the asset store, made again when the project, the script's folder or the props
+  change. Godot's sound, when the game makes any, is kept beside the frames as `sound.wav`.
+- Outside a composition: `raea godot shot SCRIPT.ts|res://SCENE.tscn -o DIR --frames 120 [--project DIR] [--fps 30]
+  [--size 1920x1080] [-- ARGS]` writes `DIR/0000.png` and on.
+
+## raea's scene as a Godot project, and back — HEADLESS
+
+`raea godot export EDIT.tsx [-o DIR] [--at 0-90]` writes the composition's 3D as a project Godot runs and edits
+(`out/godot/EDIT/` unless `-o`): `project.godot` at the composition's size and `main.tscn`, where each primitive is
+Godot's own mesh (BoxMesh, SphereMesh, CylinderMesh, PlaneMesh), a solid its mesh, a model its glTF, each material a
+StandardMaterial3D, each light and the camera Godot's, and `--at`'s frames an AnimationPlayer that plays on start.
+Godot's axes are raea's, so the numbers carry over as they are. Each node keeps its part's id as `raea_id` metadata.
+
+- Open it in Godot's editor: `raea godot open out/godot/EDIT`. Play it: `raea godot run --project out/godot/EDIT
+  --scene res://main.tscn --window` (it plays until the window is closed), or add a script of yours.
+- `raea godot back out/godot/EDIT` prints each change made in Godot as an edit at its TSX line, the same lines as
+  `raea blender back` (`bevy/blender`). A node added there is written as `media/NAME.glb` with its sidecar, and its
+  line is the `<Model>` that places it. `--json` gives the same as data. Make the edits in the TSX; raea changes
+  nothing itself.
+- What the export leaves out (instanced parts, effects, 2D) is counted in the line it prints, by kind.
 
 ## Common mistakes
 

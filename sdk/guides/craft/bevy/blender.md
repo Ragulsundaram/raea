@@ -19,8 +19,8 @@ Go to Blender only when a check names a script. Each of these findings carries i
 | the brief says it moves, and it has no skeleton | `raea gen check --rig` | `rig.py` |
 | a cloth lies on or hangs from something | the brief | `cloth.py` |
 
-Never use Blender for layout, cameras, lights, final materials or animation timing: those are TSX, where they are
-frame-pure and checked (`raea scene lint`, `raea scene light`, the review sheets). "I know bpy" is no reason to model
+Never use Blender yourself for layout, cameras, lights, final materials or animation timing: those are TSX, where
+they are frame-pure and checked (`raea scene lint`, `raea scene light`, the review sheets). "I know bpy" is no reason to model
 something in Blender: a thing defined by numbers is a solid, and one defined by its looks is generated or downloaded.
 
 A gap in solids (a fillet it can't make, real UVs) goes through `raea solid export`, then a script. Log it in the
@@ -109,7 +109,8 @@ Points and boxes are in raea's frame (metres, y up, z toward the viewer, the mod
 - `convert.py IN OUT.glb [--textures DIR] [--unit auto|m|cm|mm] [--max-texture 2048]`: FBX, OBJ, .blend, STL or
   PLY to `.glb`. Applies rotation and scale. `auto` takes a model whose biggest side is over 50 as centimetres. Maps
   named diff, nor_gl, rough, metal or ao in `textures/` beside the file are wired in and written as 8-bit PNG no
-  bigger than `--max-texture`.
+  bigger than `--max-texture`. It also unpacks a Draco-compressed `.glb`. It is for a model that holds still: on one
+  whose clips move its parts, the applied rotation and scale change the poses.
 - `decimate.py IN OUT TARGET [--lods 0.5,0.25]`: down to TARGET triangles (or a ratio, at 1 or under). Fails if it
   lands over 1.15 × the target. `--lods` also writes `OUT.lodN.glb`.
 - `repair.py IN OUT [--debris 0.005] [--voxel SIZE] [--keep-pieces]`: merges doubled vertices, drops pieces under the
@@ -126,6 +127,11 @@ Points and boxes are in raea's frame (metres, y up, z toward the viewer, the mod
   bones, weights and named pose clips (plus `Rest`). `rigid` is for parts that don't bend (a lamp, a machine); `auto`
   is for a creature. Fails if a bone gets no vertices. A bone gets the vertices nearest its segment, so run a base's
   bone across the base, not up its middle.
+- `contents.py IN.blend`: what a `.blend` holds, and nothing written: each mesh object with its triangles, modifiers
+  and collections, each collection, each geometry-node group, each material and whether it has image textures.
+- `take.py IN.blend OUT.glb NAME [NAME ...]`: the named objects and collections of a `.blend` as one `.glb`, modifiers
+  applied, lights and cameras left behind. For a library or production file that holds many things
+  (`bevy/blend-files`); convert.py takes a whole file.
 - `cloth.py IN OUT (--sheet W,D,X,Y,Z | --cloth NAME) [--pin box] [--frames 60] [--stiff 5] [--bend 0.05]
   [--crumple 0] [--no-floor]`: a cloth simulated onto what IN holds and a floor at y 0, baked into the clip `Drape`.
   Also writes `OUT.settled.glb`. A flat sheet lands flat: a rag wants `--stiff 1 --bend 0.01 --crumple 0.035` (soft,
@@ -133,6 +139,50 @@ Points and boxes are in raea's frame (metres, y up, z toward the viewer, the mod
 
 In the scene, raea decides when a clip plays: `<Model src="media/lamp.glb" animation="Reach" time={t} loop={false}>`
 eases in over the clip and holds its last pose past the end. Timing is the Sequence's, never Blender's.
+
+## The scene in Blender and back, for the person's hands — HEADLESS (then a window)
+
+When the person wants to place, light or frame the scene by hand in Blender, the TSX stays the scene and Blender is
+where they move things. Its changes come back as edits you make:
+
+1. `raea blender open EDIT.tsx [--at 0-90]` exports the composition's 3D (`raea scene export`), builds it in a
+   headless Blender, saves `out/blender/EDIT/EDIT.blend` and opens it in a new Blender window (`--no-window` leaves
+   it closed). Each primitive is Blender's own mesh, each model its glTF, each material one Principled BSDF, each
+   light in watts, the camera's lens at raea's field of view, and `--at`'s frames are keys. Everything sits under an
+   empty named `raea`; inside it the numbers are raea's (y up, metres).
+2. The person changes it in Blender and saves.
+3. `raea blender back out/blender/EDIT/EDIT.blend` prints one line per change at its TSX line:
+   `"crate" (edit.tsx:14:7): moved by [0.4, 0, 0] to [1.4, 0.5, 0] (world)`. Parts moved, turned, scaled, recoloured,
+   made rougher or more metal, relit, deleted; the camera's move and lens. A mesh made in Blender is written as
+   `media/NAME.glb` with its sidecar, and its line is the `<Model>` that places it. `--json` gives the same as data.
+4. Make the edits in the TSX; raea changes nothing itself. Placements are world positions: inside a moved group,
+   take the group's transform away first.
+
+Only the first frame sent is compared, and only what the line names comes back: a modifier, a node material past
+Principled's colour, roughness, metalness and emission, or a re-parenting is said nowhere. `raea blender open` on a
+`.blend`, `.glb`, `.gltf`, `.obj` or `.fbx` opens the file as it is.
+
+## Blender's own pictures in a composition: `<BlenderShot>` — HEADLESS
+
+When a layer must be drawn by Blender itself (Cycles, Geometry Nodes, a `.blend` the person brought with its own
+look), render it as a shot. Frame N of the composition (or its Sequence) shows frame N of the shot:
+
+```tsx
+import { BlenderShot } from "raea/blender/shot";
+
+// a raea/blender script whose default export builds the scene and its camera, or file= a .blend with its own
+<Sequence from={30} durationInFrames={90}>
+  <BlenderShot script="blender/orbit.ts" engine="cycles" samples={64} transparent />
+</Sequence>
+```
+
+- Paths are the composition folder's. The shot takes the composition's size, fps and length unless given
+  (`width`, `height`, `frames`); `args` reach the script's `sys.argv`.
+- It is rendered once and kept in the asset store, made again when the script's folder, the `.blend`, the props or
+  raea change. The first render of a long Cycles shot is slow; keep samples low while iterating.
+- Outside a composition: `raea blender shot SCRIPT.ts|FILE.blend -o DIR --frames 90 [--fps 30] [--size 1920x1080]
+  [--engine eevee|cycles|workbench] [--samples N] [--transparent] [-- ARGS]` writes `DIR/0000.png` and on.
+- A script sets the scene; `shoot()` from `raea/blender/shoot` is what draws it, so a script never renders itself.
 
 ## Setting it up — HEADLESS
 
@@ -159,11 +209,13 @@ In the raea app, a workspace gives it to the feed's agents with a controller's s
 
 Only permissive assets (CC0, CC BY with its credit, MIT). Every script refuses a source without a sidecar
 (`chair.fbx.json` or `chair.json`: `{"source": URL, "license": "CC0", "credit": ""}`) and carries it through to its
-output, with the step added. `raea solid export` writes its own.
+output, with the step added. `raea solid export` writes its own. Which libraries fall under the rule, and how to
+fetch from each, is `bevy/sources`.
 
 ## Common mistakes
 
-- Building, lighting or framing the scene in Blender: export one asset, build the scene in TSX.
+- Building, lighting or framing the scene in Blender yourself: export one asset, build the scene in TSX. When the
+  person wants their hands on it, `raea blender open` and `raea blender back` (above).
 - Fixing an asset live and moving on: the next source change loses the fix. Put it in the script.
 - Modelling a box, a shelf or a bracket in bpy: it's a solid.
 - Decimating without `--seen`: the budget is for the distance it's seen from, not a number picked by eye.
