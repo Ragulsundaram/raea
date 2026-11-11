@@ -28,7 +28,7 @@ export interface Api {
    * Remove the specified previews collection.
    * @param pcoll Preview collection to close.
    */
-  remove(pcoll: P.bpy_utils_previews.ImagePreviewCollection): any;
+  remove(pcoll: P.bpy_utils_previews.ImagePreviewCollection): H.Ref<void>;
   /**
    * Remove the specified previews collection.
    * @param pcoll Preview collection to close.
@@ -36,7 +36,7 @@ export interface Api {
   remove(kw: {
     /** Preview collection to close. */
     pcoll: P.bpy_utils_previews.ImagePreviewCollection;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**
@@ -119,9 +119,9 @@ export interface ImagePreviewCollection {
     force_reload?: H.In<boolean>;
   }): H.Ptr<R.ImagePreview>;
   /** Clear all previews. */
-  clear(): any;
+  clear(): H.Ref<void>;
   /** Close the collection and clear all previews. */
-  close(): any;
+  close(): H.Ref<void>;
 }
 /** The class bpy.utils.previews.ImagePreviewCollection: called, a new one. */
 export interface ImagePreviewCollectionClass {

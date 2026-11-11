@@ -21,6 +21,8 @@ export interface Prop {
   items?: Item[];
   flag?: boolean;
   dynamic?: boolean;
+  /** BL34: items Blender works out at the time, by an item function (tools/itemf.json): its static items or any string */
+  itemf?: boolean;
   min?: number;
   max?: number;
   default?: string | unknown[];
@@ -41,6 +43,8 @@ export interface PyMember {
   doc: string;
   sig?: string | null;
   static?: boolean;
+  /** written in Python and returns no value anywhere (dump.py returns_none): it gives None */
+  none?: boolean;
   ro?: boolean;
   type?: string;
   value?: string;
@@ -57,7 +61,7 @@ export interface Struct {
   funcs: Func[];
   nested?: string;
   pyprops?: { id: string; doc: string; ro: boolean }[];
-  pyfuncs?: { id: string; sig: string | null; doc: string; static: boolean }[];
+  pyfuncs?: { id: string; sig: string | null; doc: string; static: boolean; none?: boolean }[];
   cfuncs?: { id: string; doc: string }[];
 }
 

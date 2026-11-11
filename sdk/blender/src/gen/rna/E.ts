@@ -271,7 +271,7 @@ export interface EditBone extends R.bpy_struct {
    * the length of the other bone is not used.
    * @param other Bone to copy orientation from.
    */
-  align_orientation(other: R.EditBone): any;
+  align_orientation(other: R.EditBone): H.Ref<void>;
   /**
    * Align this bone to another by moving its tail and settings its roll
    * the length of the other bone is not used.
@@ -280,7 +280,7 @@ export interface EditBone extends R.bpy_struct {
   align_orientation(kw: {
     /** Bone to copy orientation from. */
     other: R.EditBone;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Transform the bones head, tail, roll and envelope
    * (when the matrix has a scale component).
@@ -294,7 +294,7 @@ export interface EditBone extends R.bpy_struct {
      * direction to the head and tail.
      */
     roll?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Transform the bones head, tail, roll and envelope
    * (when the matrix has a scale component).
@@ -310,7 +310,7 @@ export interface EditBone extends R.bpy_struct {
      * direction to the head and tail.
      */
     roll?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**

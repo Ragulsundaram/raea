@@ -1022,7 +1022,7 @@ export interface Menu extends R.bpy_struct {
    * @param context The context.
    * @param layout The layout to draw into.
    */
-  draw_collapsible(context: R.Context, layout: R.UILayout): any;
+  draw_collapsible(context: R.Context, layout: R.UILayout): H.Ref<void>;
   /**
    * Draw the menu inline when the header shows menus, otherwise draw it
    * as a collapsed icon. Intended for use within header draw functions.
@@ -1034,7 +1034,7 @@ export interface Menu extends R.bpy_struct {
     context: R.Context;
     /** The layout to draw into. */
     layout: R.UILayout;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Define these on the subclass:
    * - preset_operator (string)
@@ -1046,7 +1046,7 @@ export interface Menu extends R.bpy_struct {
    * - preset_operator_defaults (dict of keyword args)
    * @param context The context.
    */
-  draw_preset(context: R.Context): any;
+  draw_preset(context: R.Context): H.Ref<void>;
   /**
    * Define these on the subclass:
    * - preset_operator (string)
@@ -1061,7 +1061,7 @@ export interface Menu extends R.bpy_struct {
   draw_preset(kw: {
     /** The context. */
     context: R.Context;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Populate a menu from a list of paths.
    * @param searchpaths Paths to scan.
@@ -1089,7 +1089,7 @@ export interface Menu extends R.bpy_struct {
     translate?: H.In<boolean>;
     /** Add submenus for sub-directories instead of listing their contents. */
     recursive_paths?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Populate a menu from a list of paths.
    * @param searchpaths Paths to scan.
@@ -1121,7 +1121,7 @@ export interface Menu extends R.bpy_struct {
     translate?: H.In<boolean>;
     /** Add submenus for sub-directories instead of listing their contents. */
     recursive_paths?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**
@@ -1436,7 +1436,7 @@ export interface Mesh extends R.ID {
    * @returns The edge crease attribute.
    */
   edge_creases_ensure(): H.Ptr<R.FloatAttribute>;
-  edge_creases_remove(): any;
+  edge_creases_remove(): H.Ref<void>;
   /**
    * Make a mesh from a list of vertices/edges/faces
    * Until we have a nicer way to make geometry, use this.
@@ -1453,7 +1453,7 @@ export interface Mesh extends R.ID {
    * @param faces iterator of faces, each faces contains three or more indices to the *vertices* argument. eg: [(5, 6, 8, 9), (1, 2, 3), ...]
    * @param shade_flat When true, mark new faces as flat-shaded.
    */
-  from_pydata(vertices: H.In<readonly (readonly number[])[]>, edges: H.In<readonly (readonly number[])[]>, faces: H.In<readonly (readonly number[])[]>, shade_flat?: H.In<boolean>): any;
+  from_pydata(vertices: H.In<readonly (readonly number[])[]>, edges: H.In<readonly (readonly number[])[]>, faces: H.In<readonly (readonly number[])[]>, shade_flat?: H.In<boolean>): H.Ref<void>;
   /**
    * Make a mesh from a list of vertices/edges/faces
    * Until we have a nicer way to make geometry, use this.
@@ -1473,7 +1473,7 @@ export interface Mesh extends R.ID {
   from_pydata(vertices: H.In<readonly (readonly number[])[]>, edges: H.In<readonly (readonly number[])[]>, faces: H.In<readonly (readonly number[])[]>, kw: {
     /** When true, mark new faces as flat-shaded. */
     shade_flat?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Make a mesh from a list of vertices/edges/faces
    * Until we have a nicer way to make geometry, use this.
@@ -1509,29 +1509,29 @@ export interface Mesh extends R.ID {
     faces: H.In<readonly (readonly number[])[]>;
     /** When true, mark new faces as flat-shaded. */
     shade_flat?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Render and display faces uniform, using face normals,
    * setting the "sharp_face" attribute true for every face
    */
-  shade_flat(): any;
+  shade_flat(): H.Ref<void>;
   /**
    * Render and display faces smooth, using interpolated vertex normals,
    * removing the "sharp_face" attribute
    */
-  shade_smooth(): any;
+  shade_smooth(): H.Ref<void>;
   /**
    * Ensure the "crease_vert" attribute exists, creating it if needed.
    * @returns The vertex crease attribute.
    */
   vertex_creases_ensure(): H.Ptr<R.FloatAttribute>;
-  vertex_creases_remove(): any;
+  vertex_creases_remove(): H.Ref<void>;
   /**
    * Ensure the ".sculpt_mask" attribute exists, creating it if needed.
    * @returns The vertex paint mask attribute.
    */
   vertex_paint_mask_ensure(): H.Ptr<R.FloatAttribute>;
-  vertex_paint_mask_remove(): any;
+  vertex_paint_mask_remove(): H.Ref<void>;
 }
 
 /**

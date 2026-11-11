@@ -2367,7 +2367,7 @@ export interface BlendDataNodeTrees {
    * @param name New name for the data-block
    * @param type The type of node_group to add - `GeometryNodeTree`: Geometry Node Editor (Advanced geometry editing and tools creation using nodes) - `CompositorNodeTree`: Compositor (Create effects and post-process renders, images, and the 3D Viewport) - `ShaderNodeTree`: Shader Editor (Edit materials, lights, and world shading using nodes) - `TextureNodeTree`: Texture Node Editor (Edit textures using nodes)
    */
-  "new"(name: H.In<string>, type: H.In<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree">): H.Ptr<R.NodeTree>;
+  "new"(name: H.In<string>, type: H.In<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree" | (string & {})>): H.Ptr<R.NodeTree>;
   /**
    * Add a new node tree to the main database
    * @param name New name for the data-block
@@ -2383,7 +2383,7 @@ export interface BlendDataNodeTrees {
      * - `ShaderNodeTree`: Shader Editor (Edit materials, lights, and world shading using nodes)
      * - `TextureNodeTree`: Texture Node Editor (Edit textures using nodes)
      */
-    type: H.In<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree">;
+    type: H.In<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree" | (string & {})>;
   }): H.Ptr<R.NodeTree>;
   /**
    * Remove a node tree from the current blendfile
@@ -3330,7 +3330,7 @@ export interface BlendFileColorspace extends R.bpy_struct {
    * - `Linear Rec.2020`: Linear Rec.2020 (Linear BT.2020 with illuminant D65 white point)
    * - `ACEScg`: ACEScg (Linear AP1 with ACES white point)
    */
-  get working_space(): H.Ref<"Linear Rec.709" | "Linear Rec.2020" | "ACEScg">;
+  get working_space(): H.Ref<"Linear Rec.709" | "Linear Rec.2020" | "ACEScg" | (string & {})>;
   /** Unique identifier for common color spaces, as defined by the Color Interop Forum. May be empty if there is no interop ID for the working space. Common values are lin_rec709_scene, lin_rec2020_scene and lin_ap1_scene (for ACEScg) Default: "". */
   get working_space_interop_id(): H.Ref<string>;
   /** A color space, view or display was not found, which likely means the OpenColorIO config used to create this blend file is missing Default: False. */
@@ -4332,11 +4332,11 @@ export interface Brush extends R.ID {
    * - `ADD`: Add (Add effect of brush)
    * - `SUBTRACT`: Subtract (Subtract effect of brush)
    */
-  get direction(): H.Ref<"ADD" | "SUBTRACT">;
-  set direction(v: H.In<"ADD" | "SUBTRACT">);
+  get direction(): H.Ref<"ADD" | "SUBTRACT" | (string & {})>;
+  set direction(v: H.In<"ADD" | "SUBTRACT" | (string & {})>);
   /** Stroke Method Default: 'DOTS'. */
-  get stroke_method(): H.Ref<E.BrushStrokeMethod>;
-  set stroke_method(v: H.In<E.BrushStrokeMethod>);
+  get stroke_method(): H.Ref<E.BrushStrokeMethod | (string & {})>;
+  set stroke_method(v: H.In<E.BrushStrokeMethod | (string & {})>);
   /**
    * Sculpt Plane Default: 'AREA'.
    * - `AREA`: Area Plane
@@ -5494,8 +5494,8 @@ export interface BrushTextureSlot extends R.TextureSlot {
    * - `RANDOM`: Random
    * - `STENCIL`: Stencil
    */
-  get map_mode(): H.Ref<"VIEW_PLANE" | "AREA_PLANE" | "TILED" | "3D" | "RANDOM" | "STENCIL">;
-  set map_mode(v: H.In<"VIEW_PLANE" | "AREA_PLANE" | "TILED" | "3D" | "RANDOM" | "STENCIL">);
+  get map_mode(): H.Ref<"VIEW_PLANE" | "AREA_PLANE" | "TILED" | "3D" | "RANDOM" | "STENCIL" | (string & {})>;
+  set map_mode(v: H.In<"VIEW_PLANE" | "AREA_PLANE" | "TILED" | "3D" | "RANDOM" | "STENCIL" | (string & {})>);
   /**
    * Mode Default: 'VIEW_PLANE'.
    * - `VIEW_PLANE`: View Plane

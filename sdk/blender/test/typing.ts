@@ -51,6 +51,11 @@ export async function script(): Promise<void> {
   scene.frame_end = 48;
   scene.render.resolution_x = 1920;
   void [loc, x, name, kind, world, e, dims, finished, n];
+  // BL34: an enum Blender works out at the time takes what it would then: a 2D curve's fill_mode is NONE, BACK, FRONT or
+  // BOTH, though the static items are the 3D ones (FULL, BACK, FRONT, HALF)
+  const curve = bpy.data.curves.new("outline", "CURVE");
+  curve.dimensions = "2D";
+  curve.fill_mode = "BOTH";
 
   // @ts-expect-error Object.type is read-only
   ob.type = "MESH";

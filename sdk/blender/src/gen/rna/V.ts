@@ -885,8 +885,8 @@ export interface View3DShading extends R.bpy_struct {
    * - `MATERIAL`: Material Preview (Preview materials using predefined environment lights)
    * - `RENDERED`: Rendered (Preview the final scene using the active render engine)
    */
-  get type(): H.Ref<"WIREFRAME" | "SOLID" | "MATERIAL" | "RENDERED">;
-  set type(v: H.In<"WIREFRAME" | "SOLID" | "MATERIAL" | "RENDERED">);
+  get type(): H.Ref<"WIREFRAME" | "SOLID" | "MATERIAL" | "RENDERED" | (string & {})>;
+  set type(v: H.In<"WIREFRAME" | "SOLID" | "MATERIAL" | "RENDERED" | (string & {})>);
   /**
    * Lighting Method for Solid/Texture Viewport Shading Default: 'STUDIO'.
    * - `STUDIO`: Studio (Display using studio lighting)
@@ -1023,8 +1023,8 @@ export interface View3DShading extends R.bpy_struct {
   get shadow_intensity(): H.Ref<number>;
   set shadow_intensity(v: H.In<number>);
   /** Render Pass to show in the viewport Default: 'COMBINED'. */
-  get render_pass(): H.Ref<E.View3DShadingRenderPass>;
-  set render_pass(v: H.In<E.View3DShadingRenderPass>);
+  get render_pass(): H.Ref<E.View3DShadingRenderPass | (string & {})>;
+  set render_pass(v: H.In<E.View3DShadingRenderPass | (string & {})>);
   /** Name of the active Shader AOV Default: "". */
   get aov_name(): H.Ref<string>;
   set aov_name(v: H.In<string>);

@@ -41,7 +41,8 @@ export function propTy(p: Prop, n: Names, owner: string, role: "in" | "out"): Ty
     case "string":
       return { ts: "string", kind: "val" };
     case "enum": {
-      const u = p.dynamic || !p.items?.length ? "string" : n.enumType(p.items, owner, p.id);
+      // an item function's enum (BL34) takes its static items or whatever else Blender gives at the time
+      const u = p.dynamic || !p.items?.length ? "string" : n.enumType(p.items, owner, p.id) + (p.itemf ? " | (string & {})" : "");
       return { ts: p.flag ? `Set<${u}>` : u, kind: "val" };
     }
     case "pointer": {
@@ -130,15 +131,15 @@ function pyMembers(s: Struct, n: Names, skip: Set<string>): string[] {
     const get = `${jsdoc(d.text)}  get ${key(p.id)}(): ${direct(t)};`;
     out.push(p.ro ? get : `${get}\n  set ${key(p.id)}(v: ${d.type ? input(pyType(d.type, { names: n, role: "in", self })) : "any"});`);
   }
-  for (const f of [...(s.pyfuncs ?? []), ...(s.cfuncs ?? []).map((c) => ({ ...c, sig: null, static: false }))]) {
+  for (const f of [...(s.pyfuncs ?? []), ...(s.cfuncs ?? []).map((c) => ({ ...c, sig: null, static: false, none: false }))]) {
     if (skip.has(f.id)) continue;
-    out.push(pyCallable(f.id, f.doc, f.sig, n, self));
+    out.push(pyCallable(f.id, f.doc, f.sig, n, self, undefined, "  ", false, f.none));
   }
   return out;
 }
 
 /** A Python function or method's overloads, from its docstring (its `.. method::` line, :param:, :type:, :rtype:). */
-export function pyCallable(name: string, doc: string, sig: string | null | undefined, n: Names, self?: string, module?: string, indent = "  ", call = false): string {
+export function pyCallable(name: string, doc: string, sig: string | null | undefined, n: Names, self?: string, module?: string, indent = "  ", call = false, none = false): string {
   const d = readDoc(doc);
   const s = d.sig ?? (sig ? sig : null);
   const where = (role: "in" | "out") => ({ names: n, role, self, module });
@@ -149,7 +150,8 @@ export function pyCallable(name: string, doc: string, sig: string | null | undef
         return { name: p.name, ty, opt: p.def !== undefined, mode: p.mode, rest: p.rest, doc: info?.doc };
       })
     : [{ name: "args", ty: "any", opt: true, mode: "pos", rest: "args" }, { name: "kwargs", ty: "any", opt: true, mode: "kw", rest: "kwargs" }];
-  const ret = d.rtype ? direct(pyType(d.rtype, where("out"))) : "any";
+  // no :rtype:, and Python source that returns no value anywhere (none): None, as Python gives
+  const ret = d.rtype ? direct(pyType(d.rtype, where("out"))) : none ? "H.Ref<void>" : "any";
   const text = [d.text, d.returns ? `@returns ${d.returns}` : ""].filter(Boolean).join("\n");
   return overloads(name, ps, ret, text, indent, call);
 }

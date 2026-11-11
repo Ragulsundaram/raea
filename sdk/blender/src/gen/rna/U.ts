@@ -3947,8 +3947,8 @@ export interface UserAssetLibrary extends R.bpy_struct {
    * - `APPEND_REUSE`: Append (Reuse Data) (Import the assets as copied data-block while avoiding multiple copies of nested, typically heavy data. For example the textures of a material asset, or the mesh of an object asset, don't have to be copied every time this asset is imported. The instances of the asset share the data instead.)
    * - `PACK`: Pack (Import the asset as linked data-block, and pack it in the current file (ensures that it remains unchanged in case the library data is modified, is not available anymore, etc.))
    */
-  get import_method(): H.Ref<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK">;
-  set import_method(v: H.In<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK">);
+  get import_method(): H.Ref<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK" | (string & {})>;
+  set import_method(v: H.In<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK" | (string & {})>);
   /** Use relative path when linking assets from this asset library Default: True. */
   get use_relative_path(): H.Ref<boolean>;
   set use_relative_path(v: H.In<boolean>);

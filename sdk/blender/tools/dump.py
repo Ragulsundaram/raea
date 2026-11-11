@@ -3,10 +3,13 @@
 # bpy.utils, bpy.path, bpy.app, bpy.props, bpy_extras, ...) with their docstrings, whose `:type:` lines gen.ts reads.
 # Python because it runs inside Blender:
 #   blender --background --factory-startup --python tools/dump.py -- OUT.json
+import ast
 import bpy
 import inspect
 import json
+import re
 import sys
+import textwrap
 import types
 
 import _rna_info as rna_info
@@ -84,14 +87,47 @@ def sig(obj):
         return None
 
 
+def value(v):
+    """A data member's repr, so two dumps of one Blender are equal: a set's items sorted (Python orders them by a hash
+    seeded per run), and no memory address (an object's repr carries one)."""
+    r = "%s({%s})" % (type(v).__name__, ", ".join(sorted(map(repr, v)))) if isinstance(v, (set, frozenset)) else repr(v)
+    return re.sub(r" at 0x[0-9a-fA-F]+", "", r)[:200]
+
+
 def doc(obj):
     d = getattr(obj, "__doc__", None)
     return inspect.cleandoc(d) if isinstance(d, str) else ""
 
 
+def returns_none(fn):
+    """True when a function written in Python returns no value anywhere (no `return X`, no yield), so it gives None,
+    which its docstring often doesn't say (register, draw, Object.shade_smooth). False for a C function: no source."""
+    try:
+        top = ast.parse(textwrap.dedent(inspect.getsource(fn))).body[0]
+    except (OSError, TypeError, SyntaxError, IndexError):
+        return False
+    if not isinstance(top, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return False
+    todo = list(top.body)
+    while todo:
+        node = todo.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)):
+            continue  # a nested function's returns are its own
+        if isinstance(node, (ast.Yield, ast.YieldFrom)):
+            return False
+        if isinstance(node, ast.Return) and node.value is not None:
+            if not (isinstance(node.value, ast.Constant) and node.value.value is None):
+                return False
+        todo.extend(ast.iter_child_nodes(node))
+    return True
+
+
 def pyfunc(name, f):
     fn = getattr(f, "__func__", f)
-    return {"id": name, "sig": sig(fn), "doc": doc(fn), "static": isinstance(f, (staticmethod, classmethod))}
+    d = {"id": name, "sig": sig(fn), "doc": doc(fn), "static": isinstance(f, (staticmethod, classmethod))}
+    if returns_none(fn):
+        d["none"] = True
+    return d
 
 
 def struct(s):
@@ -136,19 +172,24 @@ def member(name, obj, depth):
             m = {"id": n, "kind": kind, "doc": doc(a)}
             if kind == "method":
                 m["sig"] = sig(getattr(a, "__func__", a))
+                if returns_none(getattr(a, "__func__", a)):
+                    m["none"] = True
                 if isinstance(a, (staticmethod, classmethod)) or type(a).__name__ == "classmethod_descriptor":
                     m["static"] = True
             if kind == "data":
                 m["type"] = type(a).__name__
-                m["value"] = repr(a)[:200]
+                m["value"] = value(a)
             if kind == "property" and isinstance(a, property):
                 m["ro"] = a.fset is None
             own.append(m)
         bases = [b.__module__ + "." + b.__qualname__ for b in obj.__bases__ if b is not object]
         return {"id": name, "kind": "class", "doc": doc(obj), "sig": sig(obj), "bases": bases, "members": own}
     if callable(obj):
-        return {"id": name, "kind": "function", "doc": doc(obj), "sig": sig(obj)}
-    return {"id": name, "kind": "data", "type": type(obj).__name__, "value": repr(obj)[:200], "doc": ""}
+        f = {"id": name, "kind": "function", "doc": doc(obj), "sig": sig(obj)}
+        if returns_none(obj):
+            f["none"] = True
+        return f
+    return {"id": name, "kind": "data", "type": type(obj).__name__, "value": value(obj), "doc": ""}
 
 
 def members(mod, depth=0):
@@ -181,7 +222,7 @@ def app():
         if callable(v):
             out.append({"id": name, "kind": "function", "doc": doc(v), "sig": sig(v)})
         else:
-            out.append({"id": name, "kind": "data", "type": type(v).__name__, "value": repr(v)[:200], "doc": d})
+            out.append({"id": name, "kind": "data", "type": type(v).__name__, "value": value(v), "doc": d})
     return out
 
 

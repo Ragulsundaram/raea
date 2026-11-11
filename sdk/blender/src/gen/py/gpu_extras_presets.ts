@@ -20,7 +20,7 @@ export interface Api {
      * If None or not specified, an automatic value will be calculated.
      */
     segments?: H.In<number | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw a circle.
    * @param position 2D position where the circle will be drawn.
@@ -43,7 +43,7 @@ export interface Api {
      * If None or not specified, an automatic value will be calculated.
      */
     segments?: H.In<number | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw a 2d texture.
    * @param texture GPUTexture to draw (e.g. gpu.texture.from_image(image) for :class:`bpy.types.Image`).
@@ -52,7 +52,7 @@ export interface Api {
    * @param height Height of the image when drawn.
    * @param is_scene_linear_with_rec709_srgb_target True if the `texture` is stored in scene linear color space and the destination frame-buffer uses the Rec.709 sRGB color space (which is true when drawing textures acquired from :class:`bpy.types.Image` inside a 'PRE_VIEW', 'POST_VIEW' or 'POST_PIXEL' draw handler). Otherwise the color space is assumed to match the one of the frame-buffer. (default=False)
    */
-  draw_texture_2d(texture: P.gpu_types.GPUTexture, position: H.In<readonly number[]>, width: H.In<number>, height: H.In<number>, is_scene_linear_with_rec709_srgb_target?: H.In<boolean>): any;
+  draw_texture_2d(texture: P.gpu_types.GPUTexture, position: H.In<readonly number[]>, width: H.In<number>, height: H.In<number>, is_scene_linear_with_rec709_srgb_target?: H.In<boolean>): H.Ref<void>;
   /**
    * Draw a 2d texture.
    * @param texture GPUTexture to draw (e.g. gpu.texture.from_image(image) for :class:`bpy.types.Image`).
@@ -70,7 +70,7 @@ export interface Api {
      * Otherwise the color space is assumed to match the one of the frame-buffer. (default=False)
      */
     is_scene_linear_with_rec709_srgb_target?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw a 2d texture.
    * @param texture GPUTexture to draw (e.g. gpu.texture.from_image(image) for :class:`bpy.types.Image`).
@@ -99,6 +99,6 @@ export interface Api {
      * Otherwise the color space is assumed to match the one of the frame-buffer. (default=False)
      */
     is_scene_linear_with_rec709_srgb_target?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
 }
 

@@ -1011,7 +1011,7 @@ export interface WindowManager extends R.ID {
     keymap?: R.KeyMap | null;
     /** Anchor the popover to the active button. */
     from_active_button?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Display a popover populated by *draw_func*.
    * @param draw_func Function to populate the popover layout.
@@ -1025,7 +1025,7 @@ export interface WindowManager extends R.ID {
     keymap?: R.KeyMap | null;
     /** Anchor the popover to the active button. */
     from_active_button?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Display a popup menu populated by *draw_func*.
    * @param draw_func Function to populate the menu layout.
@@ -1035,7 +1035,7 @@ export interface WindowManager extends R.ID {
     title?: H.In<string>;
     /** Icon shown next to the title. */
     icon?: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Display a popup menu populated by *draw_func*.
    * @param draw_func Function to populate the menu layout.
@@ -1047,7 +1047,7 @@ export interface WindowManager extends R.ID {
     title?: H.In<string>;
     /** Icon shown next to the title. */
     icon?: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Display a pie menu populated by *draw_func* at the location of *event*.
    * @param event Event used to position the pie menu.
@@ -1058,7 +1058,7 @@ export interface WindowManager extends R.ID {
     title?: H.In<string>;
     /** Icon shown next to the title. */
     icon?: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Display a pie menu populated by *draw_func* at the location of *event*.
    * @param event Event used to position the pie menu.
@@ -1073,7 +1073,7 @@ export interface WindowManager extends R.ID {
     title?: H.In<string>;
     /** Icon shown next to the title. */
     icon?: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add a new draw cursor handler to this space type.
    * It will be called every time the cursor for the specified region in the space type will be drawn.
@@ -1299,8 +1299,8 @@ export interface WorkSpace extends R.ID {
    * - `ONLINE_ESSENTIALS`: Online Essentials (Show additional building blocks and utilities available online)
    * - `CUSTOM`: Custom (Show assets from the asset libraries configured in the Preferences)
    */
-  get asset_library_reference(): H.Ref<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM">;
-  set asset_library_reference(v: H.In<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM">);
+  get asset_library_reference(): H.Ref<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM" | (string & {})>;
+  set asset_library_reference(v: H.In<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM" | (string & {})>);
   /** Sequencer Scene */
   get sequencer_scene(): H.Ptr<R.Scene>;
   set sequencer_scene(v: R.Scene | null);
@@ -1328,7 +1328,7 @@ export interface WorkSpace extends R.ID {
    * When text is a function, this will be called with the (header, context) arguments.
    * @param text Status text to display, ``None`` to clear, or a callable to install as the status bar's draw function.
    */
-  status_text_set(text: any): any;
+  status_text_set(text: any): H.Ref<void>;
   /**
    * Set the status text or None to clear,
    * When text is a function, this will be called with the (header, context) arguments.
@@ -1340,7 +1340,7 @@ export interface WorkSpace extends R.ID {
      * to install as the status bar's draw function.
      */
     text: any;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /** bpy.types.WorkSpaceTool */

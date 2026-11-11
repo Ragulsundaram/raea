@@ -50,8 +50,8 @@ export default async function () {
 - **Python itself:** `py.exec(code, vars)` runs source in Blender and gives back `result`; `py.module("addon_utils")`,
   `py.with(cm, body)` (temp_override), `py.dict`, `py.tuple`, `py.bytes`.
 
-Known gap: an enum whose items Blender works out at the time (Curve.fill_mode, which is NONE/BACK/FRONT/BOTH on a 2D
-curve) is typed with its static items only (docs/blender.feature BL34).
+An enum whose items Blender works out at the time (Curve.fill_mode, which is NONE/BACK/FRONT/BOTH on a 2D curve) takes
+its static items or any string: tools/itemf.sh reads which enums those are from Blender's own source (docs/blender.feature BL34).
 
 ## Where it runs
 

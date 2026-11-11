@@ -3929,8 +3929,8 @@ export interface TransformOrientation extends R.bpy_struct {
 /** bpy.types.TransformOrientationSlot */
 export interface TransformOrientationSlot extends R.bpy_struct {
   /** Transformation orientation Default: 'GLOBAL'. */
-  get type(): H.Ref<E.TransformOrientationSlotType>;
-  set type(v: H.In<E.TransformOrientationSlotType>);
+  get type(): H.Ref<E.TransformOrientationSlotType | (string & {})>;
+  set type(v: H.In<E.TransformOrientationSlotType | (string & {})>);
   /** Current Transform Orientation */
   get custom_orientation(): H.Ptr<R.TransformOrientation>;
   /** Use scene orientation instead of a custom setting Default: False. */

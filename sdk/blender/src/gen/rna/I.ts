@@ -650,8 +650,8 @@ export interface Image extends R.ID {
    * - `VIEWER`: Viewer (Compositing node viewer)
    * - `TILED`: UDIM Tiles (Tiled UDIM image texture)
    */
-  get source(): H.Ref<"FILE" | "SEQUENCE" | "MOVIE" | "GENERATED" | "VIEWER" | "TILED">;
-  set source(v: H.In<"FILE" | "SEQUENCE" | "MOVIE" | "GENERATED" | "VIEWER" | "TILED">);
+  get source(): H.Ref<"FILE" | "SEQUENCE" | "MOVIE" | "GENERATED" | "VIEWER" | "TILED" | (string & {})>;
+  set source(v: H.In<"FILE" | "SEQUENCE" | "MOVIE" | "GENERATED" | "VIEWER" | "TILED" | (string & {})>);
   /**
    * How to generate the image Default: 'IMAGE'.
    * - `IMAGE`: Image
@@ -960,19 +960,19 @@ export interface ImageFormatSettings extends R.bpy_struct {
    * - `MULTI_LAYER_IMAGE`: Multi-Layer EXR
    * - `VIDEO`: Video
    */
-  get media_type(): H.Ref<"IMAGE" | "MULTI_LAYER_IMAGE" | "VIDEO">;
-  set media_type(v: H.In<"IMAGE" | "MULTI_LAYER_IMAGE" | "VIDEO">);
+  get media_type(): H.Ref<"IMAGE" | "MULTI_LAYER_IMAGE" | "VIDEO" | (string & {})>;
+  set media_type(v: H.In<"IMAGE" | "MULTI_LAYER_IMAGE" | "VIDEO" | (string & {})>);
   /** File format to save the rendered images as Default: 'PNG'. */
-  get file_format(): H.Ref<E.ImageFileFormat>;
-  set file_format(v: H.In<E.ImageFileFormat>);
+  get file_format(): H.Ref<E.ImageFileFormat | (string & {})>;
+  set file_format(v: H.In<E.ImageFileFormat | (string & {})>);
   /**
    * Choose BW for saving grayscale images, RGB for saving red, green and blue channels, and RGBA for saving red, green, blue and alpha channels Default: 'RGBA'.
    * - `BW`: BW (Images get saved in 8-bit grayscale (only PNG, JPEG, TGA, TIF))
    * - `RGB`: RGB (Images are saved with RGB (color) data)
    * - `RGBA`: RGBA (Images are saved with RGB and Alpha data (if supported))
    */
-  get color_mode(): H.Ref<"BW" | "RGB" | "RGBA">;
-  set color_mode(v: H.In<"BW" | "RGB" | "RGBA">);
+  get color_mode(): H.Ref<"BW" | "RGB" | "RGBA" | (string & {})>;
+  set color_mode(v: H.In<"BW" | "RGB" | "RGBA" | (string & {})>);
   /**
    * Bit depth per channel Default: '8'.
    * - `8`: 8 (8-bit color channels)
@@ -981,8 +981,8 @@ export interface ImageFormatSettings extends R.bpy_struct {
    * - `16`: 16 (16-bit color channels)
    * - `32`: 32 (32-bit color channels)
    */
-  get color_depth(): H.Ref<"8" | "10" | "12" | "16" | "32">;
-  set color_depth(v: H.In<"8" | "10" | "12" | "16" | "32">);
+  get color_depth(): H.Ref<"8" | "10" | "12" | "16" | "32" | (string & {})>;
+  set color_depth(v: H.In<"8" | "10" | "12" | "16" | "32" | (string & {})>);
   /** Quality for image formats that support lossy compression Range: 0 to 100. Default: 90. */
   get quality(): H.Ref<number>;
   set quality(v: H.In<number>);
@@ -993,8 +993,8 @@ export interface ImageFormatSettings extends R.bpy_struct {
   get use_preview(): H.Ref<boolean>;
   set use_preview(v: H.In<boolean>);
   /** Compression codec settings for OpenEXR Default: 'NONE'. */
-  get exr_codec(): H.Ref<E.ImageFormatSettingsExrCodec>;
-  set exr_codec(v: H.In<E.ImageFormatSettingsExrCodec>);
+  get exr_codec(): H.Ref<E.ImageFormatSettingsExrCodec | (string & {})>;
+  set exr_codec(v: H.In<E.ImageFormatSettingsExrCodec | (string & {})>);
   /** Use legacy interleaved storage of views, layers and passes for compatibility with applications that do not support more efficient multi-part OpenEXR files. Default: False. */
   get use_exr_interleave(): H.Ref<boolean>;
   set use_exr_interleave(v: H.In<boolean>);
@@ -1041,8 +1041,8 @@ export interface ImageFormatSettings extends R.bpy_struct {
    * - `STEREO_3D`: Stereo 3D (Single file with an encoded stereo pair)
    * - `MULTIVIEW`: Multi-View (Single file with all the views)
    */
-  get views_format(): H.Ref<"INDIVIDUAL" | "STEREO_3D" | "MULTIVIEW">;
-  set views_format(v: H.In<"INDIVIDUAL" | "STEREO_3D" | "MULTIVIEW">);
+  get views_format(): H.Ref<"INDIVIDUAL" | "STEREO_3D" | "MULTIVIEW" | (string & {})>;
+  set views_format(v: H.In<"INDIVIDUAL" | "STEREO_3D" | "MULTIVIEW" | (string & {})>);
   /** Settings for stereo 3D */
   get stereo_3d_format(): H.Own<R.Stereo3dFormat>;
   /**

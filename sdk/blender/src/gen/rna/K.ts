@@ -191,8 +191,8 @@ export interface KeyMapItem extends R.bpy_struct {
   get map_type(): H.Ref<"KEYBOARD" | "MOUSE" | "NDOF" | "TEXTINPUT" | "TIMER">;
   set map_type(v: H.In<"KEYBOARD" | "MOUSE" | "NDOF" | "TEXTINPUT" | "TIMER">);
   /** Type of event Default: 'NONE'. */
-  get type(): H.Ref<E.EventType>;
-  set type(v: H.In<E.EventType>);
+  get type(): H.Ref<E.EventType | (string & {})>;
+  set type(v: H.In<E.EventType | (string & {})>);
   /** Value Default: 'NOTHING'. */
   get value(): H.Ref<E.EventValue>;
   set value(v: H.In<E.EventValue>);

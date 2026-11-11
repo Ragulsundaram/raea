@@ -32,8 +32,8 @@ export interface Object extends R.ID {
    * - `VERTEX_3`: 3 Vertices
    * - `BONE`: Bone (The object is parented to a bone)
    */
-  get parent_type(): H.Ref<"OBJECT" | "ARMATURE" | "LATTICE" | "VERTEX" | "VERTEX_3" | "BONE">;
-  set parent_type(v: H.In<"OBJECT" | "ARMATURE" | "LATTICE" | "VERTEX" | "VERTEX_3" | "BONE">);
+  get parent_type(): H.Ref<"OBJECT" | "ARMATURE" | "LATTICE" | "VERTEX" | "VERTEX_3" | "BONE" | (string & {})>;
+  set parent_type(v: H.In<"OBJECT" | "ARMATURE" | "LATTICE" | "VERTEX" | "VERTEX_3" | "BONE" | (string & {})>);
   /** Indices of vertices in case of a vertex parenting relation Range: 0 to 2147483647. Default: (0, 0, 0). */
   get parent_vertices(): H.Arr<number>;
   set parent_vertices(v: H.In<readonly number[]>);
@@ -274,8 +274,8 @@ export interface Object extends R.ID {
    * - `FACES`: Faces (Instantiate child objects on all faces)
    * - `COLLECTION`: Collection (Enable collection instancing)
    */
-  get instance_type(): H.Ref<"NONE" | "VERTS" | "FACES" | "COLLECTION">;
-  set instance_type(v: H.In<"NONE" | "VERTS" | "FACES" | "COLLECTION">);
+  get instance_type(): H.Ref<"NONE" | "VERTS" | "FACES" | "COLLECTION" | (string & {})>;
+  set instance_type(v: H.In<"NONE" | "VERTS" | "FACES" | "COLLECTION" | (string & {})>);
   /** Rotate instance according to vertex normal Default: False. */
   get use_instance_vertices_rotation(): H.Ref<boolean>;
   set use_instance_vertices_rotation(v: H.In<boolean>);

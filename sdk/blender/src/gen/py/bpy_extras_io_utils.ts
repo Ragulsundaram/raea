@@ -563,7 +563,7 @@ export interface Api {
    * @param copy_set set of (from, to) pairs to copy.
    * @param report function used for reporting warnings, takes a string argument.
    */
-  path_reference_copy(copy_set: H.In<Set<readonly [string, string]>>, report?: any): any;
+  path_reference_copy(copy_set: H.In<Set<readonly [string, string]>>, report?: any): H.Ref<void>;
   /**
    * Execute copying files of path_reference
    * @param copy_set set of (from, to) pairs to copy.
@@ -572,7 +572,7 @@ export interface Api {
   path_reference_copy(copy_set: H.In<Set<readonly [string, string]>>, kw: {
     /** function used for reporting warnings, takes a string argument. */
     report?: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Execute copying files of path_reference
    * @param copy_set set of (from, to) pairs to copy.
@@ -583,7 +583,7 @@ export interface Api {
     copy_set: H.In<Set<readonly [string, string]>>;
     /** function used for reporting warnings, takes a string argument. */
     report?: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Intermediate storage for properties before registration.
    *

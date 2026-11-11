@@ -184,11 +184,11 @@ export interface Api {
     /** Check for matching case when comparing extensions. */
     case_sensitive?: H.In<boolean>;
   }): H.Ref<string>;
-  /** = frozenset({'.mka', '.ac3', '.mp3', '.flac', '.aiff', '.oga', '.opus', '.ogg', '.mp2', '.eac3', '.aif', '.wav', '.aac', '.wma', '.m4a'}) */
+  /** = frozenset({'.aac', '.ac3', '.aif', '.aiff', '.eac3', '.flac', '.m4a', '.mka', '.mp2', '.mp3', '.oga', '.ogg', '.opus', '.wav', '.wma'}) */
   readonly extensions_audio: H.Ref<any>;
-  /** = frozenset({'.dpx', '.avif', '.bmp', '.hdr', '.jpeg', '.rgb', '.tif', '.exr', '.pdd', '.psd', '.jpg', '.jp2', '.psb', '.j2c', '.cin', '.tga', '.sgi', '.png', '.tx', '.dds', '.tiff', '.rgba', '.webp'}) */
+  /** = frozenset({'.avif', '.bmp', '.cin', '.dds', '.dpx', '.exr', '.hdr', '.j2c', '.jp2', '.jpeg', '.jpg', '.pdd', '.png', '.psb', '.psd', '.rgb', '.rgba', '.sgi', '.tga', '.tif', '.tiff', '.tx', '.webp'}) */
   readonly extensions_image: H.Ref<any>;
-  /** = frozenset({'.m2t', '.ogg', '.divx', '.webm', '.ts', '.r3d', '.mov', '.mv', '.mp4', '.xvid', '.m2v', '.mpeg', '.vob', '.flv', '.m2ts', '.m4v', '.mpg2', '.mts', '.flc', '.dv', '.avi', '.mpg', '.gif', '. */
+  /** = frozenset({'.avi', '.avs', '.divx', '.dv', '.flc', '.flv', '.gif', '.m2t', '.m2ts', '.m2v', '.m4v', '.mkv', '.mov', '.movie', '.mp4', '.mpeg', '.mpg', '.mpg2', '.mts', '.mv', '.mxf', '.ogg', '.ogv', ' */
   readonly extensions_movie: H.Ref<any>;
   /**
    * Returns true if *path* is in a subdirectory of *directory*.

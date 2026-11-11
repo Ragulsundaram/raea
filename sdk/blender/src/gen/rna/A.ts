@@ -615,8 +615,8 @@ export interface ActionSlot extends R.bpy_struct {
   get identifier(): H.Ref<string>;
   set identifier(v: H.In<string>);
   /** Type of data-block that this slot is intended to animate; can be set when 'UNSPECIFIED' but is otherwise read-only Default: 'UNSPECIFIED'. */
-  get target_id_type(): H.Ref<E.ActionSlotTargetIdType>;
-  set target_id_type(v: H.In<E.ActionSlotTargetIdType>);
+  get target_id_type(): H.Ref<E.ActionSlotTargetIdType | (string & {})>;
+  set target_id_type(v: H.In<E.ActionSlotTargetIdType | (string & {})>);
   /** Range: -2147483648 to 2147483647. Default: 0. */
   get target_id_type_icon(): H.Ref<number>;
   /** Name of the slot, for display in the user interface. This name combined with the slot's data-block type is unique within its Action Default: "". */
@@ -1873,8 +1873,8 @@ export interface AssetMetaData extends R.bpy_struct {
    * - `APPEND_REUSE`: Append (Reuse Data) (Import the assets as copied data-block while avoiding multiple copies of nested, typically heavy data. For example the textures of a material asset, or the mesh of an object asset, don't have to be copied every time this asset is imported. The instances of the asset share the data instead.)
    * - `PACK`: Pack (Import the asset as linked data-block, and pack it in the current file (ensures that it remains unchanged in case the library data is modified, is not available anymore, etc.))
    */
-  get preferred_import_method(): H.Ref<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK">;
-  set preferred_import_method(v: H.In<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK">);
+  get preferred_import_method(): H.Ref<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK" | (string & {})>;
+  set preferred_import_method(v: H.In<"LINK" | "APPEND" | "APPEND_REUSE" | "PACK" | (string & {})>);
 }
 
 /**
@@ -2044,8 +2044,8 @@ export interface AssetShelf extends R.bpy_struct {
    * - `ONLINE_ESSENTIALS`: Online Essentials (Show additional building blocks and utilities available online)
    * - `CUSTOM`: Custom (Show assets from the asset libraries configured in the Preferences)
    */
-  get asset_library_reference(): H.Ref<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM">;
-  set asset_library_reference(v: H.In<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM">);
+  get asset_library_reference(): H.Ref<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM" | (string & {})>;
+  set asset_library_reference(v: H.In<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM" | (string & {})>);
   /** Show the asset name together with the preview. Otherwise only the preview will be visible. Default: False. */
   get show_names(): H.Ref<boolean>;
   set show_names(v: H.In<boolean>);
@@ -2199,7 +2199,7 @@ export interface Attribute extends R.bpy_struct {
    */
   get storage_type(): H.Ref<"ARRAY" | "SINGLE">;
   /** Domain of the Attribute Default: 'POINT'. */
-  get domain(): H.Ref<E.AttributeDomain>;
+  get domain(): H.Ref<E.AttributeDomain | (string & {})>;
   /** The attribute is meant for internal use by Blender Default: False. */
   get is_internal(): H.Ref<boolean>;
   /** Whether the attribute can be removed or renamed Default: False. */

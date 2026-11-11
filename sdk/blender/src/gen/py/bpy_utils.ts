@@ -70,7 +70,7 @@ export interface Api {
    * to ``sys.path``. These may be used instead of dedicated packages, to ensure
    * the libraries are compatible with Blender.
    */
-  expose_bundled_modules(): any;
+  expose_bundled_modules(): H.Ref<void>;
   /**
    * Return a user writable directory associated with an extension.
    *
@@ -163,7 +163,7 @@ export interface Api {
    * Initialize and refresh key configurations, called from the Blender
    * window manager on startup and refresh.
    */
-  keyconfig_init(): any;
+  keyconfig_init(): H.Ref<void>;
   /**
    * Load and activate a key configuration from a file.
    * @param filepath The file path to the key configuration preset.
@@ -196,7 +196,7 @@ export interface Api {
     refresh_scripts?: H.In<boolean>;
     /** Loads additional scripts (add-ons & app-templates). */
     extensions?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /** Load extensions scripts (add-ons and app-templates) */
   load_scripts_extensions(kw?: {
     /**
@@ -204,7 +204,7 @@ export interface Api {
      * called before loading.
      */
     reload_scripts?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Create RNA "paths" from given names.
    * @returns A triple of three "RNA paths"
@@ -318,7 +318,7 @@ export interface Api {
     subdir: H.In<string>;
   }): H.Ref<string[]>;
   /** Run this after creating new script paths to update sys.path */
-  refresh_script_paths(): any;
+  refresh_script_paths(): H.Ref<void>;
   /**
    * Register a subclass of a Blender type class.
    *
@@ -380,7 +380,7 @@ export interface Api {
    * Register a function to provide manual URL mappings.
    * @param manual_hook A callable that returns ``(prefix, mapping)`` where *mapping* is a sequence of ``(pattern, url)`` pairs.
    */
-  register_manual_map(manual_hook: any): any;
+  register_manual_map(manual_hook: any): H.Ref<void>;
   /**
    * Register a function to provide manual URL mappings.
    * @param manual_hook A callable that returns ``(prefix, mapping)`` where *mapping* is a sequence of ``(pattern, url)`` pairs.
@@ -391,7 +391,7 @@ export interface Api {
      * where *mapping* is a sequence of ``(pattern, url)`` pairs.
      */
     manual_hook: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Register a preset search path.
    * @returns success
@@ -458,7 +458,7 @@ export interface Api {
     separator?: H.In<boolean>;
     /** When true, add a new nested group of tools. */
     group?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Register a tool in the toolbar.
    * @param tool_cls A tool subclass.
@@ -472,7 +472,7 @@ export interface Api {
     separator?: H.In<boolean>;
     /** When true, add a new nested group of tools. */
     group?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the base path for storing system files.
    *
@@ -703,7 +703,7 @@ export interface Api {
    * Unregister a previously registered manual map hook.
    * @param manual_hook The hook function to remove.
    */
-  unregister_manual_map(manual_hook: any): any;
+  unregister_manual_map(manual_hook: any): H.Ref<void>;
   /**
    * Unregister a previously registered manual map hook.
    * @param manual_hook The hook function to remove.
@@ -711,7 +711,7 @@ export interface Api {
   unregister_manual_map(kw: {
     /** The hook function to remove. */
     manual_hook: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Unregister a preset search path.
    * @returns success
@@ -734,7 +734,7 @@ export interface Api {
    * Unregister a previously registered tool.
    * @param tool_cls The tool class to unregister.
    */
-  unregister_tool(tool_cls: any): any;
+  unregister_tool(tool_cls: any): H.Ref<void>;
   /**
    * Unregister a previously registered tool.
    * @param tool_cls The tool class to unregister.
@@ -742,7 +742,7 @@ export interface Api {
   unregister_tool(kw: {
     /** The tool class to unregister. */
     tool_cls: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return a user resource path (normally from the users home directory).
    * @returns a path.

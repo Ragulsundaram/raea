@@ -150,8 +150,8 @@ export interface DataTransferModifier extends R.Modifier {
    * - `BONE_SELECT`: Selected Pose Bones (Transfer all vertex groups used by selected pose bones)
    * - `BONE_DEFORM`: Deform Pose Bones (Transfer all vertex groups used by deform bones)
    */
-  get layers_vgroup_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">;
-  set layers_vgroup_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">);
+  get layers_vgroup_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>;
+  set layers_vgroup_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>);
   /**
    * Which layers to transfer, in case of multi-layers types Default: 'ALL'.
    * - `ACTIVE`: Active Layer (Only transfer active data layer)
@@ -159,8 +159,8 @@ export interface DataTransferModifier extends R.Modifier {
    * - `BONE_SELECT`: Selected Pose Bones (Transfer all vertex groups used by selected pose bones)
    * - `BONE_DEFORM`: Deform Pose Bones (Transfer all vertex groups used by deform bones)
    */
-  get layers_vcol_vert_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">;
-  set layers_vcol_vert_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">);
+  get layers_vcol_vert_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>;
+  set layers_vcol_vert_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>);
   /**
    * Which layers to transfer, in case of multi-layers types Default: 'ALL'.
    * - `ACTIVE`: Active Layer (Only transfer active data layer)
@@ -168,8 +168,8 @@ export interface DataTransferModifier extends R.Modifier {
    * - `BONE_SELECT`: Selected Pose Bones (Transfer all vertex groups used by selected pose bones)
    * - `BONE_DEFORM`: Deform Pose Bones (Transfer all vertex groups used by deform bones)
    */
-  get layers_vcol_loop_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">;
-  set layers_vcol_loop_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">);
+  get layers_vcol_loop_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>;
+  set layers_vcol_loop_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>);
   /**
    * Which layers to transfer, in case of multi-layers types Default: 'ALL'.
    * - `ACTIVE`: Active Layer (Only transfer active data layer)
@@ -177,43 +177,43 @@ export interface DataTransferModifier extends R.Modifier {
    * - `BONE_SELECT`: Selected Pose Bones (Transfer all vertex groups used by selected pose bones)
    * - `BONE_DEFORM`: Deform Pose Bones (Transfer all vertex groups used by deform bones)
    */
-  get layers_uv_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">;
-  set layers_uv_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM">);
+  get layers_uv_select_src(): H.Ref<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>;
+  set layers_uv_select_src(v: H.In<"ACTIVE" | "ALL" | "BONE_SELECT" | "BONE_DEFORM" | (string & {})>);
   /**
    * How to match source and destination layers Default: 'NAME'.
    * - `ACTIVE`: Active Layer (Affect active data layer of all targets)
    * - `NAME`: By Name (Match target data layers to affect by name)
    * - `INDEX`: By Order (Match target data layers to affect by order (indices))
    */
-  get layers_vgroup_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX">;
-  set layers_vgroup_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX">);
+  get layers_vgroup_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX" | (string & {})>;
+  set layers_vgroup_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX" | (string & {})>);
   /**
    * How to match source and destination layers Default: 'NAME'.
    * - `ACTIVE`: Active Layer (Affect active data layer of all targets)
    * - `NAME`: By Name (Match target data layers to affect by name)
    * - `INDEX`: By Order (Match target data layers to affect by order (indices))
    */
-  get layers_vcol_vert_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX">;
-  set layers_vcol_vert_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX">);
+  get layers_vcol_vert_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX" | (string & {})>;
+  set layers_vcol_vert_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX" | (string & {})>);
   /**
    * How to match source and destination layers Default: 'NAME'.
    * - `ACTIVE`: Active Layer (Affect active data layer of all targets)
    * - `NAME`: By Name (Match target data layers to affect by name)
    * - `INDEX`: By Order (Match target data layers to affect by order (indices))
    */
-  get layers_vcol_loop_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX">;
-  set layers_vcol_loop_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX">);
+  get layers_vcol_loop_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX" | (string & {})>;
+  set layers_vcol_loop_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX" | (string & {})>);
   /**
    * How to match source and destination layers Default: 'NAME'.
    * - `ACTIVE`: Active Layer (Affect active data layer of all targets)
    * - `NAME`: By Name (Match target data layers to affect by name)
    * - `INDEX`: By Order (Match target data layers to affect by order (indices))
    */
-  get layers_uv_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX">;
-  set layers_uv_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX">);
+  get layers_uv_select_dst(): H.Ref<"ACTIVE" | "NAME" | "INDEX" | (string & {})>;
+  set layers_uv_select_dst(v: H.In<"ACTIVE" | "NAME" | "INDEX" | (string & {})>);
   /** How to affect destination elements with source values Default: 'REPLACE'. */
-  get mix_mode(): H.Ref<E.DataTransferModifierMixMode>;
-  set mix_mode(v: H.In<E.DataTransferModifierMixMode>);
+  get mix_mode(): H.Ref<E.DataTransferModifierMixMode | (string & {})>;
+  set mix_mode(v: H.In<E.DataTransferModifierMixMode | (string & {})>);
   /** Factor to use when applying data to destination (exact behavior depends on mix mode, multiplied with weights from vertex group when defined) Range: 0 to 1. Default: 0.0. */
   get mix_factor(): H.Ref<number>;
   set mix_factor(v: H.In<number>);

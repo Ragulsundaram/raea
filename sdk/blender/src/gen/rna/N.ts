@@ -545,8 +545,8 @@ export interface NodeClosureInputItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -558,8 +558,8 @@ export interface NodeClosureInputItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
 }
 
 /** bpy.types.NodeClosureInputItems */
@@ -653,8 +653,8 @@ export interface NodeClosureOutputItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -666,8 +666,8 @@ export interface NodeClosureOutputItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
 }
 
 /** bpy.types.NodeClosureOutputItems */
@@ -762,8 +762,8 @@ export interface NodeCombineBundleItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -775,8 +775,8 @@ export interface NodeCombineBundleItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
 }
 
 /**
@@ -839,8 +839,8 @@ export interface NodeCompositorFileOutputItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Dimensions of the vector socket Range: 2 to 4. Default: 0. */
   get vector_socket_dimensions(): H.Ref<number>;
   set vector_socket_dimensions(v: H.In<number>);
@@ -1010,8 +1010,8 @@ export interface NodeEvaluateClosureInputItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -1023,8 +1023,8 @@ export interface NodeEvaluateClosureInputItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
 }
 
 /** bpy.types.NodeEvaluateClosureInputItems */
@@ -1083,8 +1083,8 @@ export interface NodeEvaluateClosureOutputItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -1096,8 +1096,8 @@ export interface NodeEvaluateClosureOutputItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
 }
 
 /** bpy.types.NodeEvaluateClosureOutputItems */
@@ -1181,8 +1181,8 @@ export interface NodeFunctionFormatStringItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
 }
@@ -1247,13 +1247,13 @@ export interface NodeGeometryBakeItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Domain where the field is captured if it is not already an attribute-field Default: 'POINT'. */
-  get attribute_domain(): H.Ref<E.AttributeDomain>;
-  set attribute_domain(v: H.In<E.AttributeDomain>);
+  get attribute_domain(): H.Ref<E.AttributeDomain | (string & {})>;
+  set attribute_domain(v: H.In<E.AttributeDomain | (string & {})>);
   /** Bake item is an attribute stored on a geometry Default: False. */
   get is_attribute(): H.Ref<boolean>;
   set is_attribute(v: H.In<boolean>);
@@ -1321,8 +1321,8 @@ export interface NodeGeometryCaptureAttributeItem extends R.bpy_struct {
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Data Type Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.AttributeDataType>;
-  set data_type(v: H.In<E.AttributeDataType>);
+  get data_type(): H.Ref<E.AttributeDataType | (string & {})>;
+  set data_type(v: H.In<E.AttributeDataType | (string & {})>);
 }
 
 /**
@@ -1655,8 +1655,8 @@ export interface NodeGeometryViewerItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Remove the item automatically when it is unlinked Default: False. */
@@ -1868,8 +1868,8 @@ export interface NodeImplicitConversion extends R.NodeInternal {
   get socket_idname(): H.Ref<string>;
   set socket_idname(v: H.In<string>);
   /** Data Type Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set data_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get data_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set data_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Input socket template */
   input_template(index: H.In<number>): H.Ptr<R.NodeInternalSocketTemplate>;
   /** Input socket template */
@@ -2294,8 +2294,8 @@ export interface NodeRaycastSampleAttributeItem extends R.bpy_struct {
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Data Type Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.AttributeDataType>;
-  set data_type(v: H.In<E.AttributeDataType>);
+  get data_type(): H.Ref<E.AttributeDataType | (string & {})>;
+  set data_type(v: H.In<E.AttributeDataType | (string & {})>);
 }
 
 /**
@@ -2425,8 +2425,8 @@ export interface NodeSeparateBundleItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -2438,8 +2438,8 @@ export interface NodeSeparateBundleItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
 }
 
 /**
@@ -3551,8 +3551,8 @@ export interface NodeStoreBundleItem extends R.NodeInternal {
  */
 export interface NodeTree extends R.ID {
   /** Color tag of the node group which influences the header color Default: 'NONE'. */
-  get color_tag(): H.Ref<E.NodeColorTag>;
-  set color_tag(v: H.In<E.NodeColorTag>);
+  get color_tag(): H.Ref<E.NodeColorTag | (string & {})>;
+  set color_tag(v: H.In<E.NodeColorTag | (string & {})>);
   /** The width for newly created group nodes Range: 60 to 700. Default: 140. */
   get default_group_node_width(): H.Ref<number>;
   set default_group_node_width(v: H.In<number>);
@@ -3933,8 +3933,8 @@ export interface NodeTreeInterfaceSocket extends R.NodeTreeInterfaceItem {
   get select(): H.Ref<boolean>;
   set select(v: H.In<boolean>);
   /** Attribute domain used by the geometry nodes modifier to create an attribute output Default: 'POINT'. */
-  get attribute_domain(): H.Ref<E.AttributeDomain>;
-  set attribute_domain(v: H.In<E.AttributeDomain>);
+  get attribute_domain(): H.Ref<E.AttributeDomain | (string & {})>;
+  set attribute_domain(v: H.In<E.AttributeDomain | (string & {})>);
   /** The attribute name used by default when the node group is used by a geometry nodes modifier Default: "". */
   get default_attribute_name(): H.Ref<string>;
   set default_attribute_name(v: H.In<string>);
@@ -3947,11 +3947,11 @@ export interface NodeTreeInterfaceSocket extends R.NodeTreeInterfaceItem {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
   /** Input to use when the socket is unconnected. Requires "Hide Value". Default: 'VALUE'. */
-  get default_input(): H.Ref<E.NodeTreeInterfaceSocketDefaultInput>;
-  set default_input(v: H.In<E.NodeTreeInterfaceSocketDefaultInput>);
+  get default_input(): H.Ref<E.NodeTreeInterfaceSocketDefaultInput | (string & {})>;
+  set default_input(v: H.In<E.NodeTreeInterfaceSocketDefaultInput | (string & {})>);
   /** Name of the socket type Default: "". */
   get bl_socket_idname(): H.Ref<string>;
   set bl_socket_idname(v: H.In<string>);

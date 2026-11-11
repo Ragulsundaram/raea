@@ -284,7 +284,7 @@ export interface Api {
    * @param operator The operator to scale.
    * @param context The context.
    */
-  object_add_grid_scale_apply_operator(operator: R.Operator, context: R.Context): any;
+  object_add_grid_scale_apply_operator(operator: R.Operator, context: R.Context): H.Ref<void>;
   /**
    * Scale an operator's distance values by the grid size.
    * @param operator The operator to scale.
@@ -295,7 +295,7 @@ export interface Api {
     operator: R.Operator;
     /** The context. */
     context: R.Context;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add an object using the view context and preference to initialize the
    * location, rotation and layer.
@@ -414,7 +414,7 @@ export interface AddObjectHelper {
    * Update callback for the align property, resets rotation for world alignment.
    * @param context The context.
    */
-  align_update_callback(context: R.Context): any;
+  align_update_callback(context: R.Context): H.Ref<void>;
   /**
    * Update callback for the align property, resets rotation for world alignment.
    * @param context The context.
@@ -422,7 +422,7 @@ export interface AddObjectHelper {
   align_update_callback(kw: {
     /** The context. */
     context: R.Context;
-  }): any;
+  }): H.Ref<void>;
 }
 /** The class bpy_extras.object_utils.AddObjectHelper: called, a new one. */
 export interface AddObjectHelperClass {

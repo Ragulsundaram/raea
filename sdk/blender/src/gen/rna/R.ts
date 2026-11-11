@@ -1363,8 +1363,8 @@ export interface RepeatItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
 }

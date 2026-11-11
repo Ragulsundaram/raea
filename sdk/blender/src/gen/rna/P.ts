@@ -395,8 +395,8 @@ export interface ParticleDupliWeight extends R.bpy_struct {
  */
 export interface ParticleEdit extends R.bpy_struct {
   /** Tool Default: 'COMB'. */
-  get tool(): H.Ref<E.ParticleEditTool>;
-  set tool(v: H.In<E.ParticleEditTool>);
+  get tool(): H.Ref<E.ParticleEditTool | (string & {})>;
+  set tool(v: H.In<E.ParticleEditTool | (string & {})>);
   /**
    * Particle select and display mode Default: 'PATH'.
    * - `PATH`: Path (Path edit mode)
@@ -712,24 +712,24 @@ export interface ParticleSettings extends R.ID {
    * - `EMITTER`: Emitter
    * - `HAIR`: Hair
    */
-  get type(): H.Ref<"EMITTER" | "HAIR">;
-  set type(v: H.In<"EMITTER" | "HAIR">);
+  get type(): H.Ref<"EMITTER" | "HAIR" | (string & {})>;
+  set type(v: H.In<"EMITTER" | "HAIR" | (string & {})>);
   /**
    * Where to emit particles from Default: 'FACE'.
    * - `VERT`: Vertices
    * - `FACE`: Faces
    * - `VOLUME`: Volume
    */
-  get emit_from(): H.Ref<"VERT" | "FACE" | "VOLUME">;
-  set emit_from(v: H.In<"VERT" | "FACE" | "VOLUME">);
+  get emit_from(): H.Ref<"VERT" | "FACE" | "VOLUME" | (string & {})>;
+  set emit_from(v: H.In<"VERT" | "FACE" | "VOLUME" | (string & {})>);
   /**
    * How to distribute particles on selected element Default: 'JIT'.
    * - `JIT`: Jittered
    * - `RAND`: Random
    * - `GRID`: Grid
    */
-  get distribution(): H.Ref<"JIT" | "RAND" | "GRID">;
-  set distribution(v: H.In<"JIT" | "RAND" | "GRID">);
+  get distribution(): H.Ref<"JIT" | "RAND" | "GRID" | (string & {})>;
+  set distribution(v: H.In<"JIT" | "RAND" | "GRID" | (string & {})>);
   /**
    * Particle physics type Default: 'NEWTON'.
    * - `NO`: None
@@ -814,8 +814,8 @@ export interface ParticleSettings extends R.ID {
    * - `CROSS`: Cross
    * - `AXIS`: Axis
    */
-  get display_method(): H.Ref<"NONE" | "RENDER" | "DOT" | "CIRC" | "CROSS" | "AXIS">;
-  set display_method(v: H.In<"NONE" | "RENDER" | "DOT" | "CIRC" | "CROSS" | "AXIS">);
+  get display_method(): H.Ref<"NONE" | "RENDER" | "DOT" | "CIRC" | "CROSS" | "AXIS" | (string & {})>;
+  set display_method(v: H.In<"NONE" | "RENDER" | "DOT" | "CIRC" | "CROSS" | "AXIS" | (string & {})>);
   /**
    * How particles are rendered Default: 'HALO'.
    * - `NONE`: None
@@ -825,8 +825,8 @@ export interface ParticleSettings extends R.ID {
    * - `OBJECT`: Object
    * - `COLLECTION`: Collection
    */
-  get render_type(): H.Ref<"NONE" | "HALO" | "LINE" | "PATH" | "OBJECT" | "COLLECTION">;
-  set render_type(v: H.In<"NONE" | "HALO" | "LINE" | "PATH" | "OBJECT" | "COLLECTION">);
+  get render_type(): H.Ref<"NONE" | "HALO" | "LINE" | "PATH" | "OBJECT" | "COLLECTION" | (string & {})>;
+  set render_type(v: H.In<"NONE" | "HALO" | "LINE" | "PATH" | "OBJECT" | "COLLECTION" | (string & {})>);
   /**
    * Display additional particle data as a color Default: 'MATERIAL'.
    * - `NONE`: None
@@ -2408,8 +2408,8 @@ export interface PoseBoneConstraints {
  */
 export interface Preferences extends R.bpy_struct {
   /** Preferences Default: 'INTERFACE'. */
-  get active_section(): H.Ref<E.PreferencesActiveSection>;
-  set active_section(v: H.In<E.PreferencesActiveSection>);
+  get active_section(): H.Ref<E.PreferencesActiveSection | (string & {})>;
+  set active_section(v: H.In<E.PreferencesActiveSection | (string & {})>);
   /** Application Template Default: "". */
   get app_template(): H.Ref<string>;
   set app_template(v: H.In<string>);
@@ -3201,8 +3201,8 @@ export interface PreferencesSystem extends R.bpy_struct {
    * - `METAL`: Metal (Use Metal backend)
    * - `VULKAN`: Vulkan (Use Vulkan backend)
    */
-  get gpu_backend(): H.Ref<"OPENGL" | "METAL" | "VULKAN">;
-  set gpu_backend(v: H.In<"OPENGL" | "METAL" | "VULKAN">);
+  get gpu_backend(): H.Ref<"OPENGL" | "METAL" | "VULKAN" | (string & {})>;
+  set gpu_backend(v: H.In<"OPENGL" | "METAL" | "VULKAN" | (string & {})>);
   /**
    * Preferred device to select during detection (requires restarting Blender for changes to take effect) Default: 'AUTO'.
    * - `AUTO`: Auto (Auto detect best GPU for running Blender)
@@ -3519,8 +3519,8 @@ export interface PreferencesView extends R.bpy_struct {
   get font_path_ui_mono(): H.Ref<string>;
   set font_path_ui_mono(v: H.In<string>);
   /** Language used for translation Default: 'DEFAULT'. */
-  get language(): H.Ref<E.PreferencesViewLanguage>;
-  set language(v: H.In<E.PreferencesViewLanguage>);
+  get language(): H.Ref<E.PreferencesViewLanguage | (string & {})>;
+  set language(v: H.In<E.PreferencesViewLanguage | (string & {})>);
   /** Translate the descriptions when hovering UI elements (recommended) Default: True. */
   get use_translate_tooltips(): H.Ref<boolean>;
   set use_translate_tooltips(v: H.In<boolean>);
@@ -3534,8 +3534,8 @@ export interface PreferencesView extends R.bpy_struct {
   get use_translate_new_dataname(): H.Ref<boolean>;
   set use_translate_new_dataname(v: H.In<boolean>);
   /** Format for displaying date strings Default: 'DEFAULT'. */
-  get date_format(): H.Ref<E.PreferencesViewDateFormat>;
-  set date_format(v: H.In<E.PreferencesViewDateFormat>);
+  get date_format(): H.Ref<E.PreferencesViewDateFormat | (string & {})>;
+  set date_format(v: H.In<E.PreferencesViewDateFormat | (string & {})>);
   /**
    * Format for displaying time strings Default: 'H24'.
    * - `H24`: 24-Hour (23:59) (Time format: 24-hour clock with colon, eg: 23:59)

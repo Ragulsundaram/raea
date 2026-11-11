@@ -269,7 +269,7 @@ export interface ActionChannelbag {
 /** The class bpy_extras.anim_utils.ActionChannelbag: called, a new one. */
 export interface ActionChannelbagClass {
   (...args: any[]): H.Own<ActionChannelbag>;
-  /** = <bpy_struct, Struct("ActionChannelbag") at 0x7b9fd8f900> */
+  /** = <bpy_struct, Struct("ActionChannelbag")> */
   readonly bl_rna: H.Ref<any>;
 }
 
@@ -388,7 +388,7 @@ export interface AutoKeyingClass {
    * @param group The group name for the keyframes.
    * @param locks Per-channel lock status.
    */
-  keyframe_channels(target: R.Object | R.PoseBone, options: H.In<Set<string>>, data_path: H.In<string>, group: H.In<string>, locks: H.In<readonly boolean[]>): any;
+  keyframe_channels(target: R.Object | R.PoseBone, options: H.In<Set<string>>, data_path: H.In<string>, group: H.In<string>, locks: H.In<readonly boolean[]>): H.Ref<void>;
   /**
    * Keyframe channels, avoiding keying locked channels.
    * @param target The object or pose bone to keyframe.
@@ -408,13 +408,13 @@ export interface AutoKeyingClass {
     group: H.In<string>;
     /** Per-channel lock status. */
     locks: H.In<readonly boolean[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Keyframe transformation properties, avoiding keying locked channels.
    * @param target The object or pose bone to keyframe.
    * @param options Keyframing options.
    */
-  key_transformation(target: R.Object | R.PoseBone, options: H.In<Set<string>>): any;
+  key_transformation(target: R.Object | R.PoseBone, options: H.In<Set<string>>): H.Ref<void>;
   /**
    * Keyframe transformation properties, avoiding keying locked channels.
    * @param target The object or pose bone to keyframe.
@@ -425,14 +425,14 @@ export interface AutoKeyingClass {
     target: R.Object | R.PoseBone;
     /** Keyframing options. */
     options: H.In<Set<string>>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Auto-key transformation properties with the given keying set.
    * @param context The context.
    * @param target The object or pose bone to keyframe.
    * @param keyingset The keying set to use.
    */
-  key_transformation_via_keyingset(context: R.Context, target: R.Object | R.PoseBone, keyingset: R.KeyingSet): any;
+  key_transformation_via_keyingset(context: R.Context, target: R.Object | R.PoseBone, keyingset: R.KeyingSet): H.Ref<void>;
   /**
    * Auto-key transformation properties with the given keying set.
    * @param context The context.
@@ -446,7 +446,7 @@ export interface AutoKeyingClass {
     target: R.Object | R.PoseBone;
     /** The keying set to use. */
     keyingset: R.KeyingSet;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the active keying set, if it should be used.
    *
@@ -475,7 +475,7 @@ export interface AutoKeyingClass {
    * @param context The context.
    * @param target The object or pose bone to keyframe.
    */
-  autokey_transformation(context: R.Context, target: R.Object | R.PoseBone): any;
+  autokey_transformation(context: R.Context, target: R.Object | R.PoseBone): H.Ref<void>;
   /**
    * Auto-key transformation properties.
    * @param context The context.
@@ -486,7 +486,7 @@ export interface AutoKeyingClass {
     context: R.Context;
     /** The object or pose bone to keyframe. */
     target: R.Object | R.PoseBone;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**
@@ -528,23 +528,23 @@ export interface BakeOptionsClass {
  * bpy_extras.anim_utils.KeyframesCo
  */
 export interface KeyframesCo {
-  add_paths(rna_path: any, total_indices: any): any;
-  add_paths(kw: { rna_path: any; total_indices: any }): any;
-  extend_co_values(rna_path: any, total_indices: any, frame: any, values: any): any;
+  add_paths(rna_path: any, total_indices: any): H.Ref<void>;
+  add_paths(kw: { rna_path: any; total_indices: any }): H.Ref<void>;
+  extend_co_values(rna_path: any, total_indices: any, frame: any, values: any): H.Ref<void>;
   extend_co_values(kw: {
     rna_path: any;
     total_indices: any;
     frame: any;
     values: any;
-  }): any;
-  extend_co_value(rna_path: any, frame: any, value: any): any;
-  extend_co_value(kw: { rna_path: any; frame: any; value: any }): any;
+  }): H.Ref<void>;
+  extend_co_value(rna_path: any, frame: any, value: any): H.Ref<void>;
+  extend_co_value(kw: { rna_path: any; frame: any; value: any }): H.Ref<void>;
   /**
    * Assumes the action is new, that it has no F-curves. Otherwise, the only difference between versions is
    * performance and implementation simplicity.
    * @param group_name Name of the Group that F-curves are added to.
    */
-  insert_keyframes_into_new_action(total_new_keys: any, channelbag: any, group_name: any): any;
+  insert_keyframes_into_new_action(total_new_keys: any, channelbag: any, group_name: any): H.Ref<void>;
   /**
    * Assumes the action is new, that it has no F-curves. Otherwise, the only difference between versions is
    * performance and implementation simplicity.
@@ -555,13 +555,13 @@ export interface KeyframesCo {
     channelbag: any;
     /** Name of the Group that F-curves are added to. */
     group_name: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Assumes the action already exists, that it might already have F-curves. Otherwise, the
    * only difference between versions is performance and implementation simplicity.
    * @param lookup_fcurves : This is only used for efficiency. It's a substitute for ``channelbag.fcurves.find()`` which is a potentially expensive linear search.
    */
-  insert_keyframes_into_existing_action(lookup_fcurves: any, total_new_keys: any, channelbag: any): any;
+  insert_keyframes_into_existing_action(lookup_fcurves: any, total_new_keys: any, channelbag: any): H.Ref<void>;
   /**
    * Assumes the action already exists, that it might already have F-curves. Otherwise, the
    * only difference between versions is performance and implementation simplicity.
@@ -575,7 +575,7 @@ export interface KeyframesCo {
     lookup_fcurves: any;
     total_new_keys: any;
     channelbag: any;
-  }): any;
+  }): H.Ref<void>;
   get keyframes_from_fcurve(): any;
   set keyframes_from_fcurve(v: any);
 }
@@ -634,7 +634,7 @@ export interface PoseBone {
 /** The class bpy_extras.anim_utils.PoseBone: called, a new one. */
 export interface PoseBoneClass {
   (...args: any[]): H.Own<PoseBone>;
-  /** = <bpy_struct, Struct("PoseBone") at 0x7b9fde1800> */
+  /** = <bpy_struct, Struct("PoseBone")> */
   readonly bl_rna: H.Ref<any>;
 }
 

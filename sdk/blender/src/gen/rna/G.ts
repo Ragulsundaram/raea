@@ -31,8 +31,8 @@ export interface GLTF_AddonPreferences extends R.AddonPreferences {
   /** Allow glTF Embedded format Default: False. */
   get allow_embedded_format(): H.Ref<boolean>;
   set allow_embedded_format(v: H.In<boolean>);
-  draw(context: any): any;
-  draw(kw: { context: any }): any;
+  draw(context: any): H.Ref<void>;
+  draw(kw: { context: any }): H.Ref<void>;
 }
 
 /** bpy.types.GPENCIL_UL_annotation_layer */
@@ -596,8 +596,8 @@ export interface GeometryNodeCaptureAttribute extends R.GeometryNode {
   get active_item(): H.Ptr<R.RepeatItem>;
   set active_item(v: R.RepeatItem | null);
   /** Which domain to store the data in Default: 'POINT'. */
-  get domain(): H.Ref<E.AttributeDomain>;
-  set domain(v: H.In<E.AttributeDomain>);
+  get domain(): H.Ref<E.AttributeDomain | (string & {})>;
+  set domain(v: H.In<E.AttributeDomain | (string & {})>);
   /** Input socket template */
   input_template(index: H.In<number>): H.Ptr<R.NodeInternalSocketTemplate>;
   /** Input socket template */
@@ -667,8 +667,8 @@ export interface GeometryNodeClosureToListItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /**
@@ -680,8 +680,8 @@ export interface GeometryNodeClosureToListItem extends R.bpy_struct {
    * - `LIST`: List (Socket expects a list)
    * - `SINGLE`: Single (Socket expects a single value)
    */
-  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">;
-  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE">);
+  get structure_type(): H.Ref<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>;
+  set structure_type(v: H.In<"AUTO" | "DYNAMIC" | "FIELD" | "GRID" | "LIST" | "SINGLE" | (string & {})>);
   /** Range: -2147483648 to 2147483647. Default: 0. */
   get identifier(): H.Ref<number>;
 }
@@ -2300,8 +2300,8 @@ export interface GeometryNodeFieldToGrid extends R.GeometryNode {
   get active_item(): H.Ptr<R.RepeatItem>;
   set active_item(v: R.RepeatItem | null);
   /** Data type for topology grid Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set data_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get data_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set data_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Input socket template */
   input_template(index: H.In<number>): H.Ptr<R.NodeInternalSocketTemplate>;
   /** Input socket template */
@@ -2333,8 +2333,8 @@ export interface GeometryNodeFieldToGridItem extends R.bpy_struct {
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Data Type Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set data_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get data_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set data_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Range: -2147483648 to 2147483647. Default: 0. */
   get identifier(): H.Ref<number>;
 }
@@ -2436,8 +2436,8 @@ export interface GeometryNodeFieldToListItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Range: -2147483648 to 2147483647. Default: 0. */
@@ -6627,8 +6627,8 @@ export interface GeometryNodeSampleCurve extends R.GeometryNode {
   get use_all_curves(): H.Ref<boolean>;
   set use_all_curves(v: H.In<boolean>);
   /** Data Type Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.AttributeDataType>;
-  set data_type(v: H.In<E.AttributeDataType>);
+  get data_type(): H.Ref<E.AttributeDataType | (string & {})>;
+  set data_type(v: H.In<E.AttributeDataType | (string & {})>);
   /** Input socket template */
   input_template(index: H.In<number>): H.Ptr<R.NodeInternalSocketTemplate>;
   /** Input socket template */
@@ -6732,11 +6732,11 @@ export interface GeometryNodeSampleGridIndex extends R.GeometryNode {
  */
 export interface GeometryNodeSampleIndex extends R.GeometryNode {
   /** Data Type Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.AttributeDataType>;
-  set data_type(v: H.In<E.AttributeDataType>);
+  get data_type(): H.Ref<E.AttributeDataType | (string & {})>;
+  set data_type(v: H.In<E.AttributeDataType | (string & {})>);
   /** Domain Default: 'POINT'. */
-  get domain(): H.Ref<E.AttributeDomain>;
-  set domain(v: H.In<E.AttributeDomain>);
+  get domain(): H.Ref<E.AttributeDomain | (string & {})>;
+  set domain(v: H.In<E.AttributeDomain | (string & {})>);
   /** Clamp the indices to the size of the attribute domain instead of outputting a default value for invalid indices Default: False. */
   get clamp(): H.Ref<boolean>;
   set clamp(v: H.In<boolean>);
@@ -9430,7 +9430,7 @@ export interface Gizmo extends R.bpy_struct {
      * Only use when drawing within :class:`Gizmo.draw_select`.
      */
     select_id?: H.In<number | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw a shape created form :class:`Gizmo.draw_custom_shape`.
    * @param shape The cached shape to draw.
@@ -9445,7 +9445,7 @@ export interface Gizmo extends R.bpy_struct {
      * Only use when drawing within :class:`Gizmo.draw_select`.
      */
     select_id?: H.In<number | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Create a new shape that can be passed to :class:`Gizmo.draw_custom_shape`.
    * @returns The newly created shape (the return type make change).
@@ -10026,8 +10026,8 @@ export interface GreasePencilBuildModifier extends R.Modifier {
    * - `FRAMES`: Number of Frames (Set a fixed number of frames for all build animations)
    * - `PERCENTAGE`: Percentage Factor (Set a manual percentage to build)
    */
-  get time_mode(): H.Ref<"DRAWSPEED" | "FRAMES" | "PERCENTAGE">;
-  set time_mode(v: H.In<"DRAWSPEED" | "FRAMES" | "PERCENTAGE">);
+  get time_mode(): H.Ref<"DRAWSPEED" | "FRAMES" | "PERCENTAGE" | (string & {})>;
+  set time_mode(v: H.In<"DRAWSPEED" | "FRAMES" | "PERCENTAGE" | (string & {})>);
   /** Multiply recorded drawing speed by a factor Range: 0 to 100. Default: 1.2. */
   get speed_factor(): H.Ref<number>;
   set speed_factor(v: H.In<number>);

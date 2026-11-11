@@ -1164,13 +1164,13 @@ export interface CollectionExports {
    * @param type The type of export handler to add
    * @param name Name of the new export handler
    */
-  "new"(type: H.In<E.CollectionExportsType>, name?: H.In<string>): H.Ptr<R.CollectionExport>;
+  "new"(type: H.In<E.CollectionExportsType | (string & {})>, name?: H.In<string>): H.Ptr<R.CollectionExport>;
   /**
    * Add an export handler to the collection
    * @param type The type of export handler to add
    * @param name Name of the new export handler
    */
-  "new"(type: H.In<E.CollectionExportsType>, kw: {
+  "new"(type: H.In<E.CollectionExportsType | (string & {})>, kw: {
     /** Name of the new export handler */
     name?: H.In<string>;
   }): H.Ptr<R.CollectionExport>;
@@ -1181,7 +1181,7 @@ export interface CollectionExports {
    */
   "new"(kw: {
     /** The type of export handler to add */
-    type: H.In<E.CollectionExportsType>;
+    type: H.In<E.CollectionExportsType | (string & {})>;
     /** Name of the new export handler */
     name?: H.In<string>;
   }): H.Ptr<R.CollectionExport>;
@@ -1405,8 +1405,8 @@ export interface ColorManagedDisplaySettings extends R.bpy_struct {
  */
 export interface ColorManagedInputColorspaceSettings extends R.bpy_struct {
   /** Color space in the image file, to convert to and from when saving and loading the image Default: 'NONE'. */
-  get name(): H.Ref<E.ColorManagedInputColorspaceSettingsName>;
-  set name(v: H.In<E.ColorManagedInputColorspaceSettingsName>);
+  get name(): H.Ref<E.ColorManagedInputColorspaceSettingsName | (string & {})>;
+  set name(v: H.In<E.ColorManagedInputColorspaceSettingsName | (string & {})>);
   /** Treat image as non-color data without color management, like normal or displacement maps Default: False. */
   get is_data(): H.Ref<boolean>;
   set is_data(v: H.In<boolean>);
@@ -1419,8 +1419,8 @@ export interface ColorManagedInputColorspaceSettings extends R.bpy_struct {
  */
 export interface ColorManagedSequencerColorspaceSettings extends R.bpy_struct {
   /** Color space that the sequencer operates in Default: 'NONE'. */
-  get name(): H.Ref<E.ColorManagedInputColorspaceSettingsName>;
-  set name(v: H.In<E.ColorManagedInputColorspaceSettingsName>);
+  get name(): H.Ref<E.ColorManagedInputColorspaceSettingsName | (string & {})>;
+  set name(v: H.In<E.ColorManagedInputColorspaceSettingsName | (string & {})>);
 }
 
 /**
@@ -2211,11 +2211,11 @@ export interface CompositorNodeCombineColor extends R.CompositorNode {
  */
 export interface CompositorNodeConvertColorSpace extends R.CompositorNode {
   /** Color space of the input image Default: 'NONE'. */
-  get from_color_space(): H.Ref<E.ColorManagedInputColorspaceSettingsName>;
-  set from_color_space(v: H.In<E.ColorManagedInputColorspaceSettingsName>);
+  get from_color_space(): H.Ref<E.ColorManagedInputColorspaceSettingsName | (string & {})>;
+  set from_color_space(v: H.In<E.ColorManagedInputColorspaceSettingsName | (string & {})>);
   /** Color space of the output image Default: 'NONE'. */
-  get to_color_space(): H.Ref<E.ColorManagedInputColorspaceSettingsName>;
-  set to_color_space(v: H.In<E.ColorManagedInputColorspaceSettingsName>);
+  get to_color_space(): H.Ref<E.ColorManagedInputColorspaceSettingsName | (string & {})>;
+  set to_color_space(v: H.In<E.ColorManagedInputColorspaceSettingsName | (string & {})>);
   /** Input socket template */
   input_template(index: H.In<number>): H.Ptr<R.NodeInternalSocketTemplate>;
   /** Input socket template */
@@ -2447,8 +2447,8 @@ export interface CompositorNodeCryptomatteV2 extends R.CompositorNode {
    * - `CryptoMaterial`: Material (Use Material layer)
    * - `CryptoAsset`: Asset (Use Asset layer)
    */
-  get layer_name(): H.Ref<"CryptoObject" | "CryptoMaterial" | "CryptoAsset">;
-  set layer_name(v: H.In<"CryptoObject" | "CryptoMaterial" | "CryptoAsset">);
+  get layer_name(): H.Ref<"CryptoObject" | "CryptoMaterial" | "CryptoAsset" | (string & {})>;
+  set layer_name(v: H.In<"CryptoObject" | "CryptoMaterial" | "CryptoAsset" | (string & {})>);
   /** Mattes */
   readonly entries: H.Own<H.Coll<R.CryptomatteEntry>>;
   /** Number of images of a movie to use Range: 0 to 1048574. Default: 0. */
@@ -4740,8 +4740,8 @@ export interface Constraint extends R.bpy_struct {
    * - `LOCAL_WITH_PARENT`: Local With Parent (The constraint is applied relative to the rest pose local coordinate system of the bone, thus including the parent-induced transformation)
    * - `LOCAL`: Local Space (The constraint is applied relative to the local coordinate system of the object)
    */
-  get owner_space(): H.Ref<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL">;
-  set owner_space(v: H.In<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL">);
+  get owner_space(): H.Ref<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | (string & {})>;
+  set owner_space(v: H.In<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | (string & {})>);
   /**
    * Space that target is evaluated in Default: 'WORLD'.
    * - `WORLD`: World Space (The transformation of the target is evaluated relative to the world coordinate system)
@@ -4751,8 +4751,8 @@ export interface Constraint extends R.bpy_struct {
    * - `LOCAL`: Local Space (The transformation of the target is evaluated relative to its local coordinate system)
    * - `LOCAL_OWNER_ORIENT`: Local Space (Owner Orientation) (The transformation of the target bone is evaluated relative to its local coordinate system, followed by a correction for the difference in target and owner rest pose orientations. When applied as local transform to the owner produces the same global motion as the target if the parents are still in rest pose.)
    */
-  get target_space(): H.Ref<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | "LOCAL_OWNER_ORIENT">;
-  set target_space(v: H.In<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | "LOCAL_OWNER_ORIENT">);
+  get target_space(): H.Ref<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | "LOCAL_OWNER_ORIENT" | (string & {})>;
+  set target_space(v: H.In<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | "LOCAL_OWNER_ORIENT" | (string & {})>);
   /** Object for Custom Space */
   get space_object(): H.Ptr<R.Object>;
   set space_object(v: R.Object | null);
@@ -5175,8 +5175,8 @@ export interface Curve extends R.ID {
    * - `FRONT`: Front
    * - `HALF`: Half
    */
-  get fill_mode(): H.Ref<"FULL" | "BACK" | "FRONT" | "HALF">;
-  set fill_mode(v: H.In<"FULL" | "BACK" | "FRONT" | "HALF">);
+  get fill_mode(): H.Ref<"FULL" | "BACK" | "FRONT" | "HALF" | (string & {})>;
+  set fill_mode(v: H.In<"FULL" | "BACK" | "FRONT" | "HALF" | (string & {})>);
   /**
    * Triangulation solver for filling 2D curves Default: 'SWEEP_LINE'.
    * - `SWEEP_LINE`: Sweep Line (Fast without support for self-intersection)
@@ -5916,14 +5916,14 @@ export interface CyclesCurveRenderSettings extends R.PropertyGroup {
   /** Number of subdivisions used in Cardinal curve intersection (power of 2) Range: 0 to 24. Default: 2. */
   get subdivisions(): H.Ref<number>;
   set subdivisions(v: H.In<number>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesCustomCameraSettings */
 export interface CyclesCustomCameraSettings extends R.PropertyGroup {
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesDeviceSettings */
@@ -5961,8 +5961,8 @@ export interface CyclesLightSettings extends R.PropertyGroup {
   /** Generate approximate caustics in shadows of refractive surfaces. Lights, caster and receiver objects must have shadow caustics options set to enable this Default: False. */
   get is_caustics_light(): H.Ref<boolean>;
   set is_caustics_light(v: H.In<boolean>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesMaterialSettings */
@@ -5998,14 +5998,14 @@ export interface CyclesMaterialSettings extends R.PropertyGroup {
   /** Scale the distance between volume shader samples when rendering the volume (lower values give more accurate and detailed results, but also increased render time) Range: 0.0010000000474974513 to 1000. Default: 1.0. */
   get volume_step_rate(): H.Ref<number>;
   set volume_step_rate(v: H.In<number>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesMeshSettings */
 export interface CyclesMeshSettings extends R.PropertyGroup {
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesObjectSettings */
@@ -6040,8 +6040,8 @@ export interface CyclesObjectSettings extends R.PropertyGroup {
   /** Receive approximate caustics from refractive materials in shadows on this object. Lights, caster and receiver objects must have shadow caustics options set to enable this Default: False. */
   get is_caustics_receiver(): H.Ref<boolean>;
   set is_caustics_receiver(v: H.In<boolean>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesPreferences */
@@ -6076,10 +6076,10 @@ export interface CyclesPreferences extends R.AddonPreferences {
   get kernel_optimization_level(): H.Ref<"OFF" | "INTERSECT" | "FULL">;
   set kernel_optimization_level(v: H.In<"OFF" | "INTERSECT" | "FULL">);
   default_device(): any;
-  draw(context: any): any;
-  draw(kw: { context: any }): any;
-  draw_impl(layout: any, context: any): any;
-  draw_impl(kw: { layout: any; context: any }): any;
+  draw(context: any): H.Ref<void>;
+  draw(kw: { context: any }): H.Ref<void>;
+  draw_impl(layout: any, context: any): H.Ref<void>;
+  draw_impl(kw: { layout: any; context: any }): H.Ref<void>;
   find_existing_device_entry(device: any): any;
   find_existing_device_entry(kw: { device: any }): any;
   get_compute_device_type(): any;
@@ -6087,8 +6087,8 @@ export interface CyclesPreferences extends R.AddonPreferences {
   get_device_list(kw: { compute_device_type: any }): any;
   get_device_types(context: any): any;
   get_device_types(kw: { context: any }): any;
-  get_devices(compute_device_type?: string): any;
-  get_devices(kw: { compute_device_type?: string }): any;
+  get_devices(compute_device_type?: string): H.Ref<void>;
+  get_devices(kw: { compute_device_type?: string }): H.Ref<void>;
   get_devices_for_type(compute_device_type: any, device_list?: any): any;
   get_devices_for_type(compute_device_type: any, kw: { device_list?: any }): any;
   get_devices_for_type(kw: { compute_device_type: any; device_list?: any }): any;
@@ -6097,9 +6097,9 @@ export interface CyclesPreferences extends R.AddonPreferences {
   has_multi_device(): any;
   has_oidn_gpu_devices(): any;
   has_optixdenoiser_gpu_devices(): any;
-  refresh_devices(): any;
-  update_device_entries(device_list: any): any;
-  update_device_entries(kw: { device_list: any }): any;
+  refresh_devices(): H.Ref<void>;
+  update_device_entries(device_list: any): H.Ref<void>;
+  update_device_entries(kw: { device_list: any }): H.Ref<void>;
 }
 
 /** bpy.types.CyclesRenderLayerSettings */
@@ -6140,8 +6140,8 @@ export interface CyclesRenderLayerSettings extends R.PropertyGroup {
   /** Use roughness-based weighting of the albedo for the denoising feature passes Default: True. */
   get denoising_pass_use_albedo_roughness_weighting(): H.Ref<boolean>;
   set denoising_pass_use_albedo_roughness_weighting(v: H.In<boolean>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesRenderSettings */
@@ -6548,8 +6548,8 @@ export interface CyclesRenderSettings extends R.PropertyGroup {
   /** Preserve unused texture cache data, up to this amount of memory Range: 0 to 2147483647. Default: 0. */
   get debug_texture_cache_preserve_unused(): H.Ref<number>;
   set debug_texture_cache_preserve_unused(v: H.In<number>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesView3DShadingSettings */
@@ -6582,8 +6582,8 @@ export interface CyclesVisibilitySettings extends R.PropertyGroup {
   /** World visibility for volume scatter rays Default: True. */
   get scatter(): H.Ref<boolean>;
   set scatter(v: H.In<boolean>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }
 
 /** bpy.types.CyclesWorldSettings */
@@ -6626,6 +6626,6 @@ export interface CyclesWorldSettings extends R.PropertyGroup {
   /** Enable shadow casting from the world Default: True. */
   get use_shadows(): H.Ref<boolean>;
   set use_shadows(v: H.In<boolean>);
-  register(): any;
-  unregister(): any;
+  register(): H.Ref<void>;
+  unregister(): H.Ref<void>;
 }

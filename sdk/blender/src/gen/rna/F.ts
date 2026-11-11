@@ -759,8 +759,8 @@ export interface FieldSettings extends R.bpy_struct {
    * - `SURFACE`: Surface (Field originates from the surface of the object)
    * - `POINTS`: Every Point (Field originates from all of the vertices of the object)
    */
-  get shape(): H.Ref<"POINT" | "LINE" | "PLANE" | "SURFACE" | "POINTS">;
-  set shape(v: H.In<"POINT" | "LINE" | "PLANE" | "SURFACE" | "POINTS">);
+  get shape(): H.Ref<"POINT" | "LINE" | "PLANE" | "SURFACE" | "POINTS" | (string & {})>;
+  set shape(v: H.In<"POINT" | "LINE" | "PLANE" | "SURFACE" | "POINTS" | (string & {})>);
   /**
    * Falloff Default: 'SPHERE'.
    * - `CONE`: Cone
@@ -1054,8 +1054,8 @@ export interface FileAssetSelectParams extends R.FileSelectParams {
    * - `ONLINE_ESSENTIALS`: Online Essentials (Show additional building blocks and utilities available online)
    * - `CUSTOM`: Custom (Show assets from the asset libraries configured in the Preferences)
    */
-  get asset_library_reference(): H.Ref<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM">;
-  set asset_library_reference(v: H.In<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM">);
+  get asset_library_reference(): H.Ref<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM" | (string & {})>;
+  set asset_library_reference(v: H.In<"ALL" | "LOCAL" | "ESSENTIALS" | "ONLINE_ESSENTIALS" | "CUSTOM" | (string & {})>);
   /** The UUID of the catalog shown in the browser Default: "". */
   get catalog_id(): H.Ref<string>;
   set catalog_id(v: H.In<string>);
@@ -1077,8 +1077,8 @@ export interface FileAssetSelectParams extends R.FileSelectParams {
    * - `APPEND_REUSE`: Append (Reuse Data) (Import the asset as copied data-block while avoiding multiple copies of nested, typically heavy data. For example the textures of a material asset, or the mesh of an object asset, don't have to be copied every time this asset is imported. The instances of the asset share the data instead)
    * - `PACK`: Pack (Import the asset as linked data-block, and pack it in the current file (ensures that it remains unchanged in case the library data is modified, is not available anymore, etc.))
    */
-  get import_method(): H.Ref<"FOLLOW_PREFS" | "LINK" | "APPEND" | "APPEND_REUSE" | "PACK">;
-  set import_method(v: H.In<"FOLLOW_PREFS" | "LINK" | "APPEND" | "APPEND_REUSE" | "PACK">);
+  get import_method(): H.Ref<"FOLLOW_PREFS" | "LINK" | "APPEND" | "APPEND_REUSE" | "PACK" | (string & {})>;
+  set import_method(v: H.In<"FOLLOW_PREFS" | "LINK" | "APPEND" | "APPEND_REUSE" | "PACK" | (string & {})>);
   /** Create instances for collections when linking, rather than adding them directly to the scene Default: False. */
   get instance_collections_on_link(): H.Ref<boolean>;
   set instance_collections_on_link(v: H.In<boolean>);
@@ -1328,8 +1328,8 @@ export interface FileSelectParams extends R.bpy_struct {
    * - `LIST_HORIZONTAL`: Horizontal List (Display files as a horizontal list)
    * - `THUMBNAIL`: Thumbnails (Display files as thumbnails)
    */
-  get display_type(): H.Ref<"LIST_VERTICAL" | "LIST_HORIZONTAL" | "THUMBNAIL">;
-  set display_type(v: H.In<"LIST_VERTICAL" | "LIST_HORIZONTAL" | "THUMBNAIL">);
+  get display_type(): H.Ref<"LIST_VERTICAL" | "LIST_HORIZONTAL" | "THUMBNAIL" | (string & {})>;
+  set display_type(v: H.In<"LIST_VERTICAL" | "LIST_HORIZONTAL" | "THUMBNAIL" | (string & {})>);
   /**
    * Numbers of dirtree levels to show simultaneously Default: 'NONE'.
    * - `NONE`: None (Only list current directory's content, with no recursion)
@@ -1338,8 +1338,8 @@ export interface FileSelectParams extends R.bpy_struct {
    * - `ALL_2`: Two Levels (List all sub-directories' content, two levels of recursion)
    * - `ALL_3`: Three Levels (List all sub-directories' content, three levels of recursion)
    */
-  get recursion_level(): H.Ref<"NONE" | "BLEND" | "ALL_1" | "ALL_2" | "ALL_3">;
-  set recursion_level(v: H.In<"NONE" | "BLEND" | "ALL_1" | "ALL_2" | "ALL_3">);
+  get recursion_level(): H.Ref<"NONE" | "BLEND" | "ALL_1" | "ALL_2" | "ALL_3" | (string & {})>;
+  set recursion_level(v: H.In<"NONE" | "BLEND" | "ALL_1" | "ALL_2" | "ALL_3" | (string & {})>);
   /** Show a column listing the size of each file Default: False. */
   get show_details_size(): H.Ref<boolean>;
   set show_details_size(v: H.In<boolean>);
@@ -1360,8 +1360,8 @@ export interface FileSelectParams extends R.bpy_struct {
    * - `FILE_SORT_SIZE`: Size (Sort files by size)
    * - `ASSET_CATALOG`: Asset Catalog (Sort the asset list so that assets in the same catalog are kept together. Within a single catalog, assets are ordered by name. The catalogs are in order of the flattened catalog hierarchy.)
    */
-  get sort_method(): H.Ref<"FILE_SORT_ALPHA" | "FILE_SORT_EXTENSION" | "FILE_SORT_TIME" | "FILE_SORT_SIZE" | "ASSET_CATALOG">;
-  set sort_method(v: H.In<"FILE_SORT_ALPHA" | "FILE_SORT_EXTENSION" | "FILE_SORT_TIME" | "FILE_SORT_SIZE" | "ASSET_CATALOG">);
+  get sort_method(): H.Ref<"FILE_SORT_ALPHA" | "FILE_SORT_EXTENSION" | "FILE_SORT_TIME" | "FILE_SORT_SIZE" | "ASSET_CATALOG" | (string & {})>;
+  set sort_method(v: H.In<"FILE_SORT_ALPHA" | "FILE_SORT_EXTENSION" | "FILE_SORT_TIME" | "FILE_SORT_SIZE" | "ASSET_CATALOG" | (string & {})>);
   /** Sort items descending, from highest value to lowest Default: False. */
   get use_sort_invert(): H.Ref<boolean>;
   set use_sort_invert(v: H.In<boolean>);
@@ -1978,32 +1978,32 @@ export interface FluidDomainSettings extends R.bpy_struct {
    * - `OPENVDB`: OpenVDB (OpenVDB file format (.vdb))
    * - `RAW`: Raw Cache (Raw file format (.raw))
    */
-  get cache_mesh_format(): H.Ref<"UNI" | "OPENVDB" | "RAW">;
-  set cache_mesh_format(v: H.In<"UNI" | "OPENVDB" | "RAW">);
+  get cache_mesh_format(): H.Ref<"UNI" | "OPENVDB" | "RAW" | (string & {})>;
+  set cache_mesh_format(v: H.In<"UNI" | "OPENVDB" | "RAW" | (string & {})>);
   /**
    * Select the file format to be used for caching volumetric data Default: 'OPENVDB'.
    * - `UNI`: Uni Cache (Uni file format (.uni))
    * - `OPENVDB`: OpenVDB (OpenVDB file format (.vdb))
    * - `RAW`: Raw Cache (Raw file format (.raw))
    */
-  get cache_data_format(): H.Ref<"UNI" | "OPENVDB" | "RAW">;
-  set cache_data_format(v: H.In<"UNI" | "OPENVDB" | "RAW">);
+  get cache_data_format(): H.Ref<"UNI" | "OPENVDB" | "RAW" | (string & {})>;
+  set cache_data_format(v: H.In<"UNI" | "OPENVDB" | "RAW" | (string & {})>);
   /**
    * Select the file format to be used for caching particle data Default: 'OPENVDB'.
    * - `UNI`: Uni Cache (Uni file format (.uni))
    * - `OPENVDB`: OpenVDB (OpenVDB file format (.vdb))
    * - `RAW`: Raw Cache (Raw file format (.raw))
    */
-  get cache_particle_format(): H.Ref<"UNI" | "OPENVDB" | "RAW">;
-  set cache_particle_format(v: H.In<"UNI" | "OPENVDB" | "RAW">);
+  get cache_particle_format(): H.Ref<"UNI" | "OPENVDB" | "RAW" | (string & {})>;
+  set cache_particle_format(v: H.In<"UNI" | "OPENVDB" | "RAW" | (string & {})>);
   /**
    * Select the file format to be used for caching noise data Default: 'OPENVDB'.
    * - `UNI`: Uni Cache (Uni file format (.uni))
    * - `OPENVDB`: OpenVDB (OpenVDB file format (.vdb))
    * - `RAW`: Raw Cache (Raw file format (.raw))
    */
-  get cache_noise_format(): H.Ref<"UNI" | "OPENVDB" | "RAW">;
-  set cache_noise_format(v: H.In<"UNI" | "OPENVDB" | "RAW">);
+  get cache_noise_format(): H.Ref<"UNI" | "OPENVDB" | "RAW" | (string & {})>;
+  set cache_noise_format(v: H.In<"UNI" | "OPENVDB" | "RAW" | (string & {})>);
   /**
    * Change the cache type of the simulation Default: 'REPLAY'.
    * - `REPLAY`: Replay (Use the timeline to bake the scene)
@@ -2456,8 +2456,8 @@ export interface ForeachGeometryElementGenerationItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Domain that the field is evaluated on Default: 'POINT'. */
@@ -2471,8 +2471,8 @@ export interface ForeachGeometryElementInputItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
 }
@@ -2483,8 +2483,8 @@ export interface ForeachGeometryElementMainItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
 }
@@ -4010,8 +4010,8 @@ export interface FunctionNodeQuaternionToRotation extends R.FunctionNode {
  */
 export interface FunctionNodeRandomValue extends R.FunctionNode {
   /** Type of data stored in attribute Default: 'FLOAT'. */
-  get data_type(): H.Ref<E.AttributeDataType>;
-  set data_type(v: H.In<E.AttributeDataType>);
+  get data_type(): H.Ref<E.AttributeDataType | (string & {})>;
+  set data_type(v: H.In<E.AttributeDataType | (string & {})>);
   /** Input socket template */
   input_template(index: H.In<number>): H.Ptr<R.NodeInternalSocketTemplate>;
   /** Input socket template */

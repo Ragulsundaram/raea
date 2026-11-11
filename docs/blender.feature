@@ -90,7 +90,12 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
     Scenario: BL22. The whole API is typed from Blender's own: tools/gen.sh dumps Blender's RNA and docstrings, gen writes src/gen
       Given Blender 5.2.1: 1809 structs (bpy.types), 2498 operators in 77 bpy.ops modules, and 41 modules outside RNA
         (mathutils' submodules, bmesh, gpu, bpy.utils, bpy.path, bpy.props, bpy.msgbus, bpy_extras, aud, imbuf, idprop)
-      Then fewer than 1% of struct members are typed `any` (102 of about 12 900)
+      Then 68 of bpy.types' 16 684 declarations are typed `any` (0.4%; 127 before 11-11): Python methods that return a
+        value their docstring doesn't type, and Python properties with no `:type:`. A function written in Python whose
+        source returns no value anywhere (dump.py returns_none) returns nothing, as Python's None, and operators have no
+        `any` at all; the modules outside RNA have 423 of 1 461, mostly C methods whose docstrings give no type
+        (bmesh.types, gpu.types, aud)
+      And two dumps of one Blender write the same src/gen (sets sorted, no memory addresses)
       And tsc rejects a read-only property set, an enum value Blender doesn't have, a member that isn't there, a wrong
         argument type, and arithmetic on an unawaited path (test/typing.ts)
     @done
@@ -143,15 +148,24 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
       Then its example (blender/lowpoly.ts) is sdk/blender/test/guide.ts, type-checked with the tests; run as shown it
         decimates a .glb and carries its sidecar with the step added, and refuses a source without one before
         writing anything (11-10)
-      And it says where raea/blender reads differently from Python, and the BL34 gap with its cast
+      And it says where raea/blender reads differently from Python, and that an enum Blender works out at the time
+        takes any string (BL34)
       And raea-skills' 3d/blender.md is its copy, routed from 3d.md and SKILL.md (raea-skills 7497067, unpushed
         until the v0.1.1 go; ARGS go after the script with no -- of their own, as for a .py step)
+    @done
     Scenario: BL34. An enum whose items Blender works out at the time takes what Blender would take then
       Given Curve.fill_mode on a 2D curve takes NONE, BACK, FRONT or BOTH, but its static items (all the dump sees) are
-        the 3D ones, so tsc refuses `fill_mode = "BOTH"` today (11-10, logos.ts); an enum with one item or none is
-        typed string already
+        the 3D ones, so tsc refused `fill_mode = "BOTH"` (11-10, logos.ts); an enum with one item or none is typed
+        string already
       Then the properties whose items come from an item function (RNA_def_property_enum_funcs in Blender's makesrna)
         are typed as their static items or any string
+      And 11-11: tools/itemf.sh reads them from Blender 5.2.1's own makesrna (a sparse clone of its tag) into
+        tools/itemf.json: 147 properties and RNA function parameters, a helper's taken from the struct its caller
+        defines; 8 helpers whose struct is named at run time (the node socket interfaces) stay unresolved, and their
+        enums have one item or none, typed string already. gen types 222 declarations so; Python can't tell them
+        apart, since with no context Blender never calls an item function
+      And test/typing.ts sets a 2D curve's fill_mode to "BOTH" and still refuses `rotation_mode = "XYZW"`; run in
+        Blender, the same script prints fill_mode BOTH
     Scenario: BL28. The person's own Blender, live: raea's add-on serves the same bridge from a running Blender
       Given raea's add-on (sdk/blender/python/raea_blender) enabled in that Blender, and RAEA_BLENDER=live (or connect({ live: true }))
       Then batches run on Blender's main thread between its redraws, in the 3D view's context

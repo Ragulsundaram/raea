@@ -18,6 +18,14 @@ const IMPORTS = `import type * as H from "../../types";\nimport type * as M from
 const dumpPath = process.argv[2];
 if (!dumpPath) throw new Error("usage: bun tools/gen/main.ts DUMP.json");
 const d = JSON.parse(readFileSync(dumpPath, "utf8")) as Dump;
+// BL34: the enums whose items Blender works out at the time (tools/itemf.json, read from its source by tools/itemf.sh)
+const itemf = JSON.parse(readFileSync(join(dirname(new URL(import.meta.url).pathname), "../itemf.json"), "utf8")) as { blender: string; itemf: string[] };
+if (itemf.blender !== d.blender) console.warn(`gen: tools/itemf.json is Blender ${itemf.blender}'s, the dump ${d.blender}'s: run tools/itemf.sh ${d.blender}`);
+const atTheTime = new Set(itemf.itemf);
+for (const s of d.structs) {
+  for (const p of s.props) if (p.type === "enum" && atTheTime.has(`${s.id}.${p.id}`)) p.itemf = true;
+  for (const f of s.funcs) for (const a of f.args) if (a.type === "enum" && atTheTime.has(`${s.id}.${f.id}(${a.id})`)) a.itemf = true;
+}
 const root = join(dirname(new URL(import.meta.url).pathname), "../../src/gen");
 rmSync(root, { recursive: true, force: true });
 const files = new Map<string, string>();

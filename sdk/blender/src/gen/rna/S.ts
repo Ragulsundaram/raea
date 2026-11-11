@@ -3187,8 +3187,8 @@ export interface ShaderNodeMix extends R.ShaderNode {
    * - `RGBA`: Color
    * - `ROTATION`: Rotation
    */
-  get data_type(): H.Ref<"FLOAT" | "VECTOR" | "RGBA" | "ROTATION">;
-  set data_type(v: H.In<"FLOAT" | "VECTOR" | "RGBA" | "ROTATION">);
+  get data_type(): H.Ref<"FLOAT" | "VECTOR" | "RGBA" | "ROTATION" | (string & {})>;
+  set data_type(v: H.In<"FLOAT" | "VECTOR" | "RGBA" | "ROTATION" | (string & {})>);
   /**
    * Factor Mode Default: 'UNIFORM'.
    * - `UNIFORM`: Uniform (Use a single factor for all components)
@@ -5604,8 +5604,8 @@ export interface ShrinkwrapConstraint extends R.Constraint {
    * - `LOCAL_WITH_PARENT`: Local With Parent (The constraint is applied relative to the rest pose local coordinate system of the bone, thus including the parent-induced transformation)
    * - `LOCAL`: Local Space (The constraint is applied relative to the local coordinate system of the object)
    */
-  get project_axis_space(): H.Ref<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL">;
-  set project_axis_space(v: H.In<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL">);
+  get project_axis_space(): H.Ref<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | (string & {})>;
+  set project_axis_space(v: H.In<"WORLD" | "CUSTOM" | "POSE" | "LOCAL_WITH_PARENT" | "LOCAL" | (string & {})>);
   /** Limit the distance used for projection (zero disables) Range: 0 to inf. Default: 0.0. */
   get project_limit(): H.Ref<number>;
   set project_limit(v: H.In<number>);
@@ -5771,13 +5771,13 @@ export interface SimulationStateItem extends R.bpy_struct {
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
   /** Socket Type Default: 'FLOAT'. */
-  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType>;
-  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType>);
+  get socket_type(): H.Ref<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>;
+  set socket_type(v: H.In<E.ForeachGeometryElementGenerationItemSocketType | (string & {})>);
   /** Color of the corresponding socket type in the node editor Range: 0 to inf. Default: (0.0, 0.0, 0.0, 0.0). */
   get color(): H.Arr<number>;
   /** Domain where the field is captured if it is not already an attribute-field Default: 'POINT'. */
-  get attribute_domain(): H.Ref<E.AttributeDomain>;
-  set attribute_domain(v: H.In<E.AttributeDomain>);
+  get attribute_domain(): H.Ref<E.AttributeDomain | (string & {})>;
+  set attribute_domain(v: H.In<E.AttributeDomain | (string & {})>);
 }
 
 /** bpy.types.SimulationZoneViewerPathElem */
@@ -6806,8 +6806,8 @@ export interface SpaceImageEditor extends R.Space {
   get show_annotation(): H.Ref<boolean>;
   set show_annotation(v: H.In<boolean>);
   /** Channels of the image to display Default: 'COLOR'. */
-  get display_channels(): H.Ref<E.SpaceImageEditorDisplayChannels>;
-  set display_channels(v: H.In<E.SpaceImageEditorDisplayChannels>);
+  get display_channels(): H.Ref<E.SpaceImageEditorDisplayChannels | (string & {})>;
+  set display_channels(v: H.In<E.SpaceImageEditorDisplayChannels | (string & {})>);
   /** Display the image in Stereo 3D Default: False. */
   get show_stereo_3d(): H.Ref<boolean>;
   set show_stereo_3d(v: H.In<boolean>);
@@ -6844,8 +6844,8 @@ export interface SpaceImageEditor extends R.Space {
    * - `MEDIAN_POINT`: Median Point (Pivot around the median point of selected objects)
    * - `ACTIVE_ELEMENT`: Active Element (Pivot around active object)
    */
-  get pivot_point(): H.Ref<"BOUNDING_BOX_CENTER" | "CURSOR" | "INDIVIDUAL_ORIGINS" | "MEDIAN_POINT" | "ACTIVE_ELEMENT">;
-  set pivot_point(v: H.In<"BOUNDING_BOX_CENTER" | "CURSOR" | "INDIVIDUAL_ORIGINS" | "MEDIAN_POINT" | "ACTIVE_ELEMENT">);
+  get pivot_point(): H.Ref<"BOUNDING_BOX_CENTER" | "CURSOR" | "INDIVIDUAL_ORIGINS" | "MEDIAN_POINT" | "ACTIVE_ELEMENT" | (string & {})>;
+  set pivot_point(v: H.In<"BOUNDING_BOX_CENTER" | "CURSOR" | "INDIVIDUAL_ORIGINS" | "MEDIAN_POINT" | "ACTIVE_ELEMENT" | (string & {})>);
   /** Annotation data for this space */
   get annotation(): H.Ptr<R.Annotation>;
   set annotation(v: R.Annotation | null);
@@ -7006,8 +7006,8 @@ export interface SpaceNodeEditor extends R.Space {
    * - `ShaderNodeTree`: Shader Editor (Edit materials, lights, and world shading using nodes)
    * - `TextureNodeTree`: Texture Node Editor (Edit textures using nodes)
    */
-  get tree_type(): H.Ref<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree">;
-  set tree_type(v: H.In<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree">);
+  get tree_type(): H.Ref<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree" | (string & {})>;
+  set tree_type(v: H.In<"GeometryNodeTree" | "CompositorNodeTree" | "ShaderNodeTree" | "TextureNodeTree" | (string & {})>);
   /**
    * Type of data to take texture from Default: 'WORLD'.
    * - `WORLD`: World (Edit texture nodes from World)
@@ -7343,8 +7343,8 @@ export interface SpacePreferences extends R.Space {
  */
 export interface SpaceProperties extends R.Space {
   /** Default: 'RENDER'. */
-  get context(): H.Ref<E.SpacePropertiesContext>;
-  set context(v: H.In<E.SpacePropertiesContext>);
+  get context(): H.Ref<E.SpacePropertiesContext | (string & {})>;
+  set context(v: H.In<E.SpacePropertiesContext | (string & {})>);
   /** Tool Default: False. */
   get show_properties_tool(): H.Ref<boolean>;
   set show_properties_tool(v: H.In<boolean>);
@@ -7609,8 +7609,8 @@ export interface SpaceSpreadsheet extends R.Space {
   get geometry_component_type(): H.Ref<"MESH" | "POINTCLOUD" | "CURVE" | "INSTANCES" | "GREASEPENCIL" | "VOLUME">;
   set geometry_component_type(v: H.In<"MESH" | "POINTCLOUD" | "CURVE" | "INSTANCES" | "GREASEPENCIL" | "VOLUME">);
   /** Attribute domain to display Default: 'POINT'. */
-  get attribute_domain(): H.Ref<E.AttributeDomain>;
-  set attribute_domain(v: H.In<E.AttributeDomain>);
+  get attribute_domain(): H.Ref<E.AttributeDomain | (string & {})>;
+  set attribute_domain(v: H.In<E.AttributeDomain | (string & {})>);
   /**
    * Object Evaluation State Default: 'EVALUATED'.
    * - `EVALUATED`: Evaluated (Use data from fully or partially evaluated object)
@@ -7930,15 +7930,15 @@ export interface SpaceView3D extends R.Space {
    * - `LEFT_EYE`: Left Eye
    * - `RIGHT_EYE`: Right Eye
    */
-  get stereo_3d_eye(): H.Ref<"LEFT_EYE" | "RIGHT_EYE">;
+  get stereo_3d_eye(): H.Ref<"LEFT_EYE" | "RIGHT_EYE" | (string & {})>;
   /**
    * Camera Default: 'S3D'.
    * - `LEFT`: Left
    * - `RIGHT`: Right
    * - `S3D`: 3D
    */
-  get stereo_3d_camera(): H.Ref<"LEFT" | "RIGHT" | "S3D">;
-  set stereo_3d_camera(v: H.In<"LEFT" | "RIGHT" | "S3D">);
+  get stereo_3d_camera(): H.Ref<"LEFT" | "RIGHT" | "S3D" | (string & {})>;
+  set stereo_3d_camera(v: H.In<"LEFT" | "RIGHT" | "S3D" | (string & {})>);
   /** Show the left and right cameras Default: False. */
   get show_stereo_3d_cameras(): H.Ref<boolean>;
   set show_stereo_3d_cameras(v: H.In<boolean>);
