@@ -81,3 +81,11 @@ Feature: A composition handed to CapCut, ready in its timeline, and transparent 
       Then the timeline has the main track's shots, the picture in picture above, the overlay clips above that and the
         audio below, and the frame at each shot's middle matches the reference render's
       And which overlay codecs stay transparent in CapCut is recorded here, and the export uses the first that does
+
+  Rule: CC4. The raea skill says when to hand a cut over and when to make a transparent movie
+    Scenario: CC4a. The delivery guide teaches both
+      Then sdk/guides/craft/motion/delivery.md (the skill's motion/delivery.md) says a cut an editor finishes goes to
+        CapCut in layers with raea export capcut, or the app's Export to, then CapCut, and to pass on what it notes
+      And it says graphics for someone else's edit go out as a transparent .mov rendered with --alpha, nothing drawn
+        behind them, and names a background in one, --alpha with an .mp4 and exporting while CapCut is open as mistakes
+      And tools/skills.sh coverage counts raea export as taught, and the skill's copy matches the guide
