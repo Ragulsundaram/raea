@@ -208,14 +208,14 @@ export interface AnimateableProperty {
    * If `position` is also given, the property is marked animated and
    * the values are written starting at `position`.
    */
-  write(): any;
+  write(): H.Ref<void>;
   /**
    * Fills the properties frame range with a constant value and marks it animated.
    * @param data numpy array of float values representing the constant value.
    * @param position_start The start position in frames.
    * @param position_end The end position in frames.
    */
-  writeConstantRange(data: any, position_start: H.In<number>, position_end: H.In<number>): any;
+  writeConstantRange(data: any, position_start: H.In<number>, position_end: H.In<number>): H.Ref<void>;
   /**
    * Fills the properties frame range with a constant value and marks it animated.
    * @param data numpy array of float values representing the constant value.
@@ -229,13 +229,13 @@ export interface AnimateableProperty {
     position_start: H.In<number>;
     /** The end position in frames. */
     position_end: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /** The count of floats for a property. */
-  get count(): any;
-  set count(v: any);
+  get count(): H.Ref<number>;
+  set count(v: H.In<number>);
   /** Whether the property is animated. */
-  get animated(): any;
-  set animated(v: any);
+  get animated(): H.Ref<boolean>;
+  set animated(v: H.In<boolean>);
 }
 /** The class aud.AnimateableProperty: called, a new one. */
 export interface AnimateablePropertyClass {
@@ -269,7 +269,7 @@ export interface Device {
    *    Make sure the time between locking and unlocking is
    *    as short as possible to avoid clicks.
    */
-  lock(...args: any[]): any;
+  lock(...args: any[]): H.Ref<void>;
   /**
    * Plays a sound.
    * @returns The playback handle with which playback can be
@@ -303,52 +303,52 @@ export interface Device {
     keep?: H.In<boolean>;
   }): H.Ptr<P.aud.Handle>;
   /** Stops all playing and paused sounds. */
-  stopAll(...args: any[]): any;
+  stopAll(...args: any[]): H.Ref<void>;
   /**
    * Unlocks the device after a lock call, see :meth:`lock` for
    * details.
    */
-  unlock(...args: any[]): any;
+  unlock(...args: any[]): H.Ref<void>;
   /** The channel count of the device. */
-  get channels(): any;
-  set channels(v: any);
+  get channels(): H.Ref<number>;
+  set channels(v: H.In<number>);
   /**
    * The distance model of the device.
    *
    * .. seealso:: `OpenAL Documentation <https://www.openal.org/documentation/>`__
    */
-  get distance_model(): any;
-  set distance_model(v: any);
+  get distance_model(): H.Ref<number>;
+  set distance_model(v: H.In<number>);
   /**
    * The doppler factor of the device.
    * This factor is a scaling factor for the velocity vectors in doppler calculation. So a value bigger than 1 will exaggerate the effect as it raises the velocity.
    */
-  get doppler_factor(): any;
-  set doppler_factor(v: any);
+  get doppler_factor(): H.Ref<number>;
+  set doppler_factor(v: H.In<number>);
   /** The native sample format of the device. */
-  get format(): any;
-  set format(v: any);
+  get format(): H.Ref<number>;
+  set format(v: H.In<number>);
   /** The listeners's location in 3D space, a 3D tuple of floats. */
-  get listener_location(): any;
-  set listener_location(v: any);
+  get listener_location(): H.Ref<[number, number, number]>;
+  set listener_location(v: H.In<readonly [number, number, number]>);
   /** The listener's orientation in 3D space as quaternion, a 4 float tuple. */
-  get listener_orientation(): any;
-  set listener_orientation(v: any);
+  get listener_orientation(): H.Ref<[number, number, number, number]>;
+  set listener_orientation(v: H.In<readonly [number, number, number, number]>);
   /** The listener's velocity in 3D space, a 3D tuple of floats. */
-  get listener_velocity(): any;
-  set listener_velocity(v: any);
+  get listener_velocity(): H.Ref<[number, number, number]>;
+  set listener_velocity(v: H.In<readonly [number, number, number]>);
   /** The sampling rate of the device in Hz. */
-  get rate(): any;
-  set rate(v: any);
+  get rate(): H.Ref<number>;
+  set rate(v: H.In<number>);
   /**
    * The speed of sound of the device.
    * The speed of sound in air is typically 343.3 m/s.
    */
-  get speed_of_sound(): any;
-  set speed_of_sound(v: any);
+  get speed_of_sound(): H.Ref<number>;
+  set speed_of_sound(v: H.In<number>);
   /** The overall volume of the device. */
-  get volume(): any;
-  set volume(v: any);
+  get volume(): H.Ref<number>;
+  set volume(v: H.In<number>);
 }
 /** The class aud.Device: called, a new one. */
 export interface DeviceClass {
@@ -448,20 +448,20 @@ export interface DynamicMusic {
    */
   stop(...args: any[]): H.Ref<boolean>;
   /** Whether the scene is playing, paused or stopped (=invalid). */
-  get status(): any;
-  set status(v: any);
+  get status(): H.Ref<boolean>;
+  set status(v: H.In<boolean>);
   /** The playback position of the scene in seconds. */
-  get position(): any;
-  set position(v: any);
+  get position(): H.Ref<number>;
+  set position(v: H.In<number>);
   /** The length in seconds of the crossfade transition */
-  get fadeTime(): any;
-  set fadeTime(v: any);
+  get fadeTime(): H.Ref<number>;
+  set fadeTime(v: H.In<number>);
   /** The current scene */
-  get scene(): any;
-  set scene(v: any);
+  get scene(): H.Ref<number>;
+  set scene(v: H.In<number>);
   /** The volume of the scene. */
-  get volume(): any;
-  set volume(v: any);
+  get volume(): H.Ref<number>;
+  set volume(v: H.In<number>);
 }
 /** The class aud.DynamicMusic: called, a new one. */
 export interface DynamicMusicClass {
@@ -575,93 +575,93 @@ export interface Handle {
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get attenuation(): any;
-  set attenuation(v: any);
+  get attenuation(): H.Ref<number>;
+  set attenuation(v: H.In<number>);
   /**
    * The opening angle of the inner cone of the source. If the cone values of a source are set there are two (audible) cones with the apex at the :attr:`location` of the source and with infinite height, heading in the direction of the source's :attr:`orientation`.
    * In the inner cone the volume is normal. Outside the outer cone the volume will be :attr:`cone_volume_outer` and in the area between the volume will be interpolated linearly.
    */
-  get cone_angle_inner(): any;
-  set cone_angle_inner(v: any);
+  get cone_angle_inner(): H.Ref<number>;
+  set cone_angle_inner(v: H.In<number>);
   /**
    * The opening angle of the outer cone of the source.
    *
    * .. seealso:: :attr:`cone_angle_inner`
    */
-  get cone_angle_outer(): any;
-  set cone_angle_outer(v: any);
+  get cone_angle_outer(): H.Ref<number>;
+  set cone_angle_outer(v: H.In<number>);
   /**
    * The volume outside the outer cone of the source.
    *
    * .. seealso:: :attr:`cone_angle_inner`
    */
-  get cone_volume_outer(): any;
-  set cone_volume_outer(v: any);
+  get cone_volume_outer(): H.Ref<number>;
+  set cone_volume_outer(v: H.In<number>);
   /**
    * The maximum distance of the source.
    * If the listener is further away the source volume will be 0.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get distance_maximum(): any;
-  set distance_maximum(v: any);
+  get distance_maximum(): H.Ref<number>;
+  set distance_maximum(v: H.In<number>);
   /**
    * The reference distance of the source.
    * At this distance the volume will be exactly :attr:`volume`.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get distance_reference(): any;
-  set distance_reference(v: any);
+  get distance_reference(): H.Ref<number>;
+  set distance_reference(v: H.In<number>);
   /**
    * Whether the sound should be kept paused in the device when its end is reached.
    * This can be used to seek the sound to some position and start playback again.
    *
    * .. warning:: If this is set to true and you forget stopping this equals a memory leak as the handle exists until the device is destroyed.
    */
-  get keep(): any;
-  set keep(v: any);
+  get keep(): H.Ref<boolean>;
+  set keep(v: H.In<boolean>);
   /** The source's location in 3D space, a 3D tuple of floats. */
-  get location(): any;
-  set location(v: any);
+  get location(): H.Ref<[number, number, number]>;
+  set location(v: H.In<readonly [number, number, number]>);
   /** The (remaining) loop count of the sound. A negative value indicates infinity. */
-  get loop_count(): any;
-  set loop_count(v: any);
+  get loop_count(): H.Ref<number>;
+  set loop_count(v: H.In<number>);
   /** The source's orientation in 3D space as quaternion, a 4 float tuple. */
-  get orientation(): any;
-  set orientation(v: any);
+  get orientation(): H.Ref<[number, number, number, number]>;
+  set orientation(v: H.In<readonly [number, number, number, number]>);
   /** The pitch of the sound. */
-  get pitch(): any;
-  set pitch(v: any);
+  get pitch(): H.Ref<number>;
+  set pitch(v: H.In<number>);
   /** The playback position of the sound in seconds. */
-  get position(): any;
-  set position(v: any);
+  get position(): H.Ref<number>;
+  set position(v: H.In<number>);
   /** Whether the source's location, velocity and orientation is relative or absolute to the listener. */
-  get relative(): any;
-  set relative(v: any);
+  get relative(): H.Ref<boolean>;
+  set relative(v: H.In<boolean>);
   /** Whether the sound is playing, paused or stopped (=invalid). */
-  get status(): any;
-  set status(v: any);
+  get status(): H.Ref<boolean>;
+  set status(v: H.In<boolean>);
   /** The source's velocity in 3D space, a 3D tuple of floats. */
-  get velocity(): any;
-  set velocity(v: any);
+  get velocity(): H.Ref<[number, number, number]>;
+  set velocity(v: H.In<readonly [number, number, number]>);
   /** The volume of the sound. */
-  get volume(): any;
-  set volume(v: any);
+  get volume(): H.Ref<number>;
+  set volume(v: H.In<number>);
   /**
    * The maximum volume of the source.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get volume_maximum(): any;
-  set volume_maximum(v: any);
+  get volume_maximum(): H.Ref<number>;
+  set volume_maximum(v: H.In<number>);
   /**
    * The minimum volume of the source.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get volume_minimum(): any;
-  set volume_minimum(v: any);
+  get volume_minimum(): H.Ref<number>;
+  set volume_minimum(v: H.In<number>);
 }
 /** The class aud.Handle: called, a new one. */
 export interface HandleClass {
@@ -809,7 +809,7 @@ export interface PlaybackManager {
     catKey: H.In<number>;
   }): H.Ref<number>;
   /** Cleans all the invalid and finished sound from the playback manager. */
-  clean(...args: any[]): any;
+  clean(...args: any[]): H.Ref<void>;
 }
 /** The class aud.PlaybackManager: called, a new one. */
 export interface PlaybackManagerClass {
@@ -832,40 +832,40 @@ export interface Sequence extends P.aud.Sound {
    */
   add(...args: any[]): H.Ptr<P.aud.SequenceEntry>;
   /** Removes an entry from the sequence. */
-  remove(...args: any[]): any;
+  remove(...args: any[]): H.Ref<void>;
   /** Writes animation data to a sequence. */
-  setAnimationData(...args: any[]): any;
+  setAnimationData(...args: any[]): H.Ref<void>;
   /** The channel count of the sequence. */
-  get channels(): any;
-  set channels(v: any);
+  get channels(): H.Ref<number>;
+  set channels(v: H.In<number>);
   /**
    * The distance model of the sequence.
    *
    * .. seealso:: `OpenAL Documentation <https://www.openal.org/documentation/>`__
    */
-  get distance_model(): any;
-  set distance_model(v: any);
+  get distance_model(): H.Ref<number>;
+  set distance_model(v: H.In<number>);
   /**
    * The doppler factor of the sequence.
    * This factor is a scaling factor for the velocity vectors in doppler calculation. So a value bigger than 1 will exaggerate the effect as it raises the velocity.
    */
-  get doppler_factor(): any;
-  set doppler_factor(v: any);
+  get doppler_factor(): H.Ref<number>;
+  set doppler_factor(v: H.In<number>);
   /** The listeners's location in 3D space, a 3D tuple of floats. */
-  get fps(): any;
-  set fps(v: any);
+  get fps(): H.Ref<number>;
+  set fps(v: H.In<number>);
   /** Whether the whole sequence is muted. */
-  get muted(): any;
-  set muted(v: any);
+  get muted(): H.Ref<boolean>;
+  set muted(v: H.In<boolean>);
   /** The sampling rate of the sequence in Hz. */
-  get rate(): any;
-  set rate(v: any);
+  get rate(): H.Ref<number>;
+  set rate(v: H.In<number>);
   /**
    * The speed of sound of the sequence.
    * The speed of sound in air is typically 343.3 m/s.
    */
-  get speed_of_sound(): any;
-  set speed_of_sound(v: any);
+  get speed_of_sound(): H.Ref<number>;
+  set speed_of_sound(v: H.In<number>);
 }
 /** The class aud.Sequence: called, a new one. */
 export interface SequenceClass {
@@ -903,58 +903,58 @@ export interface SequenceClass {
  */
 export interface SequenceEntry {
   /** Moves the entry. */
-  move(...args: any[]): any;
+  move(...args: any[]): H.Ref<void>;
   /** Writes animation data to a sequenced entry. */
-  setAnimationData(...args: any[]): any;
+  setAnimationData(...args: any[]): H.Ref<void>;
   /**
    * This factor is used for distance based attenuation of the source.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get attenuation(): any;
-  set attenuation(v: any);
+  get attenuation(): H.Ref<number>;
+  set attenuation(v: H.In<number>);
   /**
    * The opening angle of the inner cone of the source. If the cone values of a source are set there are two (audible) cones with the apex at the :attr:`location` of the source and with infinite height, heading in the direction of the source's :attr:`orientation`.
    * In the inner cone the volume is normal. Outside the outer cone the volume will be :attr:`cone_volume_outer` and in the area between the volume will be interpolated linearly.
    */
-  get cone_angle_inner(): any;
-  set cone_angle_inner(v: any);
+  get cone_angle_inner(): H.Ref<number>;
+  set cone_angle_inner(v: H.In<number>);
   /**
    * The opening angle of the outer cone of the source.
    *
    * .. seealso:: :attr:`cone_angle_inner`
    */
-  get cone_angle_outer(): any;
-  set cone_angle_outer(v: any);
+  get cone_angle_outer(): H.Ref<number>;
+  set cone_angle_outer(v: H.In<number>);
   /**
    * The volume outside the outer cone of the source.
    *
    * .. seealso:: :attr:`cone_angle_inner`
    */
-  get cone_volume_outer(): any;
-  set cone_volume_outer(v: any);
+  get cone_volume_outer(): H.Ref<number>;
+  set cone_volume_outer(v: H.In<number>);
   /**
    * The maximum distance of the source.
    * If the listener is further away the source volume will be 0.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get distance_maximum(): any;
-  set distance_maximum(v: any);
+  get distance_maximum(): H.Ref<number>;
+  set distance_maximum(v: H.In<number>);
   /**
    * The reference distance of the source.
    * At this distance the volume will be exactly :attr:`volume`.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get distance_reference(): any;
-  set distance_reference(v: any);
+  get distance_reference(): H.Ref<number>;
+  set distance_reference(v: H.In<number>);
   /** Whether the entry is muted. */
-  get muted(): any;
-  set muted(v: any);
+  get muted(): H.Ref<boolean>;
+  set muted(v: H.In<boolean>);
   /** Whether the source's location, velocity and orientation is relative or absolute to the listener. */
-  get relative(): any;
-  set relative(v: any);
+  get relative(): H.Ref<boolean>;
+  set relative(v: H.In<boolean>);
   /** The sound the entry is representing and will be played in the sequence. */
   get sound(): any;
   set sound(v: any);
@@ -963,15 +963,15 @@ export interface SequenceEntry {
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get volume_maximum(): any;
-  set volume_maximum(v: any);
+  get volume_maximum(): H.Ref<number>;
+  set volume_maximum(v: H.In<number>);
   /**
    * The minimum volume of the source.
    *
    * .. seealso:: :attr:`Device.distance_model`
    */
-  get volume_minimum(): any;
-  set volume_minimum(v: any);
+  get volume_minimum(): H.Ref<number>;
+  set volume_minimum(v: H.In<number>);
 }
 /** The class aud.SequenceEntry: called, a new one. */
 export interface SequenceEntryClass {
@@ -1003,7 +1003,7 @@ export interface Sound {
    * @param bitrate The bitrate to write with.
    * @param buffersize The size of the writing buffer.
    */
-  write(filename: H.In<string>, rate: H.In<number>, channels: H.In<number>, format: H.In<number>, container: H.In<number>, codec: H.In<number>, bitrate: H.In<number>, buffersize: H.In<number>): any;
+  write(filename: H.In<string>, rate: H.In<number>, channels: H.In<number>, format: H.In<number>, container: H.In<number>, codec: H.In<number>, bitrate: H.In<number>, buffersize: H.In<number>): H.Ref<void>;
   /**
    * Writes the sound to a file.
    * @param filename The path to write to.
@@ -1032,7 +1032,7 @@ export interface Sound {
     bitrate: H.In<number>;
     /** The size of the writing buffer. */
     buffersize: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Caches a sound into RAM.
    *
@@ -1601,7 +1601,7 @@ export interface Sound {
    * .. note:: You can only add a sound to a sound list.
    * @param sound The sound that will be added to the list.
    */
-  addSound(sound: R.Sound): any;
+  addSound(sound: R.Sound): H.Ref<void>;
   /**
    * Adds a new sound to a sound list.
    *
@@ -1611,7 +1611,7 @@ export interface Sound {
   addSound(kw: {
     /** The sound that will be added to the list. */
     sound: R.Sound;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Adds Echo effect to the sound.
    * @returns The created :class:`Sound` object.
@@ -1680,11 +1680,11 @@ export interface Sound {
    */
   animateableTimeStretchPitchScale(): H.Ptr<R.Sound>;
   /** The sample specification of the sound as a tuple with rate and channel count. */
-  get specs(): any;
-  set specs(v: any);
+  get specs(): H.Ref<[number, number]>;
+  set specs(v: H.In<readonly [number, number]>);
   /** The sample specification of the sound as a tuple with rate and channel count. */
-  get length(): any;
-  set length(v: any);
+  get length(): H.Ref<number>;
+  set length(v: H.In<number>);
 }
 /** The class aud.Sound: called, a new one. */
 export interface SoundClass {
@@ -1938,14 +1938,14 @@ export interface SoundClass {
  */
 export interface Source {
   /** The azimuth angle. */
-  get azimuth(): any;
-  set azimuth(v: any);
+  get azimuth(): H.Ref<number>;
+  set azimuth(v: H.In<number>);
   /** The elevation angle. */
-  get elevation(): any;
-  set elevation(v: any);
+  get elevation(): H.Ref<number>;
+  set elevation(v: H.In<number>);
   /** The distance value. 0 is min, 1 is max. */
-  get distance(): any;
-  set distance(v: any);
+  get distance(): H.Ref<number>;
+  set distance(v: H.In<number>);
 }
 /** The class aud.Source: called, a new one. */
 export interface SourceClass {

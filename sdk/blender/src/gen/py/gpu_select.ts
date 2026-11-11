@@ -11,7 +11,7 @@ export interface Api {
    * Set the selection ID.
    * @param id Number (32-bit uint).
    */
-  load_id(id: H.In<number>): any;
+  load_id(id: H.In<number>): H.Ref<void>;
   /**
    * Set the selection ID.
    * @param id Number (32-bit uint).
@@ -19,6 +19,6 @@ export interface Api {
   load_id(kw: {
     /** Number (32-bit uint). */
     id: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
 }
 

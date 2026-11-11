@@ -4,7 +4,7 @@
 import type { Dump, PyMember } from "./dump";
 import { jsdoc, key, modId, type Names } from "./names";
 import { pyType } from "./pytype";
-import { direct, input, pyCallable } from "./rna";
+import { direct, input, known, pyCallable } from "./rna";
 import { readDoc, readSig } from "./sig";
 
 const PYTYPE: Record<string, string> = { str: "string", int: "number", float: "number", bool: "boolean", tuple: "any[]", bytes: "Uint8Array", NoneType: "null", list: "any[]" };
@@ -17,10 +17,12 @@ const isRo = (m: PyMember): boolean => m.ro === true || /read[- ]?only/i.test(m.
 
 function propertyMember(m: PyMember, n: Names, self: string, mod: string): string {
   const d = readDoc(m.doc);
-  const t = d.type ? pyType(d.type, { names: n, role: "out", self, module: mod }) : { ts: "any", kind: "any" as const };
+  // no :type:: what its C getter returns (tools/cret.json), else any; a setter takes the same
+  const type = d.type ?? m.ret;
+  const t = type ? pyType(type, { names: n, role: "out", self, module: mod }) : { ts: "any", kind: "any" as const };
   const get = `${jsdoc(d.text)}  get ${key(m.id)}(): ${direct(t)};`;
   if (isRo(m)) return get;
-  const inT = d.type ? input(pyType(d.type, { names: n, role: "in", self, module: mod })) : "any";
+  const inT = type ? input(pyType(type, { names: n, role: "in", self, module: mod })) : "any";
   return `${get}\n  set ${key(m.id)}(v: ${inT});`;
 }
 
@@ -50,11 +52,11 @@ function emitClass(c: PyMember, mod: string, n: Names, classes: Set<string>): st
       continue;
     }
     if (m.id === "__call__") {
-      inst.push(pyCallable(m.id, m.doc, m.sig, n, self, mod, "  ", true, m.none));
+      inst.push(pyCallable(m.id, m.doc, m.sig, n, self, mod, "  ", true, known(m)));
       continue;
     }
     if (m.kind === "property") inst.push(propertyMember(m, n, self, mod));
-    else if (m.kind === "method") (m.static ? stat : inst).push(pyCallable(m.id, m.doc, m.sig, n, self, mod, "  ", false, m.none));
+    else if (m.kind === "method") (m.static ? stat : inst).push(pyCallable(m.id, m.doc, m.sig, n, self, mod, "  ", false, known(m)));
     else if (m.kind === "data") stat.push(dataMember(m));
   }
   const d = readDoc(c.doc);
@@ -82,7 +84,7 @@ export function emitModule(mod: string, data: { doc: string; members: PyMember[]
   const api: string[] = [];
   const decls: string[] = [];
   for (const m of data.members) {
-    if (m.kind === "function") api.push(mod === "bmesh.ops" ? bmeshOp(m) : pyCallable(m.id, m.doc, m.sig, n, undefined, mod, "  ", false, m.none));
+    if (m.kind === "function") api.push(mod === "bmesh.ops" ? bmeshOp(m) : pyCallable(m.id, m.doc, m.sig, n, undefined, mod, "  ", false, known(m)));
     else if (m.kind === "class") {
       api.push(`${jsdoc(readDoc(m.doc).text.split("\n")[0])}  readonly ${key(m.id)}: ${m.id}Class;`);
       decls.push(emitClass(m, mod, n, classes));
@@ -105,7 +107,7 @@ export function emitBpyStruct(d: Dump, n: Names): string {
   for (const m of d.bpy_struct.members ?? []) {
     if (m.id.startsWith("__")) continue;
     if (m.kind === "property") body.push(propertyMember(m, n, "R.bpy_struct", "bpy.types"));
-    else if (m.kind === "method") body.push(pyCallable(m.id, m.doc, m.sig, n, "R.bpy_struct", "bpy.types", "  ", false, m.none));
+    else if (m.kind === "method") body.push(pyCallable(m.id, m.doc, m.sig, n, "R.bpy_struct", "bpy.types", "  ", false, known(m)));
   }
   return `${jsdoc("What every Blender struct (bpy.types.bpy_struct) has.", "")}export interface bpy_struct {\n${body.join("\n")}\n}\n`;
 }
@@ -115,11 +117,11 @@ export function emitApp(d: Dump, n: Names): string {
   const body: string[] = [];
   const subs: string[] = [];
   for (const m of d.app) {
-    if (m.kind === "function") body.push(pyCallable(m.id, m.doc, m.sig, n, undefined, "bpy.app"));
+    if (m.kind === "function") body.push(pyCallable(m.id, m.doc, m.sig, n, undefined, "bpy.app", "  ", false, known(m)));
     else if (m.kind === "module" || m.kind === "class") {
       const inner: string[] = [];
       for (const x of m.members ?? []) {
-        if (x.kind === "function" || x.kind === "method") inner.push(pyCallable(x.id, x.doc, x.sig, n, undefined, `bpy.app.${m.id}`));
+        if (x.kind === "function" || x.kind === "method") inner.push(pyCallable(x.id, x.doc, x.sig, n, undefined, `bpy.app.${m.id}`, "  ", false, known(x)));
         else inner.push(`${jsdoc(x.doc)}  readonly ${key(x.id)}: any;`);
       }
       const name = `App_${m.id}`;

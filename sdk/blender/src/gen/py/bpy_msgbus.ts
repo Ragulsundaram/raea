@@ -11,7 +11,7 @@ export interface Api {
    * Clear all subscribers using this owner.
    * @param owner The owner handle passed to :func:`subscribe_rna`.
    */
-  clear_by_owner(owner: any): any;
+  clear_by_owner(owner: any): H.Ref<void>;
   /**
    * Clear all subscribers using this owner.
    * @param owner The owner handle passed to :func:`subscribe_rna`.
@@ -19,7 +19,7 @@ export interface Api {
   clear_by_owner(kw: {
     /** The owner handle passed to :func:`subscribe_rna`. */
     owner: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Notify subscribers of changes to this property
    * (this typically doesn't need to be called explicitly since changes will automatically publish updates).
@@ -34,7 +34,7 @@ export interface Api {
      * - A tuple representing a (struct, property name) pair.
      */
     key?: H.In<R.Property | R.Struct | readonly [R.Struct, string]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Register a message bus subscription. It will be cleared when another blend file is
    *    loaded, or can be cleared explicitly via :func:`bpy.msgbus.clear_by_owner`.
@@ -69,6 +69,6 @@ export interface Api {
     args?: any;
     notify?: any;
     options?: any;
-  }): any;
+  }): H.Ref<void>;
 }
 

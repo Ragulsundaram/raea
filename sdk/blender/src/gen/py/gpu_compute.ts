@@ -14,7 +14,7 @@ export interface Api {
    * @param groups_y_len Int for group y length:
    * @param groups_z_len Int for group z length:
    */
-  dispatch(shader: P.gpu_types.GPUShader, groups_x_len: H.In<number>, groups_y_len: H.In<number>, groups_z_len: H.In<number>): any;
+  dispatch(shader: P.gpu_types.GPUShader, groups_x_len: H.In<number>, groups_y_len: H.In<number>, groups_z_len: H.In<number>): H.Ref<void>;
   /**
    * Dispatches GPU compute.
    * @param shader The shader that you want to dispatch.
@@ -31,6 +31,6 @@ export interface Api {
     groups_y_len: H.In<number>;
     /** Int for group z length: */
     groups_z_len: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
 }
 

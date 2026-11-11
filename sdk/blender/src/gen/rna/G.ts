@@ -9502,7 +9502,7 @@ export interface Gizmo extends R.bpy_struct {
    * @param set Function that takes a single value argument and applies it.
    * @param range Function that returns a (min, max) tuple for gizmos that use a range. The returned value is not used.
    */
-  target_set_handler(target: H.In<string>, get: any, set: any, range?: any): any;
+  target_set_handler(target: H.In<string>, get: any, set: any, range?: any): H.Ref<void>;
   /**
    * Assigns callbacks to a gizmos property.
    * @param target Target property name.
@@ -9513,7 +9513,7 @@ export interface Gizmo extends R.bpy_struct {
   target_set_handler(target: H.In<string>, get: any, set: any, kw: {
     /** Function that returns a (min, max) tuple for gizmos that use a range. The returned value is not used. */
     range?: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Assigns callbacks to a gizmos property.
    * @param target Target property name.
@@ -9530,12 +9530,12 @@ export interface Gizmo extends R.bpy_struct {
     set: any;
     /** Function that returns a (min, max) tuple for gizmos that use a range. The returned value is not used. */
     range?: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the value of this target property.
    * @param target Target property name.
    */
-  target_set_value(target: H.In<string>): any;
+  target_set_value(target: H.In<string>): H.Ref<void>;
   /**
    * Set the value of this target property.
    * @param target Target property name.
@@ -9543,7 +9543,7 @@ export interface Gizmo extends R.bpy_struct {
   target_set_value(kw: {
     /** Target property name. */
     target: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**

@@ -655,7 +655,7 @@ export interface App_icons {
    * Release the icon.
    * @param icon_id The icon id to release.
    */
-  release(icon_id: H.In<number>): any;
+  release(icon_id: H.In<number>): H.Ref<void>;
   /**
    * Release the icon.
    * @param icon_id The icon id to release.
@@ -663,7 +663,7 @@ export interface App_icons {
   release(kw: {
     /** The icon id to release. */
     icon_id: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 export interface App_timers {
@@ -695,7 +695,7 @@ export interface App_timers {
     first_interval?: H.In<number>;
     /** Don't remove timer when a new file is loaded. */
     persistent?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add a new function that will be called after the specified amount of seconds.
    * The function gets no arguments and is expected to return either None or a float.
@@ -711,12 +711,12 @@ export interface App_timers {
     first_interval?: H.In<number>;
     /** Don't remove timer when a new file is loaded. */
     persistent?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Unregister timer.
    * @param function_ Function to unregister.
    */
-  unregister(function_: any): any;
+  unregister(function_: any): H.Ref<void>;
   /**
    * Unregister timer.
    * @param function_ Function to unregister.
@@ -724,7 +724,7 @@ export interface App_timers {
   unregister(kw: {
     /** Function to unregister. */
     function: any;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /** bpy.types: the classes (bpy.types.Object, ...), for isinstance, their bl_rna, and properties added to them (bpy.types.Object.my = bpy.props.FloatProperty()). */

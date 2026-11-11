@@ -97,7 +97,7 @@ export interface GPUBatch {
    * Current a batch can have at most GPU_BATCH_VBO_MAX_LEN vertex buffers.
    * @param buf The vertex buffer that will be added to the batch.
    */
-  vertbuf_add(buf: P.gpu_types.GPUVertBuf): any;
+  vertbuf_add(buf: P.gpu_types.GPUVertBuf): H.Ref<void>;
   /**
    * Add another vertex buffer to the Batch.
    * It is not possible to add more vertices to the batch using this method.
@@ -110,7 +110,7 @@ export interface GPUBatch {
   vertbuf_add(kw: {
     /** The vertex buffer that will be added to the batch. */
     buf: P.gpu_types.GPUVertBuf;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Assign a shader to this batch that will be used for drawing when not overwritten later.
    * Note: This method has to be called in the draw context that the batch will be drawn in.
@@ -118,7 +118,7 @@ export interface GPUBatch {
    * set the shader when calling :meth:`gpu.types.GPUBatch.draw`.
    * @param program The program/shader the batch will use in future draw calls.
    */
-  program_set(program: P.gpu_types.GPUShader): any;
+  program_set(program: P.gpu_types.GPUShader): H.Ref<void>;
   /**
    * Assign a shader to this batch that will be used for drawing when not overwritten later.
    * Note: This method has to be called in the draw context that the batch will be drawn in.
@@ -129,12 +129,12 @@ export interface GPUBatch {
   program_set(kw: {
     /** The program/shader the batch will use in future draw calls. */
     program: P.gpu_types.GPUShader;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Run the drawing shader with the parameters assigned to the batch.
    * @param shader Shader that performs the drawing operations. If ``None`` is passed, the last shader set to this batch will run.
    */
-  draw(shader?: P.gpu_types.GPUShader | null): any;
+  draw(shader?: P.gpu_types.GPUShader | null): H.Ref<void>;
   /**
    * Run the drawing shader with the parameters assigned to the batch.
    * @param shader Shader that performs the drawing operations. If ``None`` is passed, the last shader set to this batch will run.
@@ -145,7 +145,7 @@ export interface GPUBatch {
      * If ``None`` is passed, the last shader set to this batch will run.
      */
     shader?: P.gpu_types.GPUShader | null;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw multiple instances of the drawing program with the parameters assigned
    * to the batch. In the vertex shader, ``gl_InstanceID`` will contain the instance
@@ -161,7 +161,7 @@ export interface GPUBatch {
      * vertex buffer.
      */
     instance_count?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw multiple instances of the drawing program with the parameters assigned
    * to the batch. In the vertex shader, ``gl_InstanceID`` will contain the instance
@@ -179,7 +179,7 @@ export interface GPUBatch {
      * vertex buffer.
      */
     instance_count?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Run the drawing program with the parameters assigned to the batch. Only draw the ``elem_count`` elements of the index buffer starting at ``elem_start``.
    * @param program Program that performs the drawing operations.
@@ -196,7 +196,7 @@ export interface GPUBatch {
      * index buffer will be drawn.
      */
     elem_count?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Run the drawing program with the parameters assigned to the batch. Only draw the ``elem_count`` elements of the index buffer starting at ``elem_start``.
    * @param program Program that performs the drawing operations.
@@ -215,7 +215,7 @@ export interface GPUBatch {
      * index buffer will be drawn.
      */
     elem_count?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
 }
 /** The class gpu.types.GPUBatch: called, a new one. */
 export interface GPUBatchClass {
@@ -282,7 +282,7 @@ export interface GPUFrameBuffer {
     depth?: H.In<number | null>;
     /** stencil value. */
     stencil?: H.In<number | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the viewport for this framebuffer object.
    * Note: The viewport state is not saved upon framebuffer rebind.
@@ -291,7 +291,7 @@ export interface GPUFrameBuffer {
    * @param xsize Width of the viewport.
    * @param ysize Height of the viewport.
    */
-  viewport_set(x: H.In<number>, y: H.In<number>, xsize: H.In<number>, ysize: H.In<number>): any;
+  viewport_set(x: H.In<number>, y: H.In<number>, xsize: H.In<number>, ysize: H.In<number>): H.Ref<void>;
   /**
    * Set the viewport for this framebuffer object.
    * Note: The viewport state is not saved upon framebuffer rebind.
@@ -309,7 +309,7 @@ export interface GPUFrameBuffer {
     xsize: H.In<number>;
     /** Height of the viewport. */
     ysize: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Returns position and dimension to current viewport.
    * @returns The viewport as ``(x, y, width, height)``.
@@ -449,7 +449,7 @@ export interface GPUOffScreen {
   unbind(kw?: {
     /** Restore the OpenGL state, can only be used when the state has been saved before. */
     restore?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw the 3d viewport in the offscreen object.
    * @param scene Scene to draw.
@@ -464,7 +464,7 @@ export interface GPUOffScreen {
     do_color_management?: H.In<boolean>;
     /** Draw background. */
     draw_background?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Draw the 3d viewport in the offscreen object.
    * @param scene Scene to draw.
@@ -491,12 +491,12 @@ export interface GPUOffScreen {
     do_color_management?: H.In<boolean>;
     /** Draw background. */
     draw_background?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Free the offscreen object.
    * The framebuffer, texture and render objects will no longer be accessible.
    */
-  free(...args: any[]): any;
+  free(...args: any[]): H.Ref<void>;
   /** The color texture attached. */
   get texture_color(): H.Ptr<P.gpu_types.GPUTexture>;
   set texture_color(v: P.gpu_types.GPUTexture);
@@ -553,7 +553,7 @@ export interface GPUShader {
    * @param length Size of the uniform data type: - 1: float - 2: vec2 or float[2] - 3: vec3 or float[3] - 4: vec4 or float[4] - 9: mat3 - 16: mat4
    * @param count Specifies the number of elements, vector or matrices that are to be modified.
    */
-  uniform_vector_float(location: H.In<number>, buffer: H.In<readonly number[]>, length: H.In<number>, count: H.In<number>): any;
+  uniform_vector_float(location: H.In<number>, buffer: H.In<readonly number[]>, length: H.In<number>, count: H.In<number>): H.Ref<void>;
   /**
    * Set the buffer to fill the uniform.
    * @param location Location of the uniform variable to be modified.
@@ -578,7 +578,7 @@ export interface GPUShader {
     length: H.In<number>;
     /** Specifies the number of elements, vector or matrices that are to be modified. */
     count: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the buffer to fill the uniform.
    * @param location Location of the uniform variable to be modified.
@@ -586,7 +586,7 @@ export interface GPUShader {
    * @param length Size of the uniform data type.
    * @param count Specifies the number of elements that are to be modified.
    */
-  uniform_vector_int(location: H.In<number>, buffer: H.In<H.Bytes>, length: H.In<number>, count: H.In<number>): any;
+  uniform_vector_int(location: H.In<number>, buffer: H.In<H.Bytes>, length: H.In<number>, count: H.In<number>): H.Ref<void>;
   /**
    * Set the buffer to fill the uniform.
    * @param location Location of the uniform variable to be modified.
@@ -603,13 +603,13 @@ export interface GPUShader {
     length: H.In<number>;
     /** Specifies the number of elements that are to be modified. */
     count: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the value of a uniform variable for the current program object.
    * @param name Name of the uniform variable whose value is to be changed.
    * @param value Value that will be used to update the specified uniform variable.
    */
-  uniform_bool(name: H.In<string>, value: H.In<boolean | readonly boolean[]>): any;
+  uniform_bool(name: H.In<string>, value: H.In<boolean | readonly boolean[]>): H.Ref<void>;
   /**
    * Specify the value of a uniform variable for the current program object.
    * @param name Name of the uniform variable whose value is to be changed.
@@ -620,13 +620,13 @@ export interface GPUShader {
     name: H.In<string>;
     /** Value that will be used to update the specified uniform variable. */
     value: H.In<boolean | readonly boolean[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the value of a uniform variable for the current program object.
    * @param name Name of the uniform variable whose value is to be changed.
    * @param value Value that will be used to update the specified uniform variable.
    */
-  uniform_float(name: H.In<string>, value: H.In<number | readonly number[]>): any;
+  uniform_float(name: H.In<string>, value: H.In<number | readonly number[]>): H.Ref<void>;
   /**
    * Specify the value of a uniform variable for the current program object.
    * @param name Name of the uniform variable whose value is to be changed.
@@ -637,13 +637,13 @@ export interface GPUShader {
     name: H.In<string>;
     /** Value that will be used to update the specified uniform variable. */
     value: H.In<number | readonly number[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the value of a uniform variable for the current program object.
    * @param name Name of the uniform variable whose value is to be changed.
    * @param seq Value that will be used to update the specified uniform variable.
    */
-  uniform_int(name: H.In<string>, seq: H.In<number | readonly number[]>): any;
+  uniform_int(name: H.In<string>, seq: H.In<number | readonly number[]>): H.Ref<void>;
   /**
    * Specify the value of a uniform variable for the current program object.
    * @param name Name of the uniform variable whose value is to be changed.
@@ -654,13 +654,13 @@ export interface GPUShader {
     name: H.In<string>;
     /** Value that will be used to update the specified uniform variable. */
     seq: H.In<number | readonly number[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the value of a texture uniform variable for the current GPUShader.
    * @param name Name of the uniform variable whose texture is to be specified.
    * @param texture Texture to attach.
    */
-  uniform_sampler(name: H.In<string>, texture: P.gpu_types.GPUTexture): any;
+  uniform_sampler(name: H.In<string>, texture: P.gpu_types.GPUTexture): H.Ref<void>;
   /**
    * Specify the value of a texture uniform variable for the current GPUShader.
    * @param name Name of the uniform variable whose texture is to be specified.
@@ -671,13 +671,13 @@ export interface GPUShader {
     name: H.In<string>;
     /** Texture to attach. */
     texture: P.gpu_types.GPUTexture;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the value of an image variable for the current GPUShader.
    * @param name Name of the image variable to which the texture is to be bound.
    * @param texture Texture to attach.
    */
-  image(name: H.In<string>, texture: P.gpu_types.GPUTexture): any;
+  image(name: H.In<string>, texture: P.gpu_types.GPUTexture): H.Ref<void>;
   /**
    * Specify the value of an image variable for the current GPUShader.
    * @param name Name of the image variable to which the texture is to be bound.
@@ -688,13 +688,13 @@ export interface GPUShader {
     name: H.In<string>;
     /** Texture to attach. */
     texture: P.gpu_types.GPUTexture;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the value of a uniform buffer object variable for the current GPUShader.
    * @param name Name of the uniform variable whose UBO is to be specified.
    * @param ubo Uniform Buffer to attach.
    */
-  uniform_block(name: H.In<string>, ubo: P.gpu_types.GPUUniformBuf): any;
+  uniform_block(name: H.In<string>, ubo: P.gpu_types.GPUUniformBuf): H.Ref<void>;
   /**
    * Specify the value of a uniform buffer object variable for the current GPUShader.
    * @param name Name of the uniform variable whose UBO is to be specified.
@@ -705,7 +705,7 @@ export interface GPUShader {
     name: H.In<string>;
     /** Uniform Buffer to attach. */
     ubo: P.gpu_types.GPUUniformBuf;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Get attribute location by name.
    * @returns The location of an attribute variable.
@@ -756,7 +756,7 @@ export interface GPUShaderCreateInfo {
    * @param type The data type of the attribute.
    * @param name name of the attribute.
    */
-  vertex_in(slot: H.In<number>, type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): any;
+  vertex_in(slot: H.In<number>, type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): H.Ref<void>;
   /**
    * Add a vertex shader input attribute.
    * @param slot The attribute index.
@@ -770,12 +770,12 @@ export interface GPUShaderCreateInfo {
     type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">;
     /** name of the attribute. */
     name: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add a vertex shader output interface block.
    * @param interface_ Object describing the block.
    */
-  vertex_out(interface_: P.gpu_types.GPUStageInterfaceInfo): any;
+  vertex_out(interface_: P.gpu_types.GPUStageInterfaceInfo): H.Ref<void>;
   /**
    * Add a vertex shader output interface block.
    * @param interface_ Object describing the block.
@@ -783,7 +783,7 @@ export interface GPUShaderCreateInfo {
   vertex_out(kw: {
     /** Object describing the block. */
     interface: P.gpu_types.GPUStageInterfaceInfo;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify a depth write behavior when modifying gl_FragDepth.
    *
@@ -884,7 +884,7 @@ export interface GPUShaderCreateInfo {
   image(slot: H.In<number>, format: H.In<"RGBA8UI" | "RGBA8I" | "RGBA8" | "RGBA32UI" | "RGBA32I" | "RGBA32F" | "RGBA16UI" | "RGBA16I" | "RGBA16F" | "RGBA16" | "RG8UI" | "RG8I" | "RG8" | "RG32UI" | "RG32I" | "RG32F" | "RG16UI" | "RG16I" | "RG16F" | "RG16" | "R8UI" | "R8I" | "R8" | "R32UI" | "R32I" | "R32F" | "R16UI" | "R16I" | "R16F" | "R16" | "R11F_G11F_B10F" | "DEPTH32F_STENCIL8" | "DEPTH24_STENCIL8" | "SRGB8_A8" | "RGB16F" | "SRGB8_A8_DXT1" | "SRGB8_A8_DXT3" | "SRGB8_A8_DXT5" | "RGBA8_DXT1" | "RGBA8_DXT3" | "RGBA8_DXT5" | "DEPTH_COMPONENT32F" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT16">, type: H.In<"FLOAT_BUFFER" | "FLOAT_1D" | "FLOAT_1D_ARRAY" | "FLOAT_2D" | "FLOAT_2D_ARRAY" | "FLOAT_3D" | "FLOAT_CUBE" | "FLOAT_CUBE_ARRAY" | "INT_BUFFER" | "INT_1D" | "INT_1D_ARRAY" | "INT_2D" | "INT_2D_ARRAY" | "INT_3D" | "INT_CUBE" | "INT_CUBE_ARRAY" | "UINT_BUFFER" | "UINT_1D" | "UINT_1D_ARRAY" | "UINT_2D" | "UINT_2D_ARRAY" | "UINT_3D" | "UINT_CUBE" | "UINT_CUBE_ARRAY" | "SHADOW_2D" | "SHADOW_2D_ARRAY" | "SHADOW_CUBE" | "SHADOW_CUBE_ARRAY" | "DEPTH_2D" | "DEPTH_2D_ARRAY" | "DEPTH_CUBE" | "DEPTH_CUBE_ARRAY">, name: H.In<string>, kw?: {
     /** Set containing values that describe how the image resource is to be read or written. */
     qualifiers?: H.In<Set<"NO_RESTRICT" | "READ" | "WRITE">>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify an image resource used for arbitrary load and store operations.
    * @param slot The image resource index.
@@ -903,14 +903,14 @@ export interface GPUShaderCreateInfo {
     name: H.In<string>;
     /** Set containing values that describe how the image resource is to be read or written. */
     qualifiers?: H.In<Set<"NO_RESTRICT" | "READ" | "WRITE">>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify an image texture sampler.
    * @param slot The image texture sampler index.
    * @param type The data type describing the format of each sampler unit.
    * @param name The image texture sampler name.
    */
-  sampler(slot: H.In<number>, type: H.In<"FLOAT_BUFFER" | "FLOAT_1D" | "FLOAT_1D_ARRAY" | "FLOAT_2D" | "FLOAT_2D_ARRAY" | "FLOAT_3D" | "FLOAT_CUBE" | "FLOAT_CUBE_ARRAY" | "INT_BUFFER" | "INT_1D" | "INT_1D_ARRAY" | "INT_2D" | "INT_2D_ARRAY" | "INT_3D" | "INT_CUBE" | "INT_CUBE_ARRAY" | "UINT_BUFFER" | "UINT_1D" | "UINT_1D_ARRAY" | "UINT_2D" | "UINT_2D_ARRAY" | "UINT_3D" | "UINT_CUBE" | "UINT_CUBE_ARRAY" | "SHADOW_2D" | "SHADOW_2D_ARRAY" | "SHADOW_CUBE" | "SHADOW_CUBE_ARRAY" | "DEPTH_2D" | "DEPTH_2D_ARRAY" | "DEPTH_CUBE" | "DEPTH_CUBE_ARRAY">, name: H.In<string>): any;
+  sampler(slot: H.In<number>, type: H.In<"FLOAT_BUFFER" | "FLOAT_1D" | "FLOAT_1D_ARRAY" | "FLOAT_2D" | "FLOAT_2D_ARRAY" | "FLOAT_3D" | "FLOAT_CUBE" | "FLOAT_CUBE_ARRAY" | "INT_BUFFER" | "INT_1D" | "INT_1D_ARRAY" | "INT_2D" | "INT_2D_ARRAY" | "INT_3D" | "INT_CUBE" | "INT_CUBE_ARRAY" | "UINT_BUFFER" | "UINT_1D" | "UINT_1D_ARRAY" | "UINT_2D" | "UINT_2D_ARRAY" | "UINT_3D" | "UINT_CUBE" | "UINT_CUBE_ARRAY" | "SHADOW_2D" | "SHADOW_2D_ARRAY" | "SHADOW_CUBE" | "SHADOW_CUBE_ARRAY" | "DEPTH_2D" | "DEPTH_2D_ARRAY" | "DEPTH_CUBE" | "DEPTH_CUBE_ARRAY">, name: H.In<string>): H.Ref<void>;
   /**
    * Specify an image texture sampler.
    * @param slot The image texture sampler index.
@@ -924,7 +924,7 @@ export interface GPUShaderCreateInfo {
     type: H.In<"FLOAT_BUFFER" | "FLOAT_1D" | "FLOAT_1D_ARRAY" | "FLOAT_2D" | "FLOAT_2D_ARRAY" | "FLOAT_3D" | "FLOAT_CUBE" | "FLOAT_CUBE_ARRAY" | "INT_BUFFER" | "INT_1D" | "INT_1D_ARRAY" | "INT_2D" | "INT_2D_ARRAY" | "INT_3D" | "INT_CUBE" | "INT_CUBE_ARRAY" | "UINT_BUFFER" | "UINT_1D" | "UINT_1D_ARRAY" | "UINT_2D" | "UINT_2D_ARRAY" | "UINT_3D" | "UINT_CUBE" | "UINT_CUBE_ARRAY" | "SHADOW_2D" | "SHADOW_2D_ARRAY" | "SHADOW_CUBE" | "SHADOW_CUBE_ARRAY" | "DEPTH_2D" | "DEPTH_2D_ARRAY" | "DEPTH_CUBE" | "DEPTH_CUBE_ARRAY">;
     /** The image texture sampler name. */
     name: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify a global access constant.
    * @param type The data type of the constant.
@@ -968,7 +968,7 @@ export interface GPUShaderCreateInfo {
    * .. seealso:: `GLSL Cross Compilation <https://developer.blender.org/docs/features/gpu/glsl_cross_compilation/>`__
    * @param source The vertex shader source code.
    */
-  vertex_source(source: H.In<string>): any;
+  vertex_source(source: H.In<string>): H.Ref<void>;
   /**
    * Vertex shader source code written in GLSL.
    *
@@ -984,7 +984,7 @@ export interface GPUShaderCreateInfo {
   vertex_source(kw: {
     /** The vertex shader source code. */
     source: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Fragment shader source code written in GLSL.
    *
@@ -997,7 +997,7 @@ export interface GPUShaderCreateInfo {
    * .. seealso:: `GLSL Cross Compilation <https://developer.blender.org/docs/features/gpu/glsl_cross_compilation/>`__
    * @param source The fragment shader source code.
    */
-  fragment_source(source: H.In<string>): any;
+  fragment_source(source: H.In<string>): H.Ref<void>;
   /**
    * Fragment shader source code written in GLSL.
    *
@@ -1013,7 +1013,7 @@ export interface GPUShaderCreateInfo {
   fragment_source(kw: {
     /** The fragment shader source code. */
     source: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * compute shader source code written in GLSL.
    *
@@ -1030,7 +1030,7 @@ export interface GPUShaderCreateInfo {
    * .. seealso:: `GLSL Cross Compilation <https://developer.blender.org/docs/features/gpu/glsl_cross_compilation/>`__
    * @param source The compute shader source code.
    */
-  compute_source(source: H.In<string>): any;
+  compute_source(source: H.In<string>): H.Ref<void>;
   /**
    * compute shader source code written in GLSL.
    *
@@ -1050,7 +1050,7 @@ export interface GPUShaderCreateInfo {
   compute_source(kw: {
     /** The compute shader source code. */
     source: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Source code included before resource declaration. Useful for defining structs used by Uniform Buffers.
    *
@@ -1061,7 +1061,7 @@ export interface GPUShaderCreateInfo {
    *    "struct MyType {int foo; float bar;};"
    * @param source The source code defining types.
    */
-  typedef_source(source: H.In<string>): any;
+  typedef_source(source: H.In<string>): H.Ref<void>;
   /**
    * Source code included before resource declaration. Useful for defining structs used by Uniform Buffers.
    *
@@ -1075,7 +1075,7 @@ export interface GPUShaderCreateInfo {
   typedef_source(kw: {
     /** The source code defining types. */
     source: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add a preprocessing define directive. In GLSL it would be something like:
    *
@@ -1085,7 +1085,7 @@ export interface GPUShaderCreateInfo {
    * @param name Token name.
    * @param value Text that replaces token occurrences.
    */
-  define(name: H.In<string>, value: H.In<string>): any;
+  define(name: H.In<string>, value: H.In<string>): H.Ref<void>;
   /**
    * Add a preprocessing define directive. In GLSL it would be something like:
    *
@@ -1100,14 +1100,14 @@ export interface GPUShaderCreateInfo {
     name: H.In<string>;
     /** Text that replaces token occurrences. */
     value: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the local group size for compute shaders.
    * @param x The local group size in the x dimension.
    * @param y The local group size in the y dimension. Optional. Defaults to 1.
    * @param z The local group size in the z dimension. Optional. Defaults to 1.
    */
-  local_group_size(x: H.In<number>, y?: H.In<number>, z?: H.In<number>): any;
+  local_group_size(x: H.In<number>, y?: H.In<number>, z?: H.In<number>): H.Ref<void>;
   /**
    * Specify the local group size for compute shaders.
    * @param x The local group size in the x dimension.
@@ -1119,7 +1119,7 @@ export interface GPUShaderCreateInfo {
     y?: H.In<number>;
     /** The local group size in the z dimension. Optional. Defaults to 1. */
     z?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the local group size for compute shaders.
    * @param x The local group size in the x dimension.
@@ -1133,7 +1133,7 @@ export interface GPUShaderCreateInfo {
     y?: H.In<number>;
     /** The local group size in the z dimension. Optional. Defaults to 1. */
     z?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
 }
 /** The class gpu.types.GPUShaderCreateInfo: called, a new one. */
 export interface GPUShaderCreateInfoClass {
@@ -1157,7 +1157,7 @@ export interface GPUStageInterfaceInfo {
    * @param type The data type of the attribute.
    * @param name name of the attribute.
    */
-  smooth(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): any;
+  smooth(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): H.Ref<void>;
   /**
    * Add an attribute with qualifier of type *smooth* to the interface block.
    * @param type The data type of the attribute.
@@ -1168,13 +1168,13 @@ export interface GPUStageInterfaceInfo {
     type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">;
     /** name of the attribute. */
     name: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add an attribute with qualifier of type ``flat`` to the interface block.
    * @param type The data type of the attribute.
    * @param name name of the attribute.
    */
-  flat(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): any;
+  flat(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): H.Ref<void>;
   /**
    * Add an attribute with qualifier of type ``flat`` to the interface block.
    * @param type The data type of the attribute.
@@ -1185,13 +1185,13 @@ export interface GPUStageInterfaceInfo {
     type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">;
     /** name of the attribute. */
     name: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Add an attribute with qualifier of type ``no_perspective`` to the interface block.
    * @param type The data type of the attribute.
    * @param name name of the attribute.
    */
-  no_perspective(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): any;
+  no_perspective(type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">, name: H.In<string>): H.Ref<void>;
   /**
    * Add an attribute with qualifier of type ``no_perspective`` to the interface block.
    * @param type The data type of the attribute.
@@ -1202,7 +1202,7 @@ export interface GPUStageInterfaceInfo {
     type: H.In<"FLOAT" | "VEC2" | "VEC3" | "VEC4" | "MAT3" | "MAT4" | "UINT" | "UVEC2" | "UVEC3" | "UVEC4" | "INT" | "IVEC2" | "IVEC3" | "IVEC4" | "BOOL">;
     /** name of the attribute. */
     name: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /** Name of the interface block. */
   get name(): H.Ref<string>;
   set name(v: H.In<string>);
@@ -1238,7 +1238,7 @@ export interface GPUTexture {
    * @param format The format that describes the content of a single item. ``UINT_24_8`` is deprecated, use ``FLOAT`` instead.
    * @param value Sequence each representing the value to fill. Sizes 1..4 are supported.
    */
-  clear(format?: H.In<"FLOAT" | "INT" | "UINT" | "UBYTE" | "UINT_24_8" | "10_11_11_REV">, value?: H.In<readonly number[]>): any;
+  clear(format?: H.In<"FLOAT" | "INT" | "UINT" | "UBYTE" | "UINT_24_8" | "10_11_11_REV">, value?: H.In<readonly number[]>): H.Ref<void>;
   /**
    * Fill texture with specific value.
    * @param format The format that describes the content of a single item. ``UINT_24_8`` is deprecated, use ``FLOAT`` instead.
@@ -1252,7 +1252,7 @@ export interface GPUTexture {
     format?: H.In<"FLOAT" | "INT" | "UINT" | "UBYTE" | "UINT_24_8" | "10_11_11_REV">;
     /** Sequence each representing the value to fill. Sizes 1..4 are supported. */
     value?: H.In<readonly number[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Creates a buffer with the value of all pixels.
    * @returns The Buffer with the read pixels.
@@ -1262,23 +1262,23 @@ export interface GPUTexture {
    * Set texture sampling method for coordinates outside of the [0..1] uv range along the x axis.
    * @param extend_mode the specified extent mode.
    */
-  extend_mode_x(extend_mode?: H.In<"EXTEND" | "REPEAT" | "MIRRORED_REPEAT" | "CLAMP_TO_BORDER">): any;
+  extend_mode_x(extend_mode?: H.In<"EXTEND" | "REPEAT" | "MIRRORED_REPEAT" | "CLAMP_TO_BORDER">): H.Ref<void>;
   /**
    * Set texture sampling method for coordinates outside of the [0..1] uv range along the y axis.
    * @param extend_mode the specified extent mode.
    */
-  extend_mode_y(extend_mode?: H.In<"EXTEND" | "REPEAT" | "MIRRORED_REPEAT" | "CLAMP_TO_BORDER">): any;
+  extend_mode_y(extend_mode?: H.In<"EXTEND" | "REPEAT" | "MIRRORED_REPEAT" | "CLAMP_TO_BORDER">): H.Ref<void>;
   /**
    * Set texture sampling method for coordinates outside of the [0..1] uv range along
    * both the x and y axis.
    * @param extend_mode the specified extent mode.
    */
-  extend_mode(extend_mode?: H.In<"EXTEND" | "REPEAT" | "MIRRORED_REPEAT" | "CLAMP_TO_BORDER">): any;
+  extend_mode(extend_mode?: H.In<"EXTEND" | "REPEAT" | "MIRRORED_REPEAT" | "CLAMP_TO_BORDER">): H.Ref<void>;
   /**
    * Set texture filter usage.
    * @param use_filter If set to true, the texture will use linear interpolation between neighboring texels.
    */
-  filter_mode(use_filter: H.In<boolean>): any;
+  filter_mode(use_filter: H.In<boolean>): H.Ref<void>;
   /**
    * Set texture filter usage.
    * @param use_filter If set to true, the texture will use linear interpolation between neighboring texels.
@@ -1286,13 +1286,13 @@ export interface GPUTexture {
   filter_mode(kw: {
     /** If set to true, the texture will use linear interpolation between neighboring texels. */
     use_filter: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set texture filter and mip-map usage.
    * @param use_mipmap If set to true, the texture will use mip-mapping as anti-aliasing method.
    * @param use_filter If set to true, the texture will use linear interpolation between neighboring texels.
    */
-  mipmap_mode(use_mipmap?: H.In<boolean>, use_filter?: H.In<boolean>): any;
+  mipmap_mode(use_mipmap?: H.In<boolean>, use_filter?: H.In<boolean>): H.Ref<void>;
   /**
    * Set texture filter and mip-map usage.
    * @param use_mipmap If set to true, the texture will use mip-mapping as anti-aliasing method.
@@ -1303,12 +1303,12 @@ export interface GPUTexture {
     use_mipmap?: H.In<boolean>;
     /** If set to true, the texture will use linear interpolation between neighboring texels. */
     use_filter?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set anisotropic filter usage. This only has effect if mipmapping is enabled.
    * @param use_anisotropic If set to true, the texture will use anisotropic filtering.
    */
-  anisotropic_filter(use_anisotropic: H.In<boolean>): any;
+  anisotropic_filter(use_anisotropic: H.In<boolean>): H.Ref<void>;
   /**
    * Set anisotropic filter usage. This only has effect if mipmapping is enabled.
    * @param use_anisotropic If set to true, the texture will use anisotropic filtering.
@@ -1316,7 +1316,7 @@ export interface GPUTexture {
   anisotropic_filter(kw: {
     /** If set to true, the texture will use anisotropic filtering. */
     use_anisotropic: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /** Width of the texture. */
   get width(): H.Ref<number>;
   set width(v: H.In<number>);
@@ -1347,7 +1347,7 @@ export interface GPUUniformBuf {
    * Update the data of the uniform buffer object.
    * @param data Data to fill the buffer.
    */
-  update(data: H.In<H.Bytes>): any;
+  update(data: H.In<H.Bytes>): H.Ref<void>;
   /**
    * Update the data of the uniform buffer object.
    * @param data Data to fill the buffer.
@@ -1355,7 +1355,7 @@ export interface GPUUniformBuf {
   update(kw: {
     /** Data to fill the buffer. */
     data: H.In<H.Bytes>;
-  }): any;
+  }): H.Ref<void>;
 }
 /** The class gpu.types.GPUUniformBuf: called, a new one. */
 export interface GPUUniformBufClass {
@@ -1380,7 +1380,7 @@ export interface GPUVertBuf {
    * @param id Either the name or the id of the attribute.
    * @param data Buffer or sequence of data that should be stored in the buffer
    */
-  attr_fill(id: H.In<number | string>, data: H.In<H.Bytes | readonly number[] | readonly (readonly number[])[]>): any;
+  attr_fill(id: H.In<number | string>, data: H.In<H.Bytes | readonly number[] | readonly (readonly number[])[]>): H.Ref<void>;
   /**
    * Insert data into the buffer for a single attribute.
    * @param id Either the name or the id of the attribute.
@@ -1391,7 +1391,7 @@ export interface GPUVertBuf {
     id: H.In<number | string>;
     /** Buffer or sequence of data that should be stored in the buffer */
     data: H.In<H.Bytes | readonly number[] | readonly (readonly number[])[]>;
-  }): any;
+  }): H.Ref<void>;
 }
 /** The class gpu.types.GPUVertBuf: called, a new one. */
 export interface GPUVertBufClass {
@@ -1411,7 +1411,7 @@ export interface GPUVertFormat {
    * @param len How many individual values the attribute consists of (e.g. 2 for uv coordinates).
    * @param fetch_mode How values from memory will be converted when used in the shader. This is mainly useful for memory optimizations when you want to store values with reduced precision. E.g. you can store a float in only 1 byte but it will be converted to a normal 4 byte float when used.
    */
-  attr_add(id: H.In<string>, comp_type: H.In<"I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "F32" | "I10">, len: H.In<number>, fetch_mode: H.In<"FLOAT" | "INT" | "INT_TO_FLOAT_UNIT">): any;
+  attr_add(id: H.In<string>, comp_type: H.In<"I8" | "U8" | "I16" | "U16" | "I32" | "U32" | "F32" | "I10">, len: H.In<number>, fetch_mode: H.In<"FLOAT" | "INT" | "INT_TO_FLOAT_UNIT">): H.Ref<number>;
   /**
    * Add a new attribute to the format.
    * @param id Name of the attribute. Often ``position``, ``normal``, ...
@@ -1436,7 +1436,7 @@ export interface GPUVertFormat {
      * converted to a normal 4 byte float when used.
      */
     fetch_mode: H.In<"FLOAT" | "INT" | "INT_TO_FLOAT_UNIT">;
-  }): any;
+  }): H.Ref<number>;
 }
 /** The class gpu.types.GPUVertFormat: called, a new one. */
 export interface GPUVertFormatClass {

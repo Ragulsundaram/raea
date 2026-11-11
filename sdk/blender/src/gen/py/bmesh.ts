@@ -44,7 +44,7 @@ export interface Api {
     loop_triangles?: H.In<boolean>;
     /** Use when geometry has been added or removed. */
     destructive?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Update the mesh after changes to the BMesh in editmode,
    * optionally recalculating n-gon tessellation.
@@ -57,7 +57,7 @@ export interface Api {
     loop_triangles?: H.In<boolean>;
     /** Use when geometry has been added or removed. */
     destructive?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   readonly utils: P.bmesh_utils.Api;
 }
 

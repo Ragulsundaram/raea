@@ -66,7 +66,7 @@ export interface Api {
    * Flip the face's direction.
    * @param face Face to flip.
    */
-  face_flip(face: P.bmesh_types.BMFace): any;
+  face_flip(face: P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Flip the face's direction.
    * @param face Face to flip.
@@ -74,7 +74,7 @@ export interface Api {
   face_flip(kw: {
     /** Face to flip. */
     face: P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Joins a sequence of faces.
    * @returns The newly created face or None on failure.
@@ -309,7 +309,7 @@ export interface Api {
    * @param vert The vertex to be removed.
    * @param vert_target The vertex to merge into.
    */
-  vert_splice(vert: P.bmesh_types.BMVert, vert_target: P.bmesh_types.BMVert): any;
+  vert_splice(vert: P.bmesh_types.BMVert, vert_target: P.bmesh_types.BMVert): H.Ref<void>;
   /**
    * Splice vert into vert_target, merging them.
    *
@@ -322,6 +322,6 @@ export interface Api {
     vert: P.bmesh_types.BMVert;
     /** The vertex to merge into. */
     vert_target: P.bmesh_types.BMVert;
-  }): any;
+  }): H.Ref<void>;
 }
 

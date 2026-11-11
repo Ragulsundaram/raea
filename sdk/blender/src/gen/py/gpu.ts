@@ -16,7 +16,7 @@ export interface Api {
    * Initializes the GPU module for background use.
    * If the initialization fails, a SystemError will be raised.
    */
-  init(...args: any[]): any;
+  init(...args: any[]): H.Ref<void>;
   readonly matrix: P.gpu_matrix.Api;
   readonly platform: P.gpu_platform.Api;
   readonly select: P.gpu_select.Api;

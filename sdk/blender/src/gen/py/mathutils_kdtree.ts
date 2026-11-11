@@ -26,7 +26,7 @@ export interface KDTree {
    * @param co Point 3d position.
    * @param index The index of the point (must be non-negative).
    */
-  insert(co: H.In<readonly number[]>, index: H.In<number>): any;
+  insert(co: H.In<readonly number[]>, index: H.In<number>): H.Ref<void>;
   /**
    * Insert a point into the KDTree.
    * @param co Point 3d position.
@@ -37,7 +37,7 @@ export interface KDTree {
     co: H.In<readonly number[]>;
     /** The index of the point (must be non-negative). */
     index: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Balance the tree.
    *
@@ -45,7 +45,7 @@ export interface KDTree {
    *
    *    This builds the entire tree, avoid calling after each insertion.
    */
-  balance(...args: any[]): any;
+  balance(...args: any[]): H.Ref<void>;
   /**
    * Find nearest point to ``co``.
    * @returns Returns (position, index, distance),

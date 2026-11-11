@@ -1112,7 +1112,7 @@ export interface WindowManager extends R.ID {
    * Remove a draw cursor handler that was added previously.
    * @param handler The draw cursor handler that should be removed.
    */
-  draw_cursor_remove(handler: any): any;
+  draw_cursor_remove(handler: any): H.Ref<void>;
   /**
    * Remove a draw cursor handler that was added previously.
    * @param handler The draw cursor handler that should be removed.
@@ -1120,7 +1120,7 @@ export interface WindowManager extends R.ID {
   draw_cursor_remove(kw: {
     /** The draw cursor handler that should be removed. */
     handler: any;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**

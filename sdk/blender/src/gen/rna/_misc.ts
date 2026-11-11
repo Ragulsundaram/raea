@@ -190,7 +190,7 @@ export interface bpy_struct {
    * Unset a property, will use default value afterward.
    * @param property Property name.
    */
-  property_unset(property: H.In<string>): any;
+  property_unset(property: H.In<string>): H.Ref<void>;
   /**
    * Check if a property is hidden.
    * @returns True when the property is hidden.
@@ -272,7 +272,7 @@ export interface bpy_struct {
   /** @returns the parent group for an RNA struct's custom IDProperties. */
   id_properties_ensure(...args: any[]): H.Ptr<P.idprop_types.IDPropertyGroup>;
   /** Remove the parent group for an RNA struct's custom IDProperties. */
-  id_properties_clear(...args: any[]): any;
+  id_properties_clear(...args: any[]): H.Ref<void>;
   /**
    * @returns An object used to manage an IDProperty's UI data.
    * @param key String name of the property.

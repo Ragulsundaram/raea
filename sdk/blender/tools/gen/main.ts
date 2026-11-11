@@ -26,6 +26,30 @@ for (const s of d.structs) {
   for (const p of s.props) if (p.type === "enum" && atTheTime.has(`${s.id}.${p.id}`)) p.itemf = true;
   for (const f of s.funcs) for (const a of f.args) if (a.type === "enum" && atTheTime.has(`${s.id}.${f.id}(${a.id})`)) a.itemf = true;
 }
+// BL22: what C methods and properties return where their docstrings don't say (tools/cret.json, read from the
+// bindings' C source by tools/cret.sh), by family of bindings; one written in Python (`py`, or a Python property, which
+// has `ro`) or with an :rtype: or :type: keeps its own
+type Family = { methods: Record<string, string>; getters: Record<string, string> };
+const cret = JSON.parse(readFileSync(join(dirname(new URL(import.meta.url).pathname), "../cret.json"), "utf8")) as { blender: string; families: Record<string, Family> };
+if (cret.blender !== d.blender) console.warn(`gen: tools/cret.json is Blender ${cret.blender}'s, the dump ${d.blender}'s: run tools/cret.sh ${d.blender}`);
+const FAMILY: Record<string, string> = { bmesh: "bmesh", gpu: "gpu", mathutils: "mathutils", aud: "aud", bpy: "bpy", idprop: "generic", imbuf: "generic", bl_math: "generic" };
+type Member = { id: string; doc: string; kind?: string; py?: boolean; ro?: boolean; none?: boolean; ret?: string; members?: Member[] };
+const has = (o: object, k: string) => Object.hasOwn(o, k);
+const markC = (fam: Family | undefined, m: Member) => {
+  if (!fam || m.py || m.none || /:rtype:/.test(m.doc) || !has(fam.methods, m.id)) return;
+  if (fam.methods[m.id] === "None") m.none = true;
+  else m.ret = fam.methods[m.id];
+};
+const markAll = (fam: Family | undefined, ms: Member[]) => {
+  for (const m of ms) {
+    if (m.kind === "function" || m.kind === "method") markC(fam, m);
+    else if (m.kind === "property" && fam && m.ro === undefined && !/:type:/.test(m.doc) && has(fam.getters, m.id) && fam.getters[m.id] !== "None") m.ret = fam.getters[m.id];
+    else if (m.kind === "class" || m.kind === "module") markAll(fam, m.members ?? []);
+  }
+};
+for (const [mod, data] of Object.entries(d.modules)) markAll(cret.families[FAMILY[mod.split(".")[0]] ?? ""], data.members);
+markAll(cret.families.bpy, [d.bpy_struct, ...d.app]);
+for (const s of d.structs) for (const c of s.cfuncs ?? []) markC(cret.families.bpy, c);
 const root = join(dirname(new URL(import.meta.url).pathname), "../../src/gen");
 rmSync(root, { recursive: true, force: true });
 const files = new Map<string, string>();

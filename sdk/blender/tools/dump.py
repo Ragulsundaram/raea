@@ -122,12 +122,19 @@ def returns_none(fn):
     return True
 
 
+def written(fn, d):
+    """Marks a function written in Python (`py`: what it returns is read from its own source, never tools/cret.json's
+    reading of C), and `none` when that source returns no value."""
+    if inspect.isfunction(fn):
+        d["py"] = True
+        if returns_none(fn):
+            d["none"] = True
+    return d
+
+
 def pyfunc(name, f):
     fn = getattr(f, "__func__", f)
-    d = {"id": name, "sig": sig(fn), "doc": doc(fn), "static": isinstance(f, (staticmethod, classmethod))}
-    if returns_none(fn):
-        d["none"] = True
-    return d
+    return written(fn, {"id": name, "sig": sig(fn), "doc": doc(fn), "static": isinstance(f, (staticmethod, classmethod))})
 
 
 def struct(s):
@@ -172,8 +179,7 @@ def member(name, obj, depth):
             m = {"id": n, "kind": kind, "doc": doc(a)}
             if kind == "method":
                 m["sig"] = sig(getattr(a, "__func__", a))
-                if returns_none(getattr(a, "__func__", a)):
-                    m["none"] = True
+                written(getattr(a, "__func__", a), m)
                 if isinstance(a, (staticmethod, classmethod)) or type(a).__name__ == "classmethod_descriptor":
                     m["static"] = True
             if kind == "data":
@@ -185,10 +191,7 @@ def member(name, obj, depth):
         bases = [b.__module__ + "." + b.__qualname__ for b in obj.__bases__ if b is not object]
         return {"id": name, "kind": "class", "doc": doc(obj), "sig": sig(obj), "bases": bases, "members": own}
     if callable(obj):
-        f = {"id": name, "kind": "function", "doc": doc(obj), "sig": sig(obj)}
-        if returns_none(obj):
-            f["none"] = True
-        return f
+        return written(obj, {"id": name, "kind": "function", "doc": doc(obj), "sig": sig(obj)})
     return {"id": name, "kind": "data", "type": type(obj).__name__, "value": value(obj), "doc": ""}
 
 
@@ -220,7 +223,7 @@ def app():
             continue
         d = doc(getattr(cls, name, None)) if hasattr(cls, name) else ""
         if callable(v):
-            out.append({"id": name, "kind": "function", "doc": doc(v), "sig": sig(v)})
+            out.append(written(v, {"id": name, "kind": "function", "doc": doc(v), "sig": sig(v)}))
         else:
             out.append({"id": name, "kind": "data", "type": type(v).__name__, "value": value(v), "doc": d})
     return out

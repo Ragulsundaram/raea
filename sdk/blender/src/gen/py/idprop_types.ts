@@ -104,7 +104,7 @@ export interface IDPropertyGroup extends AsyncIterable<any> {
    *    Unlike :meth:`dict.update`, keyword arguments are not supported.
    * @param other Updates the values in the group with this.
    */
-  update(other: H.In<P.idprop_types.IDPropertyGroup | H.DictIn<any>>): any;
+  update(other: H.In<P.idprop_types.IDPropertyGroup | H.DictIn<any>>): H.Ref<void>;
   /**
    * Update key-value pairs from *other*, overwriting existing keys.
    *
@@ -116,7 +116,7 @@ export interface IDPropertyGroup extends AsyncIterable<any> {
   update(kw: {
     /** Updates the values in the group with this. */
     other: H.In<P.idprop_types.IDPropertyGroup | H.DictIn<any>>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the value for key, if it exists, else default.
    * @returns The value for the key, or *default* if not found.
@@ -152,7 +152,7 @@ export interface IDPropertyGroup extends AsyncIterable<any> {
    */
   to_dict(...args: any[]): H.Ref<Map<string, any>>;
   /** Clear all members from this group. */
-  clear(...args: any[]): any;
+  clear(...args: any[]): H.Ref<void>;
   /** The name of this Group. */
   get name(): H.Ref<string>;
   set name(v: H.In<string>);

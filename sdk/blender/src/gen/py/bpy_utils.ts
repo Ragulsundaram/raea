@@ -330,7 +330,7 @@ export interface Api {
    *    If the class has a *register* class method it will be called
    *    before registration.
    */
-  register_class(): any;
+  register_class(): H.Ref<void>;
   /**
    * Utility function to create register and unregister functions
    * which simply registers and unregisters a sequence of classes.
@@ -685,12 +685,12 @@ export interface Api {
    *    If the class has an *unregister* class method it will be called
    *    before unregistering.
    */
-  unregister_class(): any;
+  unregister_class(): H.Ref<void>;
   /**
    * Unregister a CLI command.
    * @param handle The return value of :func:`register_cli_command`.
    */
-  unregister_cli_command(handle: any): any;
+  unregister_cli_command(handle: any): H.Ref<void>;
   /**
    * Unregister a CLI command.
    * @param handle The return value of :func:`register_cli_command`.
@@ -698,7 +698,7 @@ export interface Api {
   unregister_cli_command(kw: {
     /** The return value of :func:`register_cli_command`. */
     handle: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Unregister a previously registered manual map hook.
    * @param manual_hook The hook function to remove.

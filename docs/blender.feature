@@ -90,11 +90,15 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
     Scenario: BL22. The whole API is typed from Blender's own: tools/gen.sh dumps Blender's RNA and docstrings, gen writes src/gen
       Given Blender 5.2.1: 1809 structs (bpy.types), 2498 operators in 77 bpy.ops modules, and 41 modules outside RNA
         (mathutils' submodules, bmesh, gpu, bpy.utils, bpy.path, bpy.props, bpy.msgbus, bpy_extras, aud, imbuf, idprop)
-      Then 68 of bpy.types' 16 684 declarations are typed `any` (0.4%; 127 before 11-11): Python methods that return a
+      Then 51 of bpy.types' 16 684 declarations are typed `any` (0.3%; 127 before 11-11): Python methods that return a
         value their docstring doesn't type, and Python properties with no `:type:`. A function written in Python whose
         source returns no value anywhere (dump.py returns_none) returns nothing, as Python's None, and operators have no
-        `any` at all; the modules outside RNA have 423 of 1 461, mostly C methods whose docstrings give no type
-        (bmesh.types, gpu.types, aud)
+        `any` at all; the modules outside RNA have 104 of 1 461 (423 before 11-11), mostly Python helpers in bpy_extras
+        and bpy.utils and bpy.props' property definitions
+      And where a C method's or property's docstring gives no type, tools/cret.sh reads it from the bindings' own C
+        source (tools/cret.json: 274 method and 122 property names, each where every C function bound to that name
+        agrees): None, bool, int, float, str, or a tuple a Py_BuildValue format makes; test/cret.test.ts reads every
+        property so typed on live bmesh, aud, imbuf and mathutils objects in Blender and gets that type (11-11)
       And two dumps of one Blender write the same src/gen (sets sorted, no memory addresses)
       And tsc rejects a read-only property set, an enum value Blender doesn't have, a member that isn't there, a wrong
         argument type, and arithmetic on an unawaited path (test/typing.ts)

@@ -227,7 +227,7 @@ export interface Text extends R.ID {
      * The values match Python's slicing logic (negative values count backwards from the end, the end value is not inclusive).
      */
     range?: H.In<readonly [readonly [number, number], readonly [number, number]] | null>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**

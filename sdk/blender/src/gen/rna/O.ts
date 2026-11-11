@@ -1419,7 +1419,7 @@ export interface Operator extends R.bpy_struct {
    * @param message The message or a function that returns the message.
    * @param args A sequence of arguments to pass to ``message``, if it's a callable, otherwise argument is not available.
    */
-  poll_message_set(message: any, ...args: any[]): any;
+  poll_message_set(message: any, ...args: any[]): H.Ref<void>;
 }
 
 /** bpy.types.OperatorFileListElement */

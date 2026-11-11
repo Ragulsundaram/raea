@@ -28,7 +28,7 @@ export interface ImBuf {
   resize(size: H.In<readonly [number, number]>, kw?: {
     /** Method of resizing ('FAST', 'BILINEAR'). */
     method?: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Resize the image in-place.
    * @param size New size.
@@ -38,13 +38,13 @@ export interface ImBuf {
     size: H.In<readonly [number, number]>;
     /** Method of resizing ('FAST', 'BILINEAR'). */
     method?: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Crop the image in-place.
    * @param min Minimum pixel coordinates (X, Y), inclusive.
    * @param max Maximum pixel coordinates (X, Y), inclusive.
    */
-  crop(min: H.In<readonly [number, number]>, max: H.In<readonly [number, number]>): any;
+  crop(min: H.In<readonly [number, number]>, max: H.In<readonly [number, number]>): H.Ref<void>;
   /**
    * Crop the image in-place.
    * @param min Minimum pixel coordinates (X, Y), inclusive.
@@ -55,7 +55,7 @@ export interface ImBuf {
     min: H.In<readonly [number, number]>;
     /** Maximum pixel coordinates (X, Y), inclusive. */
     max: H.In<readonly [number, number]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return a context manager that yields a :class:`memoryview` of the image's pixel data, shaped ``(height, width, channels)``.
    *
@@ -77,7 +77,7 @@ export interface ImBuf {
    * The previous buffer is freed.
    * @param buffer_type The buffer type.
    */
-  convert_buffer_type(buffer_type: H.In<"BYTE" | "FLOAT">): any;
+  convert_buffer_type(buffer_type: H.In<"BYTE" | "FLOAT">): H.Ref<void>;
   /**
    * Convert the image's pixel buffer to the given type.
    * When the image is already of the given type this is a no-op.
@@ -87,9 +87,9 @@ export interface ImBuf {
   convert_buffer_type(kw: {
     /** The buffer type. */
     buffer_type: H.In<"BYTE" | "FLOAT">;
-  }): any;
+  }): H.Ref<void>;
   /** Clear image data immediately (causing an error on re-use). */
-  free(...args: any[]): any;
+  free(...args: any[]): H.Ref<void>;
   /**
    * Return a copy of the image.
    * @returns A copy of the image.

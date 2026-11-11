@@ -535,7 +535,7 @@ export interface BlendData extends R.bpy_struct {
    * ID collections), but less safe/versatile (it can break Blender, e.g. by removing all scenes...).
    * @param ids Sequence of IDs (types can be mixed).
    */
-  batch_remove(ids: H.In<readonly R.ID[]>): any;
+  batch_remove(ids: H.In<readonly R.ID[]>): H.Ref<void>;
   /**
    * Remove (delete) several IDs at once.
    *
@@ -546,7 +546,7 @@ export interface BlendData extends R.bpy_struct {
   batch_remove(kw: {
     /** Sequence of IDs (types can be mixed). */
     ids: H.In<readonly R.ID[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Call ``visit_path_fn`` for the file paths used by all ID data-blocks in current ``bpy.data``.
    *
@@ -560,7 +560,7 @@ export interface BlendData extends R.bpy_struct {
     visit_types?: H.In<Set<string> | null>;
     /** Set of flags that influence which data-blocks are visited. See :ref:`rna_enum_file_path_foreach_flag_items`. */
     flags?: H.In<Set<string>>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Call ``visit_path_fn`` for the file paths used by all ID data-blocks in current ``bpy.data``.
    *
@@ -576,7 +576,7 @@ export interface BlendData extends R.bpy_struct {
     visit_types?: H.In<Set<string> | null>;
     /** Set of flags that influence which data-blocks are visited. See :ref:`rna_enum_file_path_foreach_flag_items`. */
     flags?: H.In<Set<string>>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Returns a mapping of all ID data-blocks in current ``bpy.data`` to a set of all file paths used by them.
    *

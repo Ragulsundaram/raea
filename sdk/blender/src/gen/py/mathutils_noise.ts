@@ -127,7 +127,7 @@ export interface Api {
    * Sets the random seed used for random_unit_vector, random_vector, and random.
    * @param seed Seed used for the random generator. When seed is zero, the current time will be used instead.
    */
-  seed_set(seed: H.In<number>): any;
+  seed_set(seed: H.In<number>): H.Ref<void>;
   /**
    * Returns the turbulence value from the noise basis at the specified position.
    * @returns The turbulence value.

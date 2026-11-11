@@ -21,7 +21,7 @@ export interface Api {
    * Defines the fixed pipeline blending equation.
    * @param mode The type of blend mode. * ``NONE`` No blending. * ``ALPHA`` The original color channels are interpolated according to the alpha value. * ``ALPHA_PREMULT`` The original color channels are interpolated according to the alpha value with the new colors pre-multiplied by this value. * ``ADDITIVE`` The original color channels are added by the corresponding ones. * ``ADDITIVE_PREMULT`` The original color channels are added by the corresponding ones that are pre-multiplied by the alpha value. * ``MULTIPLY`` The original color channels are multiplied by the corresponding ones. * ``SUBTRACT`` The original color channels are subtracted by the corresponding ones. * ``INVERT`` The original color channels are replaced by its complementary color.
    */
-  blend_set(mode: H.In<"NONE" | "ALPHA" | "ALPHA_PREMULT" | "ADDITIVE" | "ADDITIVE_PREMULT" | "MULTIPLY" | "SUBTRACT" | "INVERT">): any;
+  blend_set(mode: H.In<"NONE" | "ALPHA" | "ALPHA_PREMULT" | "ADDITIVE" | "ADDITIVE_PREMULT" | "MULTIPLY" | "SUBTRACT" | "INVERT">): H.Ref<void>;
   /**
    * Defines the fixed pipeline blending equation.
    * @param mode The type of blend mode. * ``NONE`` No blending. * ``ALPHA`` The original color channels are interpolated according to the alpha value. * ``ALPHA_PREMULT`` The original color channels are interpolated according to the alpha value with the new colors pre-multiplied by this value. * ``ADDITIVE`` The original color channels are added by the corresponding ones. * ``ADDITIVE_PREMULT`` The original color channels are added by the corresponding ones that are pre-multiplied by the alpha value. * ``MULTIPLY`` The original color channels are multiplied by the corresponding ones. * ``SUBTRACT`` The original color channels are subtracted by the corresponding ones. * ``INVERT`` The original color channels are replaced by its complementary color.
@@ -39,12 +39,12 @@ export interface Api {
      * * ``INVERT`` The original color channels are replaced by its complementary color.
      */
     mode: H.In<"NONE" | "ALPHA" | "ALPHA_PREMULT" | "ADDITIVE" | "ADDITIVE_PREMULT" | "MULTIPLY" | "SUBTRACT" | "INVERT">;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Sets the number of ``gl_ClipDistance`` planes used for clip geometry.
    * @param distances_enabled Number of clip distances enabled.
    */
-  clip_distances_set(distances_enabled: H.In<number>): any;
+  clip_distances_set(distances_enabled: H.In<number>): H.Ref<void>;
   /**
    * Sets the number of ``gl_ClipDistance`` planes used for clip geometry.
    * @param distances_enabled Number of clip distances enabled.
@@ -52,7 +52,7 @@ export interface Api {
   clip_distances_set(kw: {
     /** Number of clip distances enabled. */
     distances_enabled: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Enable or disable writing of frame buffer color components.
    * @param r Red component.
@@ -60,7 +60,7 @@ export interface Api {
    * @param b Blue component.
    * @param a Alpha component.
    */
-  color_mask_set(r: H.In<boolean>, g: H.In<boolean>, b: H.In<boolean>, a: H.In<boolean>): any;
+  color_mask_set(r: H.In<boolean>, g: H.In<boolean>, b: H.In<boolean>, a: H.In<boolean>): H.Ref<void>;
   /**
    * Enable or disable writing of frame buffer color components.
    * @param r Red component.
@@ -77,7 +77,7 @@ export interface Api {
     b: H.In<boolean>;
     /** Alpha component. */
     a: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Writing status in the depth component.
    * @returns True if writing to the depth component is enabled.
@@ -87,7 +87,7 @@ export interface Api {
    * Write to depth component.
    * @param value True for writing to the depth component.
    */
-  depth_mask_set(value: H.In<boolean>): any;
+  depth_mask_set(value: H.In<boolean>): H.Ref<void>;
   /**
    * Write to depth component.
    * @param value True for writing to the depth component.
@@ -95,7 +95,7 @@ export interface Api {
   depth_mask_set(kw: {
     /** True for writing to the depth component. */
     value: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Current depth_test equation.
    * @returns The current depth test mode.
@@ -105,7 +105,7 @@ export interface Api {
    * Defines the depth_test equation.
    * @param mode The depth test equation name.
    */
-  depth_test_set(mode: H.In<"NONE" | "ALWAYS" | "LESS" | "LESS_EQUAL" | "EQUAL" | "GREATER" | "GREATER_EQUAL">): any;
+  depth_test_set(mode: H.In<"NONE" | "ALWAYS" | "LESS" | "LESS_EQUAL" | "EQUAL" | "GREATER" | "GREATER_EQUAL">): H.Ref<void>;
   /**
    * Defines the depth_test equation.
    * @param mode The depth test equation name.
@@ -113,12 +113,12 @@ export interface Api {
   depth_test_set(kw: {
     /** The depth test equation name. */
     mode: H.In<"NONE" | "ALWAYS" | "LESS" | "LESS_EQUAL" | "EQUAL" | "GREATER" | "GREATER_EQUAL">;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify whether none, front-facing or back-facing facets can be culled.
    * @param culling The face culling mode.
    */
-  face_culling_set(culling: H.In<"NONE" | "FRONT" | "BACK">): any;
+  face_culling_set(culling: H.In<"NONE" | "FRONT" | "BACK">): H.Ref<void>;
   /**
    * Specify whether none, front-facing or back-facing facets can be culled.
    * @param culling The face culling mode.
@@ -126,12 +126,12 @@ export interface Api {
   face_culling_set(kw: {
     /** The face culling mode. */
     culling: H.In<"NONE" | "FRONT" | "BACK">;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specifies the orientation of front-facing polygons.
    * @param invert True for clockwise polygons as front-facing.
    */
-  front_facing_set(invert: H.In<boolean>): any;
+  front_facing_set(invert: H.In<boolean>): H.Ref<void>;
   /**
    * Specifies the orientation of front-facing polygons.
    * @param invert True for clockwise polygons as front-facing.
@@ -139,7 +139,7 @@ export interface Api {
   front_facing_set(kw: {
     /** True for clockwise polygons as front-facing. */
     invert: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Current width of rasterized lines.
    * @returns The current line width.
@@ -149,7 +149,7 @@ export interface Api {
    * Specify the width of rasterized lines.
    * @param width New width.
    */
-  line_width_set(width: H.In<number>): any;
+  line_width_set(width: H.In<number>): H.Ref<void>;
   /**
    * Specify the width of rasterized lines.
    * @param width New width.
@@ -157,7 +157,7 @@ export interface Api {
   line_width_set(kw: {
     /** New width. */
     width: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Specify the diameter of rasterized points.
    *
@@ -168,7 +168,7 @@ export interface Api {
    * point size via ``gl_PointSize`` in the vertex shader.
    * @param size New diameter.
    */
-  point_size_set(size: H.In<number>): any;
+  point_size_set(size: H.In<number>): H.Ref<void>;
   /**
    * Specify the diameter of rasterized points.
    *
@@ -182,7 +182,7 @@ export interface Api {
   point_size_set(kw: {
     /** New diameter. */
     size: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * When enabled (True), point size is taken from the shader builtin
    * ``gl_PointSize``. When disabled (False), the global state value can
@@ -190,7 +190,7 @@ export interface Api {
    * value.
    * @param enable True to use shader ``gl_PointSize``, False for global state.
    */
-  program_point_size_set(enable: H.In<boolean>): any;
+  program_point_size_set(enable: H.In<boolean>): H.Ref<void>;
   /**
    * When enabled (True), point size is taken from the shader builtin
    * ``gl_PointSize``. When disabled (False), the global state value can
@@ -201,7 +201,7 @@ export interface Api {
   program_point_size_set(kw: {
     /** True to use shader ``gl_PointSize``, False for global state. */
     enable: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Retrieve the scissors of the active framebuffer.
    * Note: Only valid between 'scissor_set' and a framebuffer rebind.
@@ -219,7 +219,7 @@ export interface Api {
    * @param xsize Width of the scissor rectangle.
    * @param ysize Height of the scissor rectangle.
    */
-  scissor_set(x: H.In<number>, y: H.In<number>, xsize: H.In<number>, ysize: H.In<number>): any;
+  scissor_set(x: H.In<number>, y: H.In<number>, xsize: H.In<number>, ysize: H.In<number>): H.Ref<void>;
   /**
    * Specifies the scissor area of the active framebuffer.
    * Note: The scissor state is not saved upon framebuffer rebind.
@@ -237,12 +237,12 @@ export interface Api {
     xsize: H.In<number>;
     /** Height of the scissor rectangle. */
     ysize: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Enable/disable scissor testing on the active framebuffer.
    * @param enable True - enable scissor testing. False - disable scissor testing.
    */
-  scissor_test_set(enable: H.In<boolean>): any;
+  scissor_test_set(enable: H.In<boolean>): H.Ref<void>;
   /**
    * Enable/disable scissor testing on the active framebuffer.
    * @param enable True - enable scissor testing. False - disable scissor testing.
@@ -253,7 +253,7 @@ export interface Api {
      * False - disable scissor testing.
      */
     enable: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Viewport of the active framebuffer.
    * @returns The viewport as a tuple (x, y, xsize, ysize).
@@ -267,7 +267,7 @@ export interface Api {
    * @param xsize Width of the viewport.
    * @param ysize Height of the viewport.
    */
-  viewport_set(x: H.In<number>, y: H.In<number>, xsize: H.In<number>, ysize: H.In<number>): any;
+  viewport_set(x: H.In<number>, y: H.In<number>, xsize: H.In<number>, ysize: H.In<number>): H.Ref<void>;
   /**
    * Specifies the viewport of the active framebuffer.
    * Note: The viewport state is not saved upon framebuffer rebind.
@@ -285,6 +285,6 @@ export interface Api {
     xsize: H.In<number>;
     /** Height of the viewport. */
     ysize: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
 }
 

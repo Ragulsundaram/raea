@@ -131,15 +131,20 @@ function pyMembers(s: Struct, n: Names, skip: Set<string>): string[] {
     const get = `${jsdoc(d.text)}  get ${key(p.id)}(): ${direct(t)};`;
     out.push(p.ro ? get : `${get}\n  set ${key(p.id)}(v: ${d.type ? input(pyType(d.type, { names: n, role: "in", self })) : "any"});`);
   }
-  for (const f of [...(s.pyfuncs ?? []), ...(s.cfuncs ?? []).map((c) => ({ ...c, sig: null, static: false, none: false }))]) {
+  for (const f of [...(s.pyfuncs ?? []), ...(s.cfuncs ?? []).map((c) => ({ ...c, sig: null, static: false }))]) {
     if (skip.has(f.id)) continue;
-    out.push(pyCallable(f.id, f.doc, f.sig, n, self, undefined, "  ", false, f.none));
+    out.push(pyCallable(f.id, f.doc, f.sig, n, self, undefined, "  ", false, known(f)));
   }
   return out;
 }
 
+/** What a function gives where its docstring doesn't say, read from its source: None (dump.py returns_none, or C), or
+ * the Python type its C source returns (tools/cret.json). */
+export type Known = string | undefined;
+export const known = (m: { none?: boolean; ret?: string }): Known => (m.none ? "None" : m.ret);
+
 /** A Python function or method's overloads, from its docstring (its `.. method::` line, :param:, :type:, :rtype:). */
-export function pyCallable(name: string, doc: string, sig: string | null | undefined, n: Names, self?: string, module?: string, indent = "  ", call = false, none = false): string {
+export function pyCallable(name: string, doc: string, sig: string | null | undefined, n: Names, self?: string, module?: string, indent = "  ", call = false, kr?: Known): string {
   const d = readDoc(doc);
   const s = d.sig ?? (sig ? sig : null);
   const where = (role: "in" | "out") => ({ names: n, role, self, module });
@@ -150,8 +155,8 @@ export function pyCallable(name: string, doc: string, sig: string | null | undef
         return { name: p.name, ty, opt: p.def !== undefined, mode: p.mode, rest: p.rest, doc: info?.doc };
       })
     : [{ name: "args", ty: "any", opt: true, mode: "pos", rest: "args" }, { name: "kwargs", ty: "any", opt: true, mode: "kw", rest: "kwargs" }];
-  // no :rtype:, and Python source that returns no value anywhere (none): None, as Python gives
-  const ret = d.rtype ? direct(pyType(d.rtype, where("out"))) : none ? "H.Ref<void>" : "any";
+  // no :rtype:: what its source shows, if it shows (Python's by dump.py returns_none, C's by tools/cret.json), else any
+  const ret = d.rtype ? direct(pyType(d.rtype, where("out"))) : kr === "None" ? "H.Ref<void>" : kr ? direct(pyType(kr, where("out"))) : "any";
   const text = [d.text, d.returns ? `@returns ${d.returns}` : ""].filter(Boolean).join("\n");
   return overloads(name, ps, ret, text, indent, call);
 }

@@ -111,7 +111,7 @@ export interface BMDeformVert {
     default?: any;
   }): any;
   /** Clears all weights. */
-  clear(...args: any[]): any;
+  clear(...args: any[]): H.Ref<void>;
 }
 /** The class bmesh.types.BMDeformVert: called, a new one. */
 export interface BMDeformVertClass {
@@ -134,7 +134,7 @@ export interface BMEdge {
    *    This flushes selection down (e.g. selecting a face also selects its edges and vertices), but not up (e.g. de-selecting a vertex won't de-select faces that use it). Before finishing with a mesh, flushing is typically still needed.
    * @param select Select or de-select.
    */
-  select_set(select: H.In<boolean>): any;
+  select_set(select: H.In<boolean>): H.Ref<void>;
   /**
    * Set the selection.
    * This is different from the *select* attribute because it updates the selection state of associated geometry.
@@ -147,13 +147,13 @@ export interface BMEdge {
   select_set(kw: {
     /** Select or de-select. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the hide state.
    * This is different from the *hide* attribute because it updates the selection and hide state of associated geometry.
    * @param hide Hidden or visible.
    */
-  hide_set(hide: H.In<boolean>): any;
+  hide_set(hide: H.In<boolean>): H.Ref<void>;
   /**
    * Set the hide state.
    * This is different from the *hide* attribute because it updates the selection and hide state of associated geometry.
@@ -162,12 +162,12 @@ export interface BMEdge {
   hide_set(kw: {
     /** Hidden or visible. */
     hide: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
    */
-  copy_from(other: P.bmesh_types.BMEdge): any;
+  copy_from(other: P.bmesh_types.BMEdge): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
@@ -175,7 +175,7 @@ export interface BMEdge {
   copy_from(kw: {
     /** Another element of the same type to copy from. */
     other: P.bmesh_types.BMEdge;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the other vertex on this edge or None if the vertex is not used by this edge.
    * @returns The edge's other vert.
@@ -256,7 +256,7 @@ export interface BMEdge {
    *
    *    The normal of edge vertex will be a zero vector if vertex :attr:`is_wire` is True.
    */
-  normal_update(...args: any[]): any;
+  normal_update(...args: any[]): H.Ref<void>;
   /** Selected state of this element. */
   get select(): H.Ref<boolean>;
   set select(v: H.In<boolean>);
@@ -347,7 +347,7 @@ export interface BMEdgeSeq extends AsyncIterable<BMEdge> {
    * Remove an edge.
    * @param edge The edge to remove.
    */
-  remove(edge: P.bmesh_types.BMEdge): any;
+  remove(edge: P.bmesh_types.BMEdge): H.Ref<void>;
   /**
    * Remove an edge.
    * @param edge The edge to remove.
@@ -355,7 +355,7 @@ export interface BMEdgeSeq extends AsyncIterable<BMEdge> {
   remove(kw: {
     /** The edge to remove. */
     edge: P.bmesh_types.BMEdge;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return an edge which uses the **verts** passed.
    * @returns The edge found or the fallback value.
@@ -400,13 +400,13 @@ export interface BMEdgeSeq extends AsyncIterable<BMEdge> {
    *    Running this on sequences besides :class:`bmesh.types.BMesh.verts`, :class:`bmesh.types.BMesh.edges`, :class:`bmesh.types.BMesh.faces`
    *    works but won't result in each element having a valid index, instead its order in the sequence will be set.
    */
-  index_update(...args: any[]): any;
+  index_update(...args: any[]): H.Ref<void>;
   /**
    * Ensure internal data needed for int subscript access is initialized with verts/edges/faces, eg ``bm.verts[index]``.
    *
    * This needs to be called again after adding/removing data in this sequence.
    */
-  ensure_lookup_table(...args: any[]): any;
+  ensure_lookup_table(...args: any[]): H.Ref<void>;
   /**
    * Sort the elements of this sequence, using an optional custom sort key.
    * Indices of elements are not changed, :meth:`bmesh.types.BMElemSeq.index_update` can be used for that.
@@ -425,7 +425,7 @@ export interface BMEdgeSeq extends AsyncIterable<BMEdge> {
     key?: any;
     /** Reverse the order of the elements */
     reverse?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /** custom-data layers (read-only). */
   get layers(): H.Ptr<P.bmesh_types.BMLayerAccessEdge>;
 }
@@ -447,14 +447,14 @@ export interface BMEditSelIterClass {
 export interface BMEditSelSeq extends AsyncIterable<any> {
   readonly [index: number]: any;
   /** Ensures all elements in the selection history are selected. */
-  validate(...args: any[]): any;
+  validate(...args: any[]): H.Ref<void>;
   /** Empties the selection history. */
-  clear(...args: any[]): any;
+  clear(...args: any[]): H.Ref<void>;
   /**
    * Add an element to the selection history (no action taken if its already added).
    * @param element The element to add.
    */
-  add(element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace): any;
+  add(element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Add an element to the selection history (no action taken if its already added).
    * @param element The element to add.
@@ -462,12 +462,12 @@ export interface BMEditSelSeq extends AsyncIterable<any> {
   add(kw: {
     /** The element to add. */
     element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Remove an element from the selection history.
    * @param element The element to remove.
    */
-  remove(element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace): any;
+  remove(element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Remove an element from the selection history.
    * @param element The element to remove.
@@ -475,14 +475,14 @@ export interface BMEditSelSeq extends AsyncIterable<any> {
   remove(kw: {
     /** The element to remove. */
     element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Discard an element from the selection history.
    *
    * Like remove but doesn't raise an error when the element is not in the selection list.
    * @param element The element to discard.
    */
-  discard(element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace): any;
+  discard(element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Discard an element from the selection history.
    *
@@ -492,7 +492,7 @@ export interface BMEditSelSeq extends AsyncIterable<any> {
   discard(kw: {
     /** The element to discard. */
     element: P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /** The last selected element or None (read-only). */
   get active(): H.Ptr<P.bmesh_types.BMVert | P.bmesh_types.BMEdge | P.bmesh_types.BMFace>;
 }
@@ -527,7 +527,7 @@ export interface BMElemSeq extends AsyncIterable<any> {
    *    Running this on sequences besides :class:`bmesh.types.BMesh.verts`, :class:`bmesh.types.BMesh.edges`, :class:`bmesh.types.BMesh.faces`
    *    works but won't result in each element having a valid index, instead its order in the sequence will be set.
    */
-  index_update(...args: any[]): any;
+  index_update(...args: any[]): H.Ref<void>;
 }
 /** The class bmesh.types.BMElemSeq: called, a new one. */
 export interface BMElemSeqClass {
@@ -557,7 +557,7 @@ export interface BMFace {
    *    This flushes selection down (e.g. selecting a face also selects its edges and vertices), but not up (e.g. de-selecting a vertex won't de-select faces that use it). Before finishing with a mesh, flushing is typically still needed.
    * @param select Select or de-select.
    */
-  select_set(select: H.In<boolean>): any;
+  select_set(select: H.In<boolean>): H.Ref<void>;
   /**
    * Set the selection.
    * This is different from the *select* attribute because it updates the selection state of associated geometry.
@@ -570,13 +570,13 @@ export interface BMFace {
   select_set(kw: {
     /** Select or de-select. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the hide state.
    * This is different from the *hide* attribute because it updates the selection and hide state of associated geometry.
    * @param hide Hidden or visible.
    */
-  hide_set(hide: H.In<boolean>): any;
+  hide_set(hide: H.In<boolean>): H.Ref<void>;
   /**
    * Set the hide state.
    * This is different from the *hide* attribute because it updates the selection and hide state of associated geometry.
@@ -585,12 +585,12 @@ export interface BMFace {
   hide_set(kw: {
     /** Hidden or visible. */
     hide: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
    */
-  copy_from(other: P.bmesh_types.BMFace): any;
+  copy_from(other: P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
@@ -598,13 +598,13 @@ export interface BMFace {
   copy_from(kw: {
     /** Another element of the same type to copy from. */
     other: P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Interpolate the customdata from another face onto this one (faces should overlap).
    * @param face The face to interpolate data from.
    * @param vert When True, also copy vertex data.
    */
-  copy_from_face_interp(face: P.bmesh_types.BMFace, vert?: H.In<boolean>): any;
+  copy_from_face_interp(face: P.bmesh_types.BMFace, vert?: H.In<boolean>): H.Ref<void>;
   /**
    * Interpolate the customdata from another face onto this one (faces should overlap).
    * @param face The face to interpolate data from.
@@ -613,7 +613,7 @@ export interface BMFace {
   copy_from_face_interp(face: P.bmesh_types.BMFace, kw: {
     /** When True, also copy vertex data. */
     vert?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Interpolate the customdata from another face onto this one (faces should overlap).
    * @param face The face to interpolate data from.
@@ -624,7 +624,7 @@ export interface BMFace {
     face: P.bmesh_types.BMFace;
     /** When True, also copy vertex data. */
     vert?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Make a copy of this face.
    * @returns The newly created face.
@@ -643,7 +643,7 @@ export interface BMFace {
    *    This flushes selection down (selecting a face also selects its edges and vertices), but not up. Before finishing with a mesh, flushing with :meth:`bmesh.types.BMesh.uv_select_flush_mode` is still needed.
    * @param select Select or de-select.
    */
-  uv_select_set(select: H.In<boolean>): any;
+  uv_select_set(select: H.In<boolean>): H.Ref<void>;
   /**
    * Set the UV face selection state.
    *
@@ -655,7 +655,7 @@ export interface BMFace {
   uv_select_set(kw: {
     /** Select or de-select. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the area of the face.
    * @returns The area of the face.
@@ -709,9 +709,9 @@ export interface BMFace {
    * Update face normal based on the positions of the face verts.
    * This does not update the normals of face verts.
    */
-  normal_update(...args: any[]): any;
+  normal_update(...args: any[]): H.Ref<void>;
   /** Reverses winding of a face, which flips its normal. */
-  normal_flip(...args: any[]): any;
+  normal_flip(...args: any[]): H.Ref<void>;
   /** Selected state of this element. */
   get select(): H.Ref<boolean>;
   set select(v: H.In<boolean>);
@@ -798,7 +798,7 @@ export interface BMFaceSeq extends AsyncIterable<BMFace> {
    * Remove a face.
    * @param face The face to remove.
    */
-  remove(face: P.bmesh_types.BMFace): any;
+  remove(face: P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Remove a face.
    * @param face The face to remove.
@@ -806,7 +806,7 @@ export interface BMFaceSeq extends AsyncIterable<BMFace> {
   remove(kw: {
     /** The face to remove. */
     face: P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return a face which uses the **verts** passed.
    * @returns The face found or the fallback value.
@@ -851,13 +851,13 @@ export interface BMFaceSeq extends AsyncIterable<BMFace> {
    *    Running this on sequences besides :class:`bmesh.types.BMesh.verts`, :class:`bmesh.types.BMesh.edges`, :class:`bmesh.types.BMesh.faces`
    *    works but won't result in each element having a valid index, instead its order in the sequence will be set.
    */
-  index_update(...args: any[]): any;
+  index_update(...args: any[]): H.Ref<void>;
   /**
    * Ensure internal data needed for int subscript access is initialized with verts/edges/faces, eg ``bm.verts[index]``.
    *
    * This needs to be called again after adding/removing data in this sequence.
    */
-  ensure_lookup_table(...args: any[]): any;
+  ensure_lookup_table(...args: any[]): H.Ref<void>;
   /**
    * Sort the elements of this sequence, using an optional custom sort key.
    * Indices of elements are not changed, :meth:`bmesh.types.BMElemSeq.index_update` can be used for that.
@@ -876,7 +876,7 @@ export interface BMFaceSeq extends AsyncIterable<BMFace> {
     key?: any;
     /** Reverse the order of the elements */
     reverse?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /** custom-data layers (read-only). */
   get layers(): H.Ptr<P.bmesh_types.BMLayerAccessFace>;
   /** active face. */
@@ -1085,7 +1085,7 @@ export interface BMLayerCollection extends AsyncIterable<any> {
    * Remove a layer
    * @param layer The layer to remove.
    */
-  remove(layer: P.bmesh_types.BMLayerItem): any;
+  remove(layer: P.bmesh_types.BMLayerItem): H.Ref<void>;
   /**
    * Remove a layer
    * @param layer The layer to remove.
@@ -1093,7 +1093,7 @@ export interface BMLayerCollection extends AsyncIterable<any> {
   remove(kw: {
     /** The layer to remove. */
     layer: P.bmesh_types.BMLayerItem;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the identifiers of collection members
    * (matching Python's dict.keys() functionality).
@@ -1171,7 +1171,7 @@ export interface BMLayerItem {
    * Copy data from another layer.
    * @param other Another layer to copy from.
    */
-  copy_from(other: P.bmesh_types.BMLayerItem): any;
+  copy_from(other: P.bmesh_types.BMLayerItem): H.Ref<void>;
   /**
    * Copy data from another layer.
    * @param other Another layer to copy from.
@@ -1179,7 +1179,7 @@ export interface BMLayerItem {
   copy_from(kw: {
     /** Another layer to copy from. */
     other: P.bmesh_types.BMLayerItem;
-  }): any;
+  }): H.Ref<void>;
   /** The layer's unique name (read-only). */
   get name(): H.Ref<string>;
 }
@@ -1200,7 +1200,7 @@ export interface BMLoop {
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
    */
-  copy_from(other: P.bmesh_types.BMLoop): any;
+  copy_from(other: P.bmesh_types.BMLoop): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
@@ -1208,14 +1208,14 @@ export interface BMLoop {
   copy_from(kw: {
     /** Another element of the same type to copy from. */
     other: P.bmesh_types.BMLoop;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Interpolate the customdata from a face onto this loop (the loop's vert should overlap the face).
    * @param face The face to interpolate data from.
    * @param vert When enabled, interpolate the loop's vertex data (optional).
    * @param multires When enabled, interpolate the loop's multires data (optional).
    */
-  copy_from_face_interp(face: P.bmesh_types.BMFace, vert?: H.In<boolean>, multires?: H.In<boolean>): any;
+  copy_from_face_interp(face: P.bmesh_types.BMFace, vert?: H.In<boolean>, multires?: H.In<boolean>): H.Ref<void>;
   /**
    * Interpolate the customdata from a face onto this loop (the loop's vert should overlap the face).
    * @param face The face to interpolate data from.
@@ -1227,7 +1227,7 @@ export interface BMLoop {
     vert?: H.In<boolean>;
     /** When enabled, interpolate the loop's multires data (optional). */
     multires?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Interpolate the customdata from a face onto this loop (the loop's vert should overlap the face).
    * @param face The face to interpolate data from.
@@ -1241,7 +1241,7 @@ export interface BMLoop {
     vert?: H.In<boolean>;
     /** When enabled, interpolate the loop's multires data (optional). */
     multires?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the UV vertex selection state.
    *
@@ -1250,7 +1250,7 @@ export interface BMLoop {
    *    This does not flush selection, so selecting a vertex won't select the edges & faces that use it. Before finishing with a mesh, flushing with :meth:`bmesh.types.BMesh.uv_select_flush_mode` is still needed.
    * @param select Select or de-select.
    */
-  uv_select_vert_set(select: H.In<boolean>): any;
+  uv_select_vert_set(select: H.In<boolean>): H.Ref<void>;
   /**
    * Set the UV vertex selection state.
    *
@@ -1262,7 +1262,7 @@ export interface BMLoop {
   uv_select_vert_set(kw: {
     /** Select or de-select. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the UV edge selection state.
    *
@@ -1271,7 +1271,7 @@ export interface BMLoop {
    *    This flushes selection down (selecting an edge also selects its vertices), but not up (de-selecting a vertex won't de-select the edges & faces that use it). Before finishing with a mesh, flushing with :meth:`bmesh.types.BMesh.uv_select_flush_mode` is still needed.
    * @param select Select or de-select.
    */
-  uv_select_edge_set(select: H.In<boolean>): any;
+  uv_select_edge_set(select: H.In<boolean>): H.Ref<void>;
   /**
    * Set the UV edge selection state.
    *
@@ -1283,7 +1283,7 @@ export interface BMLoop {
   uv_select_edge_set(kw: {
     /** Select or de-select. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the angle at this loops corner of the face.
    * This is calculated so sharper corners give lower angles.
@@ -1392,7 +1392,7 @@ export interface BMVert {
    *    This flushes selection down (e.g. selecting a face also selects its edges and vertices), but not up (e.g. de-selecting a vertex won't de-select faces that use it). Before finishing with a mesh, flushing is typically still needed.
    * @param select Select or de-select.
    */
-  select_set(select: H.In<boolean>): any;
+  select_set(select: H.In<boolean>): H.Ref<void>;
   /**
    * Set the selection.
    * This is different from the *select* attribute because it updates the selection state of associated geometry.
@@ -1405,13 +1405,13 @@ export interface BMVert {
   select_set(kw: {
     /** Select or de-select. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Set the hide state.
    * This is different from the *hide* attribute because it updates the selection and hide state of associated geometry.
    * @param hide Hidden or visible.
    */
-  hide_set(hide: H.In<boolean>): any;
+  hide_set(hide: H.In<boolean>): H.Ref<void>;
   /**
    * Set the hide state.
    * This is different from the *hide* attribute because it updates the selection and hide state of associated geometry.
@@ -1420,12 +1420,12 @@ export interface BMVert {
   hide_set(kw: {
     /** Hidden or visible. */
     hide: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
    */
-  copy_from(other: P.bmesh_types.BMVert): any;
+  copy_from(other: P.bmesh_types.BMVert): H.Ref<void>;
   /**
    * Copy values from another element of matching type.
    * @param other Another element of the same type to copy from.
@@ -1433,12 +1433,12 @@ export interface BMVert {
   copy_from(kw: {
     /** Another element of the same type to copy from. */
     other: P.bmesh_types.BMVert;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Interpolate the customdata from a face onto this vert (the vert should overlap the face).
    * @param face The face to interpolate data from.
    */
-  copy_from_face_interp(face: P.bmesh_types.BMFace): any;
+  copy_from_face_interp(face: P.bmesh_types.BMFace): H.Ref<void>;
   /**
    * Interpolate the customdata from a face onto this vert (the vert should overlap the face).
    * @param face The face to interpolate data from.
@@ -1446,13 +1446,13 @@ export interface BMVert {
   copy_from_face_interp(kw: {
     /** The face to interpolate data from. */
     face: P.bmesh_types.BMFace;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Interpolate the customdata from a vert between 2 other verts.
    * @param vert_pair The verts between which to interpolate data from.
    * @param fac The interpolation factor.
    */
-  copy_from_vert_interp(vert_pair: H.In<readonly P.bmesh_types.BMVert[]>, fac: H.In<number>): any;
+  copy_from_vert_interp(vert_pair: H.In<readonly P.bmesh_types.BMVert[]>, fac: H.In<number>): H.Ref<void>;
   /**
    * Interpolate the customdata from a vert between 2 other verts.
    * @param vert_pair The verts between which to interpolate data from.
@@ -1463,7 +1463,7 @@ export interface BMVert {
     vert_pair: H.In<readonly P.bmesh_types.BMVert[]>;
     /** The interpolation factor. */
     fac: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Return the angle between this vert's two connected edges.
    * @returns Angle between edges in radians.
@@ -1497,7 +1497,7 @@ export interface BMVert {
    *
    *    The vertex normal will be a zero vector if vertex :attr:`is_wire` is True.
    */
-  normal_update(...args: any[]): any;
+  normal_update(...args: any[]): H.Ref<void>;
   /** Selected state of this element. */
   get select(): H.Ref<boolean>;
   set select(v: H.In<boolean>);
@@ -1574,7 +1574,7 @@ export interface BMVertSeq extends AsyncIterable<BMVert> {
    * Remove a vert.
    * @param vert The vert to remove.
    */
-  remove(vert: P.bmesh_types.BMVert): any;
+  remove(vert: P.bmesh_types.BMVert): H.Ref<void>;
   /**
    * Remove a vert.
    * @param vert The vert to remove.
@@ -1582,7 +1582,7 @@ export interface BMVertSeq extends AsyncIterable<BMVert> {
   remove(kw: {
     /** The vert to remove. */
     vert: P.bmesh_types.BMVert;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Initialize the index values of this sequence.
    *
@@ -1598,13 +1598,13 @@ export interface BMVertSeq extends AsyncIterable<BMVert> {
    *    Running this on sequences besides :class:`bmesh.types.BMesh.verts`, :class:`bmesh.types.BMesh.edges`, :class:`bmesh.types.BMesh.faces`
    *    works but won't result in each element having a valid index, instead its order in the sequence will be set.
    */
-  index_update(...args: any[]): any;
+  index_update(...args: any[]): H.Ref<void>;
   /**
    * Ensure internal data needed for int subscript access is initialized with verts/edges/faces, eg ``bm.verts[index]``.
    *
    * This needs to be called again after adding/removing data in this sequence.
    */
-  ensure_lookup_table(...args: any[]): any;
+  ensure_lookup_table(...args: any[]): H.Ref<void>;
   /**
    * Sort the elements of this sequence, using an optional custom sort key.
    * Indices of elements are not changed, :meth:`bmesh.types.BMElemSeq.index_update` can be used for that.
@@ -1623,7 +1623,7 @@ export interface BMVertSeq extends AsyncIterable<BMVert> {
     key?: any;
     /** Reverse the order of the elements */
     reverse?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /** custom-data layers (read-only). */
   get layers(): H.Ptr<P.bmesh_types.BMLayerAccessVert>;
 }
@@ -1641,7 +1641,7 @@ export interface BMesh {
   /** @returns A copy of this BMesh. */
   copy(...args: any[]): H.Ptr<P.bmesh_types.BMesh>;
   /** Clear all mesh data. */
-  clear(...args: any[]): any;
+  clear(...args: any[]): H.Ref<void>;
   /**
    * Explicitly free the BMesh data from memory, causing exceptions on further access.
    *
@@ -1651,7 +1651,7 @@ export interface BMesh {
    *    However in some cases it's hard to predict when this will be and it's useful to
    *    explicitly free the data.
    */
-  free(...args: any[]): any;
+  free(...args: any[]): H.Ref<void>;
   /**
    * Initialize this bmesh from existing object data-block (only meshes are currently supported).
    * @param object The object data to load.
@@ -1664,7 +1664,7 @@ export interface BMesh {
     face_normals?: H.In<boolean>;
     /** Calculate vertex normals. */
     vertex_normals?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Initialize this bmesh from existing object data-block (only meshes are currently supported).
    * @param object The object data to load.
@@ -1681,7 +1681,7 @@ export interface BMesh {
     face_normals?: H.In<boolean>;
     /** Calculate vertex normals. */
     vertex_normals?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Initialize this bmesh from existing mesh data-block.
    *
@@ -1702,7 +1702,7 @@ export interface BMesh {
     use_shape_key?: H.In<boolean>;
     /** The shape key index to use. */
     shape_key_index?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Initialize this bmesh from existing mesh data-block.
    *
@@ -1725,12 +1725,12 @@ export interface BMesh {
     use_shape_key?: H.In<boolean>;
     /** The shape key index to use. */
     shape_key_index?: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Writes this BMesh data into an existing Mesh data-block.
    * @param mesh The mesh data to write into.
    */
-  to_mesh(mesh: R.Mesh): any;
+  to_mesh(mesh: R.Mesh): H.Ref<void>;
   /**
    * Writes this BMesh data into an existing Mesh data-block.
    * @param mesh The mesh data to write into.
@@ -1738,17 +1738,17 @@ export interface BMesh {
   to_mesh(kw: {
     /** The mesh data to write into. */
     mesh: R.Mesh;
-  }): any;
+  }): H.Ref<void>;
   /** Flush selection based on the current mode :attr:`bmesh.types.BMesh.select_mode`. */
   select_flush_mode(kw?: {
     /** Flush selection down from faces to edges & verts or from edges to verts. This option is ignored when vertex selection mode is enabled. */
     flush_down?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Flush selection from vertices, independent of the current selection mode.
    * @param select flush selection or de-selected elements.
    */
-  select_flush(select: H.In<boolean>): any;
+  select_flush(select: H.In<boolean>): H.Ref<void>;
   /**
    * Flush selection from vertices, independent of the current selection mode.
    * @param select flush selection or de-selected elements.
@@ -1756,12 +1756,12 @@ export interface BMesh {
   select_flush(kw: {
     /** flush selection or de-selected elements. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /** Flush UV selection based on the current mode :attr:`bmesh.types.BMesh.select_mode`. */
   uv_select_flush_mode(kw?: {
     /** Flush selection down from faces to edges & verts or from edges to verts. This option is ignored when vertex selection mode is enabled. */
     flush_down?: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Flush selection from UV vertices to edges & faces independent of the selection mode.
    *
@@ -1770,7 +1770,7 @@ export interface BMesh {
    *    - |UV_SELECT_SYNC_TO_MESH_NEEDED|
    * @param select Flush selection or de-selected elements.
    */
-  uv_select_flush(select: H.In<boolean>): any;
+  uv_select_flush(select: H.In<boolean>): H.Ref<void>;
   /**
    * Flush selection from UV vertices to edges & faces independent of the selection mode.
    *
@@ -1782,7 +1782,7 @@ export interface BMesh {
   uv_select_flush(kw: {
     /** Flush selection or de-selected elements. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Flush selection from UV vertices to contiguous UV's independent of the selection mode.
    *
@@ -1791,7 +1791,7 @@ export interface BMesh {
    *    - |UV_SELECT_SYNC_TO_MESH_NEEDED|
    * @param select Flush selection or de-selected elements.
    */
-  uv_select_flush_shared(select: H.In<boolean>): any;
+  uv_select_flush_shared(select: H.In<boolean>): H.Ref<void>;
   /**
    * Flush selection from UV vertices to contiguous UV's independent of the selection mode.
    *
@@ -1803,7 +1803,7 @@ export interface BMesh {
   uv_select_flush_shared(kw: {
     /** Flush selection or de-selected elements. */
     select: H.In<boolean>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Sync selection from mesh to UVs.
    *
@@ -1814,9 +1814,9 @@ export interface BMesh {
   uv_select_sync_from_mesh(kw?: {
     /** Behavior when flushing from the mesh to UV selection |UV_STICKY_SELECT_MODE_REF|. This should only be used when preparing to create a UV selection. */
     sticky_select_mode?: any;
-  }): any;
+  }): H.Ref<void>;
   /** Sync selection from UVs to the mesh. */
-  uv_select_sync_to_mesh(...args: any[]): any;
+  uv_select_sync_to_mesh(...args: any[]): H.Ref<void>;
   /**
    * Set the UV selection state for loop-vertices, loop-edges & faces.
    *
@@ -1837,7 +1837,7 @@ export interface BMesh {
     faces?: H.In<readonly P.bmesh_types.BMFace[]>;
     /** See |UV_STICKY_SELECT_MODE_REF|. */
     sticky_select_mode?: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Select or de-select mesh elements, updating the UV selection.
    *
@@ -1853,7 +1853,7 @@ export interface BMesh {
     faces?: H.In<readonly P.bmesh_types.BMFace[]>;
     /** See |UV_STICKY_SELECT_MODE_REF|. */
     sticky_select_mode?: any;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Update normals of mesh faces and verts.
    *
@@ -1861,7 +1861,7 @@ export interface BMesh {
    *
    *    The normal of any vertex where :attr:`is_wire` is True will be a zero vector.
    */
-  normal_update(...args: any[]): any;
+  normal_update(...args: any[]): H.Ref<void>;
   /**
    * Transform the mesh (optionally filtering flagged data only).
    * @param matrix 4x4 transform matrix.
@@ -1869,7 +1869,7 @@ export interface BMesh {
   transform(matrix: H.In<M.MatrixLike>, kw?: {
     /** Flag to filter vertices. */
     filter?: H.In<Set<"SELECT" | "HIDE" | "SEAM" | "SMOOTH" | "TAG"> | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Transform the mesh (optionally filtering flagged data only).
    * @param matrix 4x4 transform matrix.
@@ -1879,7 +1879,7 @@ export interface BMesh {
     matrix: H.In<M.MatrixLike>;
     /** Flag to filter vertices. */
     filter?: H.In<Set<"SELECT" | "HIDE" | "SEAM" | "SMOOTH" | "TAG"> | null>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Calculate mesh volume based on face normals.
    * @returns The volume of the mesh.

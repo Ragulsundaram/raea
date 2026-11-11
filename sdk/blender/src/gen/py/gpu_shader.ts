@@ -112,6 +112,6 @@ export interface Api {
     config?: H.In<string>;
   }): H.Ptr<P.gpu_types.GPUShader>;
   /** Unbind the bound shader object. */
-  unbind(...args: any[]): any;
+  unbind(...args: any[]): H.Ref<void>;
 }
 

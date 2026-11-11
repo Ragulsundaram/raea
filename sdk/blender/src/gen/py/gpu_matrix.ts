@@ -23,12 +23,12 @@ export interface Api {
    */
   get_projection_matrix(...args: any[]): H.Remote<M.Matrix>;
   /** Load an identity matrix into the stack. */
-  load_identity(...args: any[]): any;
+  load_identity(...args: any[]): H.Ref<void>;
   /**
    * Load a matrix into the stack.
    * @param matrix A 4x4 matrix.
    */
-  load_matrix(matrix: H.In<M.MatrixLike>): any;
+  load_matrix(matrix: H.In<M.MatrixLike>): H.Ref<void>;
   /**
    * Load a matrix into the stack.
    * @param matrix A 4x4 matrix.
@@ -36,12 +36,12 @@ export interface Api {
   load_matrix(kw: {
     /** A 4x4 matrix. */
     matrix: H.In<M.MatrixLike>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Load a projection matrix into the stack.
    * @param matrix A 4x4 matrix.
    */
-  load_projection_matrix(matrix: H.In<M.MatrixLike>): any;
+  load_projection_matrix(matrix: H.In<M.MatrixLike>): H.Ref<void>;
   /**
    * Load a projection matrix into the stack.
    * @param matrix A 4x4 matrix.
@@ -49,12 +49,12 @@ export interface Api {
   load_projection_matrix(kw: {
     /** A 4x4 matrix. */
     matrix: H.In<M.MatrixLike>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Multiply the current stack matrix.
    * @param matrix A 4x4 matrix.
    */
-  multiply_matrix(matrix: H.In<M.MatrixLike>): any;
+  multiply_matrix(matrix: H.In<M.MatrixLike>): H.Ref<void>;
   /**
    * Multiply the current stack matrix.
    * @param matrix A 4x4 matrix.
@@ -62,13 +62,13 @@ export interface Api {
   multiply_matrix(kw: {
     /** A 4x4 matrix. */
     matrix: H.In<M.MatrixLike>;
-  }): any;
+  }): H.Ref<void>;
   /** Remove the last model-view matrix from the stack. */
-  pop(...args: any[]): any;
+  pop(...args: any[]): H.Ref<void>;
   /** Remove the last projection matrix from the stack. */
-  pop_projection(...args: any[]): any;
+  pop_projection(...args: any[]): H.Ref<void>;
   /** Add to the model-view matrix stack. */
-  push(...args: any[]): any;
+  push(...args: any[]): H.Ref<void>;
   /**
    * Context manager to ensure balanced push/pop calls, even in the case of an error.
    * @returns The context manager.
@@ -80,14 +80,14 @@ export interface Api {
    */
   push_pop_projection(...args: any[]): H.Ptr<P.gpu_types.MatrixStackContext>;
   /** Add to the projection matrix stack. */
-  push_projection(...args: any[]): any;
+  push_projection(...args: any[]): H.Ref<void>;
   /** Empty stack and set to identity. */
-  reset(...args: any[]): any;
+  reset(...args: any[]): H.Ref<void>;
   /**
    * Scale the current stack matrix.
    * @param scale Scale the current stack matrix with 2 or 3 floats.
    */
-  scale(scale: H.In<readonly number[]>): any;
+  scale(scale: H.In<readonly number[]>): H.Ref<void>;
   /**
    * Scale the current stack matrix.
    * @param scale Scale the current stack matrix with 2 or 3 floats.
@@ -95,12 +95,12 @@ export interface Api {
   scale(kw: {
     /** Scale the current stack matrix with 2 or 3 floats. */
     scale: H.In<readonly number[]>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Scale the current stack matrix uniformly.
    * @param scale Uniform scale factor.
    */
-  scale_uniform(scale: H.In<number>): any;
+  scale_uniform(scale: H.In<number>): H.Ref<void>;
   /**
    * Scale the current stack matrix uniformly.
    * @param scale Uniform scale factor.
@@ -108,12 +108,12 @@ export interface Api {
   scale_uniform(kw: {
     /** Uniform scale factor. */
     scale: H.In<number>;
-  }): any;
+  }): H.Ref<void>;
   /**
    * Translate the current stack matrix.
    * @param offset Translate the current stack matrix with 2 or 3 floats.
    */
-  translate(offset: H.In<readonly number[]>): any;
+  translate(offset: H.In<readonly number[]>): H.Ref<void>;
   /**
    * Translate the current stack matrix.
    * @param offset Translate the current stack matrix with 2 or 3 floats.
@@ -121,6 +121,6 @@ export interface Api {
   translate(kw: {
     /** Translate the current stack matrix with 2 or 3 floats. */
     offset: H.In<readonly number[]>;
-  }): any;
+  }): H.Ref<void>;
 }
 

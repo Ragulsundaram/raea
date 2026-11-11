@@ -43,8 +43,12 @@ export interface PyMember {
   doc: string;
   sig?: string | null;
   static?: boolean;
-  /** written in Python and returns no value anywhere (dump.py returns_none): it gives None */
+  /** written in Python (dump.py written): what it returns is read from its source, never from tools/cret.json */
+  py?: boolean;
+  /** gives None: written in Python and returns no value anywhere (dump.py returns_none), or C (tools/cret.json) */
   none?: boolean;
+  /** the Python type its C source returns, a method's or a property's, where its docstring doesn't say (tools/cret.json) */
+  ret?: string;
   ro?: boolean;
   type?: string;
   value?: string;
@@ -61,8 +65,8 @@ export interface Struct {
   funcs: Func[];
   nested?: string;
   pyprops?: { id: string; doc: string; ro: boolean }[];
-  pyfuncs?: { id: string; sig: string | null; doc: string; static: boolean; none?: boolean }[];
-  cfuncs?: { id: string; doc: string }[];
+  pyfuncs?: { id: string; sig: string | null; doc: string; static: boolean; py?: boolean; none?: boolean; ret?: string }[];
+  cfuncs?: { id: string; doc: string; none?: boolean; ret?: string }[];
 }
 
 export interface Op {

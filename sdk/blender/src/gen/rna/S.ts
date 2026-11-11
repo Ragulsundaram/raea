@@ -6267,7 +6267,7 @@ export interface Space extends R.bpy_struct {
    * @param handler The draw handler that should be removed.
    * @param region_type Region type the callback was added to.
    */
-  draw_handler_remove(handler: any, region_type: H.In<string>): any;
+  draw_handler_remove(handler: any, region_type: H.In<string>): H.Ref<void>;
   /**
    * Remove a draw handler that was added previously.
    * @param handler The draw handler that should be removed.
@@ -6278,7 +6278,7 @@ export interface Space extends R.bpy_struct {
     handler: any;
     /** Region type the callback was added to. */
     region_type: H.In<string>;
-  }): any;
+  }): H.Ref<void>;
 }
 
 /**
