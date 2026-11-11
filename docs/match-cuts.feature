@@ -92,7 +92,27 @@ Feature: Match cuts on the thirds: a piece's cuts planned as a chain of hooks, c
 
   Rule: The guide is shown to help
 
+    @done
     Scenario: MC5. A fresh agent plans one short piece with the guide and without it; the plan checks compare them, and one graybox is rendered and checked
+      # Status 11-10: measured. One-shot sessions (claude -p) planned the same 24-second loop for a bicycle shop's tenth
+      # birthday: 16:9 at 30 fps on a 120 bpm grid, 8-14 shots, a storyboard and its chain, with the kit in
+      # checks/match-cuts. Four read the guide. Two controls ran with raea's home on main's guides, which hold no
+      # match-cut guide and no route to it; neither looked for one. All six chains pass all eleven plan checks: each
+      # found plan.ts in its kit and ran it until they did. So the plan checks alone don't separate them, and the
+      # guide's change is in the craft:
+      #   - hard cuts: one in every guided plan (4 of 4), on a downbeat with a reason; none in either control
+      #   - thirds places used: 7-9 guided, 6-7 controls
+      #   - storyboard cut fields that name where the eye lands: 85-100% guided, 46-67% controls
+      #   - joins used: 3-5 kinds guided, 3-4 controls; hooks resting at CC low in both (2-5 of 24-28 guided, 0-2 of
+      #     24-26 controls); every plan named a part for every hook, had a montage and looped
+      # A fifth session built a 13-shot graybox of one guided chain (graphic, motion, eye, FULL and hard joins, two J
+      # bridges) from the guide's steps 6-7, at 1280x720. The render check found nothing on it. With every hook moved
+      # in a copy of the chain, it failed all 22 measured hooks and both bridges. The render (720 frames, 9-12 ms a
+      # frame) passed the cut check. The floor found 9 clips in three contacts (a trunk in its crown, a paper chain in
+      # a person, a hand in a wheel), which were fixed to 0 errors, 0 warns, 0 notes. The frames either side of each cut
+      # put the hooks on their places. All six planners hit plan.ts skipping its file without --only (fixed,
+      # MC2), and the builder's notes went into the guide (MC1). Spend: $13.87 logged ($7.27 measured, $6.60 estimated
+      # for the four guided runs, whose text logs carry no cost).
       Then both runs get chain.ts's types and the same brief; only one gets the guide
       And the plan checks' results for both are recorded here, with what the guide changed
       And the guided chain's graybox passes the render check, or its findings are recorded and fixed
