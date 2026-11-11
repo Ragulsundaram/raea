@@ -170,9 +170,20 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
         apart, since with no context Blender never calls an item function
       And test/typing.ts sets a 2D curve's fill_mode to "BOTH" and still refuses `rotation_mode = "XYZW"`; run in
         Blender, the same script prints fill_mode BOTH
+    @done
     Scenario: BL28. The person's own Blender, live: raea's add-on serves the same bridge from a running Blender
-      Given raea's add-on (sdk/blender/python/raea_blender) enabled in that Blender, and RAEA_BLENDER=live (or connect({ live: true }))
+      Given raea's add-on (sdk/blender/python/raea_blender) enabled in that Blender by `raea setup blender`, which copies
+        it into Blender's add-ons folder (replacing an older copy; `--check` says whether it's current and on), and
+        RAEA_BLENDER=live (or connect({ live: true }))
       Then batches run on Blender's main thread between its redraws, in the 3D view's context
+      And a Blender with no window (a command-line render, setup's own checks) doesn't serve, so it never hides the one
+        the person has open; once that Blender quits, connect({ live: true }) refuses its live.json
+      And 11-11: test/live.ts (run by hand: it opens a window) set up Blender 5.2.1 in a scratch BLENDER_USER_RESOURCES,
+        started it with its window and drove it from TypeScript: a cube made, moved and put in edit mode, and
+        view3d.snap_cursor_to_center run, all on the main thread in the 3D view's context; 5 of 5 runs passed. It found
+        two bugs, both fixed: Blender 5.2 gives a timer the window but no area, so view3d operators had no 3D view; and
+        a slot freed by garbage collection was freed before the read an await had queued for it, in headless runs too
+        (test/bridge.test.ts forces that race)
     Scenario: BL29. A clean machine on each platform (macOS, Windows, Linux) runs a TypeScript script through raea/blender
       Given an empty HOME, `raea setup blender` then `raea blender run smoke.ts`
       Then the script prints its PASS line, and the download size and the libraries a clean Linux needs are recorded

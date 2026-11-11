@@ -248,7 +248,9 @@ export class Session {
     try {
       while (this.#queue.length || (this.#frees.length && !this.closed)) {
         const batch = this.#queue.splice(0);
-        if (this.#frees.length && !this.closed) batch.unshift({ op: { o: "free", ids: this.#frees.splice(0) } });
+        // frees go last: an op queued before its proxy was collected still names the slot (the read an await queues
+        // while its call is in Blender), and `always` sends them again after a batch that fails before them
+        if (this.#frees.length && !this.closed) batch.push({ op: { o: "free", ids: this.#frees.splice(0) }, always: true });
         await this.#send(batch);
       }
     } finally {

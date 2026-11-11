@@ -112,6 +112,19 @@ describe.skipIf(!has)("the bridge", () => {
     expect(await py.exec<number>("result = sum(range(x))", { x: 5 })).toBe(10);
   });
 
+  test("a result collected while its batch is in Blender is still read (frees go after the ops queued before them)", async () => {
+    // the call goes in one batch; the await queues its read for the next; the proxy, held by nothing after that, is
+    // collected while Blender works, so its slot's free joins the read in that next batch (BL28: 1 run in 6 failed so)
+    const results: Promise<number>[] = [];
+    for (let i = 0; i < 3; i++) {
+      results.push((async () => (await b.py.exec<number>(`import time\ntime.sleep(0.2)\nresult = ${i}`)) as number)());
+      await Promise.resolve();
+      (globalThis as { Bun?: { gc(full: boolean): void } }).Bun?.gc(true);
+      await new Promise((ok) => setTimeout(ok, 50));
+    }
+    expect(await Promise.all(results)).toEqual([0, 1, 2]);
+  });
+
   test("bmesh and mathutils.geometry run in Blender", async () => {
     const { bmesh, bpy, mathutils, py } = b;
     const bm = bmesh.new();

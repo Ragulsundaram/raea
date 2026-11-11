@@ -121,6 +121,6 @@ What an agent reads and shows the person, and the tools raea installs.
 | [`raea show`](show.md) | Show the person something in the raea app, as an item they can use and answer: stills, a video, a sound, a script, an interactive .tsx or a question. |
 | [`raea skill`](skill.md) | Print the agent skill this raea ships, matched to its version, or one of its references. |
 | [`raea skills`](skills.md) | Install raea's agent skill where Claude Code, Codex, Kimi or Gemini read skills, with its MCP server and hook. |
-| [`raea setup`](setup.md) | Find Blender, or download its current LTS, and install its MCP add-on. |
+| [`raea setup`](setup.md) | Find Blender, or download its current LTS, and install raea's add-on and the MCP add-on. |
 
 <!-- generated:end -->

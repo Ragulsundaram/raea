@@ -13,6 +13,11 @@ bl_info = {
 
 
 def register():
+    import bpy
+    if bpy.app.background:
+        # a windowless Blender (a render from the command line, `raea setup blender`'s own checks) serves nobody, and
+        # its live.json would hide the Blender the person has open; headless runs serve through python/headless.py
+        return
     from . import server
     server.start_gui()
 

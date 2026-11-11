@@ -24,7 +24,7 @@ raea blender run blender/repair.py -- scan.glb scan-fixed.glb
 ## Usage
 
 ```sh
-raea setup blender [--check] [--download]   (find Blender or download the LTS into ~/.raea/tools/blender, and install its MCP add-on)
+raea setup blender [--check] [--download]   (find Blender or download the LTS into ~/.raea/tools/blender, and install raea's add-on and the MCP add-on)
 raea blender run SCRIPT.py [ARGS...]   (blender --background --python SCRIPT.py -- ARGS, headless; blender/X.py missing from the project is copied from the library: convert, decimate, repair, split, bake, rig, cloth)
 raea blender run SCRIPT.ts [FILE.blend] [ARGS...]   (a TypeScript script against Blender's whole Python API through raea/blender: bpy, bmesh, mathutils, typed; a headless Blender, FILE.blend opened, quit when the script ends)
 ```

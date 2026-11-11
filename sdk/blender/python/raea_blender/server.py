@@ -115,14 +115,15 @@ class Gui:
 
 @contextlib.contextmanager
 def ui_context():
-    """A timer runs with no window in its context; operators that need one (object.mode_set, view3d.*) get the
-    first window, its screen and its 3D view's main region, as a script run from Blender's UI would."""
+    """A timer runs with no area in its context (Blender 5.2 gives it the window, older ones nothing); operators that
+    need one (object.mode_set, view3d.*) get the window, its screen and its 3D view's main region, as a script run from
+    Blender's UI would."""
     ctx = bpy.context
     wm = ctx.window_manager
-    if ctx.window is not None or wm is None or not wm.windows:
+    win = ctx.window or (wm.windows[0] if wm is not None and wm.windows else None)
+    if ctx.area is not None or win is None:
         yield
         return
-    win = wm.windows[0]
     kw = {"window": win, "screen": win.screen}
     area = next((a for a in win.screen.areas if a.type == "VIEW_3D"), None)
     if area is not None:
