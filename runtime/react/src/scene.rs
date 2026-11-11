@@ -36,8 +36,6 @@ pub(crate) use contact::register as register_scene;
 pub mod physics;
 // matchmove: `track` and the matchmove.solve native call (scene/track.rs)
 pub mod track;
-// shots drawn by Blender and Godot: <BlenderShot>, <GodotShot> as native calls made by `raea blender|godot shot` (scene/shots.rs)
-pub mod shots;
 
 thread_local! {
     /// each part's data-props as last parsed: its text and the props, and the scene it was last read in

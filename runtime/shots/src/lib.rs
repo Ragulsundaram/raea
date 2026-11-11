@@ -14,7 +14,7 @@ type R<T> = Result<T, String>;
 
 const GIVES: &str = "{ dir: string; frames: number }";
 
-pub(crate) fn register() {
+pub fn register() {
     raea_native::register(
         "blender.shot",
         "{ script?: string; file?: string; engine?: string; samples?: number; transparent?: boolean; args?: string[]; fps: number; width: number; height: number; frames: number }",
@@ -83,15 +83,17 @@ fn identity(k: &mut Key, p: &Path) {
 /// `raea blender shot` / `raea godot shot`'s arguments for this request, the source first.
 fn command(engine: &str, v: &Value, dir: &Path, out: &Path) -> R<Vec<String>> {
     let s = |k: &str| v.get(k).and_then(Value::as_str).map(str::to_string);
-    let n = |k: &str| v.get(k).and_then(Value::as_f64).ok_or_else(|| format!("{engine}.shot: {k} is a number"));
+    // the size and length as whole counts, at least one
+    let whole = |k: &str| v[k].as_f64().filter(|x| *x >= 1.0).map(|x| x.round() as u32).ok_or_else(|| format!("{engine}.shot: {k} is a number of 1 or more"));
+    let fps = v["fps"].as_f64().filter(|f| *f > 0.0).ok_or_else(|| format!("{engine}.shot: fps is a number over 0"))?;
     let at = |p: String| if p.starts_with("res://") { p } else { dir.join(p).to_string_lossy().into_owned() };
     let src = match engine {
         "blender" => s("script").or_else(|| s("file")).ok_or("BlenderShot: give script or file")?,
         _ => s("script").or_else(|| s("scene")).ok_or("GodotShot: give script or scene")?,
     };
-    let (w, h) = (n("width")?.round() as u32, n("height")?.round() as u32);
+    let (w, h) = (whole("width")?, whole("height")?);
     let mut a = vec![engine.to_string(), "shot".into(), at(src), "-o".into(), out.to_string_lossy().into_owned()];
-    a.extend(["--frames".into(), (n("frames")?.round() as u32).to_string(), "--fps".into(), n("fps")?.to_string(), "--size".into(), format!("{w}x{h}")]);
+    a.extend(["--frames".into(), whole("frames")?.to_string(), "--fps".into(), fps.to_string(), "--size".into(), format!("{w}x{h}")]);
     if engine == "blender" {
         if let (Some(_), Some(f)) = (s("script"), s("file")) {
             a.extend(["--file".into(), at(f)]);
@@ -122,7 +124,7 @@ fn command(engine: &str, v: &Value, dir: &Path, out: &Path) -> R<Vec<String>> {
 }
 
 fn shot(engine: &str, v: &Value) -> R<Value> {
-    let dir = crate::native::composition_dir().unwrap_or_else(|| PathBuf::from("."));
+    let dir = raea_runtime_calls::composition_dir().unwrap_or_else(|| PathBuf::from("."));
     let frames = v.get("frames").and_then(Value::as_u64).filter(|n| *n > 0).ok_or_else(|| format!("{engine}.shot: frames must be a whole number over 0"))?;
     // what the frames are made from
     let mut k = Key::new();

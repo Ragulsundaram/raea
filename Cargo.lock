@@ -15104,6 +15104,7 @@ dependencies = [
  "raea-runtime-plugins",
  "raea-runtime-scene",
  "raea-runtime-shared",
+ "raea-runtime-shots",
  "raea-runtime-twins",
  "raea-runtime-view",
  "raea-sys-animate",
@@ -15168,6 +15169,17 @@ dependencies = [
  "raea-bevy-world",
  "raea-native",
  "raea-runtime-twins",
+ "serde_json",
+]
+
+[[package]]
+name = "raea-runtime-shots"
+version = "0.1.0"
+dependencies = [
+ "raea-io-assets",
+ "raea-native",
+ "raea-runtime-calls",
+ "raea-sys-bake",
  "serde_json",
 ]
 

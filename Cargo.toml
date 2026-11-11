@@ -146,6 +146,7 @@ members = [
     "runtime/bundle/lib",
     "engine/shape-web",
     "runtime/calls",
+    "runtime/shots",
     "runtime/export",
     "runtime/live",
     "runtime/page",
