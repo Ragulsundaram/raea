@@ -53,8 +53,19 @@ pub fn find() -> Option<(PathBuf, &'static str)> {
 /// `blender --version`'s first line ("Blender 5.2.1 LTS").
 fn version(bin: &Path) -> R<String> {
     let o = Command::new(bin).arg("--version").output().map_err(|e| format!("{}: {e}", bin.display()))?;
-    String::from_utf8_lossy(&o.stdout).lines().find(|l| l.starts_with("Blender ")).map(str::to_string).ok_or_else(|| format!("{} --version printed no version", bin.display()))
+    String::from_utf8_lossy(&o.stdout).lines().find(|l| l.starts_with("Blender ")).map(str::to_string).ok_or_else(|| {
+        let err = String::from_utf8_lossy(&o.stderr);
+        if err.contains("error while loading shared libraries") {
+            format!("{} can't start: {} (on Debian or Ubuntu: apt install {LINUX_LIBS})", bin.display(), err.trim())
+        } else {
+            format!("{} --version printed no version", bin.display())
+        }
+    })
 }
+
+/// What Blender's Linux build needs that a slim Debian (trixie) lacks: found 11-11 by running it in debian:trixie-slim
+/// (docs/blender.feature BL29); CUDA, HIP and oneAPI are loaded only when Cycles renders on those GPUs.
+const LINUX_LIBS: &str = "libx11-6 libxi6 libxext6 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6 libgl1 libopengl0";
 
 pub fn run(cmd: &mut Command, what: &str) -> R<String> {
     let o = cmd.output().map_err(|e| format!("{what}: {e}"))?;
@@ -94,8 +105,11 @@ fn newest(listing: &str) -> Option<String> {
 pub fn sha256(file: &Path) -> R<String> {
     let out = if cfg!(windows) {
         run(Command::new("certutil").arg("-hashfile").arg(file).arg("SHA256"), "certutil")?.lines().nth(1).unwrap_or_default().replace(' ', "")
-    } else {
+    } else if on_path("shasum").is_some() {
         run(Command::new("shasum").args(["-a", "256"]).arg(file), "shasum")?.split_whitespace().next().unwrap_or_default().to_string()
+    } else {
+        // a slim Linux (debian:trixie-slim) has coreutils' sha256sum, not perl's shasum
+        run(Command::new("sha256sum").arg(file), "sha256sum")?.split_whitespace().next().unwrap_or_default().to_string()
     };
     Ok(out.to_lowercase())
 }
@@ -174,7 +188,10 @@ fn addon(bin: &Path, check: bool) -> R<String> {
     if check {
         return Ok("MCP add-on not installed: raea setup blender installs it".into());
     }
-    let uvx = on_path(if cfg!(windows) { "uvx.exe" } else { "uvx" }).ok_or("the MCP add-on comes from uv's uvx: install uv (https://docs.astral.sh/uv/getting-started/installation/), then run raea setup blender again")?;
+    // the MCP add-on is for agents; scripts don't need it, so a machine without uv still finishes its setup
+    let Some(uvx) = on_path(if cfg!(windows) { "uvx.exe" } else { "uvx" }) else {
+        return Ok("MCP add-on not installed: it comes from uv's uvx (install uv: https://docs.astral.sh/uv/getting-started/installation/, then raea setup blender again)".into());
+    };
     let dir = py(bin, ADDONS_DIR, "RAEA_ADDONS=")?;
     run(Command::new(&uvx).args(["mcp-for-blender", "install-addon", "--addons-dir", &dir]), "uvx mcp-for-blender install-addon")?;
     enable(bin, "blender_mcp", &dir, "MCP for Blender")?;
@@ -223,7 +240,9 @@ pub fn setup(args: &[String]) -> R<String> {
         None if check => return Ok(format!("CHECKED  no Blender found (raea.blender, {}, PATH): raea setup blender downloads Blender {LTS} LTS", own_dir("blender")?.display())),
         None => {
             let (b, f) = download()?;
-            run(Command::new("git").args(["config", "--global", "raea.blender"]).arg(&b), "git config")?;
+            // remembered for tools that read raea.blender; find() takes raea's download anyway, so a machine without
+            // git (a Mac before its command line tools, Windows) is set up all the same
+            let _ = run(Command::new("git").args(["config", "--global", "raea.blender"]).arg(&b), "git config");
             (b, f)
         }
     };
@@ -281,6 +300,15 @@ mod tests {
         let listing = format!("<a href=\"blender-{LTS}.0-linux-x64.tar.xz\"> <a href=\"blender-{LTS}.12-macos-arm64.dmg\"> <a href=\"blender-{LTS}.3-windows-x64.zip\"> blender-{LTS}.9.sha256 blender-{LTS}.99beta");
         assert_eq!(newest(&listing), Some(format!("{LTS}.12")));
         assert_eq!(newest("nothing here"), None);
+    }
+
+    #[test]
+    fn sha256_of_a_known_file() {
+        let f = std::env::temp_dir().join(format!("raea-sha256-{}", std::process::id()));
+        std::fs::write(&f, b"abc").unwrap();
+        let got = sha256(&f);
+        let _ = std::fs::remove_file(&f);
+        assert_eq!(got.unwrap(), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
     }
 
     #[test]

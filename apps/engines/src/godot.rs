@@ -25,7 +25,12 @@ struct Pin {
 }
 
 fn pin() -> R<Pin> {
-    match (std::env::consts::OS, std::env::consts::ARCH) {
+    pin_for(std::env::consts::OS, std::env::consts::ARCH)
+}
+
+/// A platform GodotJS doesn't build for is told how to bring its own build (GD2), never given a stock Godot.
+fn pin_for(os: &str, arch: &str) -> R<Pin> {
+    match (os, arch) {
         // a universal app, ad-hoc signed
         ("macos", _) => Ok(Pin { asset: "macos-editor-app-4.6.1-jsc.zip", sha256: "8a3022cb07c9740b2acc4a0b6bba6be78fb2fe46ba172b13abd51e6829cdca95", size: 143_940_673, program: "Godot.app/Contents/MacOS/Godot" }),
         ("linux", "x86_64") => Ok(Pin { asset: "linux-editor-4.6.1-qjs-ng.zip", sha256: "daa91d6cff5862ed9e0b3776694fbe4ea0ebb474d244f46ffb3aa5af0318989d", size: 78_737_089, program: "godot.linuxbsd.editor.x86_64" }),
@@ -188,6 +193,15 @@ mod tests {
             assert!(p.sha256.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
             assert!(p.asset.ends_with(".zip") && p.size > 50_000_000);
         }
+    }
+
+    #[test]
+    fn a_platform_godotjs_doesnt_build_for_is_told_to_bring_its_own() {
+        for (os, arch) in [("linux", "aarch64"), ("windows", "aarch64"), ("freebsd", "x86_64")] {
+            let e = pin_for(os, arch).err().unwrap_or_default();
+            assert!(e.contains("github.com/godotjs/GodotJS") && e.contains("git config --global raea.godot PATH"), "{os} {arch}: {e}");
+        }
+        assert!(pin_for("macos", "aarch64").is_ok() && pin_for("linux", "x86_64").is_ok() && pin_for("windows", "x86_64").is_ok());
     }
 
     #[test]

@@ -187,3 +187,14 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
     Scenario: BL29. A clean machine on each platform (macOS, Windows, Linux) runs a TypeScript script through raea/blender
       Given an empty HOME, `raea setup blender` then `raea blender run smoke.ts`
       Then the script prints its PASS line, and the download size and the libraries a clean Linux needs are recorded
+      And 11-11, macOS (Apple silicon): an empty HOME and only the system's PATH (no uv, no Bun), `raea setup blender
+        --download` then `raea blender run smoke.ts alpha --beta` (sdk/blender/test/smoke.ts) printed its PASS line in
+        Blender 5.2.4 LTS: a 346 MB download, 907 MB installed. Setup finishes without uv (the MCP add-on is a note)
+        and without git
+      And 11-11, Linux (debian:trixie-slim, x86_64, on Modal): setup needs curl, ca-certificates and xz-utils, and
+        checks downloads with coreutils' sha256sum where perl's shasum is missing (a slim Debian has none). Blender
+        5.2.4's Linux build (385 MB download, 1.2 GB installed) needs libx11-6 libxi6 libxext6 libxfixes3 libxrender1
+        libxkbcommon0 libsm6 libice6 libgl1 libopengl0, which setup names when Blender can't start; with them,
+        smoke.ts run under Bun through raea/blender printed its PASS line
+      And still to run: raea's own Windows and Linux builds of this lane (`raea setup blender`, then `raea blender run
+        smoke.ts`), which come with v0.1.1's release builds

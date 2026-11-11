@@ -19,8 +19,11 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
       And it unpacks without unzip (a clean Linux has none) and the program is made executable (the zips keep no modes)
       And raea.json beside it names the release, so a moved pin downloads again
       And `git config --global raea.godot PATH` names a GodotJS build of the person's own instead
+    @done
     Scenario: GD2. A platform GodotJS doesn't build for is told how to bring its own build, not given a stock Godot
       Then a stock Godot is never looked for: without GodotJS it can't run raea/godot's scripts
+      And 11-11: find() takes only raea.godot and raea's download; Linux and Windows on arm64, and any other system,
+        are told to build GodotJS and `git config --global raea.godot PATH` (apps/engines godot.rs, a unit test)
 
   Rule: Godot's whole API is typed
     @done
@@ -68,6 +71,13 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
     Scenario: GD8. A clean machine on each platform (macOS, Windows, Linux) runs a TypeScript script through raea/godot
       Given an empty HOME, `raea setup godot` then `raea godot run smoke.ts`
       Then the script prints its PASS line, and the download size and the libraries a clean Linux needs are recorded
+      And 11-11, macOS: an empty HOME and only the system's PATH, `raea setup godot` then `raea godot run smoke.ts alpha
+        --beta` (sdk/godot/test/scripts/smoke.ts) printed its PASS line: GodotJS v1.1.0.beta1-4.6.1 with
+        JavaScriptCore, a 144 MB download, 280 MB installed
+      And 11-11, Linux (debian:trixie-slim, x86_64, on Modal): GodotJS's QuickJS-ng editor (a 79 MB download, 155 MB
+        installed) needs no library a slim Debian lacks and starts headless; without libfontconfig1 it says system fonts
+        are off. Setup checks the download with coreutils' sha256sum there (a slim Debian has no shasum)
+      And still to run: raea's own Windows and Linux builds of this lane, which come with v0.1.1's release builds
 
   Rule: The guide teaches it
     @done
