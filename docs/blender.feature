@@ -213,3 +213,76 @@ Feature: Blender as a measured workshop step: an asset passes through it on its 
         its PASS line
       And still to run: raea's own Windows and Linux builds of this lane (`raea setup blender`, then `raea blender run
         smoke.ts`), which come with v0.1.1's release builds
+
+  Rule: Blender in a raea project: a shot drawn by Blender, a scene sent to Blender and its changes read back
+    Shane, 2026-11-11: "how do we get blender and godot full integrated", then "lets do all this and make sure it ends
+    up in whatever capacity possible in v0.1.1". The TSX stays the scene. Blender draws a layer of it, is a place to
+    look at and change the scene with Blender's tools, and is a source of models; what changes there comes back to the
+    TSX as edits at their lines and as models, never as a second source of truth.
+
+    @done
+    Scenario: BL36. <BlenderShot> is a layer of a composition drawn by Blender, frame for frame
+      Given `import { BlenderShot } from "raea/blender/shot"` and <BlenderShot script="blender/orbit.ts" /> (a
+        raea/blender script whose default export builds or changes the scene) or <BlenderShot file="set.blend" />
+        (its own animation from its first frame), with engine eevee (the default), cycles or workbench, samples, and
+        transparent for a picture with alpha
+      Then Blender renders the shot's frames at the composition's size and fps for the length of its Sequence, and
+        frame N of the composition shows frame N of the shot
+      And the frames are made once for the script's bundle (with what it imports), the .blend's identity, the props,
+        the size, fps and length, and Blender's version, kept in the composition's asset store, and made again when
+        any of those change (native call blender.shot)
+      And `raea blender shot SCRIPT.ts|FILE.blend -o DIR --frames N [--fps F] [--size WxH] [--engine E] [--samples S]
+        [--transparent]` renders the same frames from the command line, numbered from DIR/0000.png
+      And 11-11: a composition with a <BlenderShot script>, a <BlenderShot file> (the .blend BL38 wrote) and a
+        <GodotShot>, each in a 30-frame <Sequence> of a 90-frame composition, rendered with each shot 30 frames long
+        (sized from the Sequence's end, not the composition's length); rendered again unchanged, it took 2 s, every
+        shot read from the asset store. The .blend's own shot matches raea's frame of the same scene
+
+    @done
+    Scenario: BL37. `raea scene export EDIT.tsx -o DIR` writes a composition's 3D as data another tool builds
+      Then DIR/scene.json lists each part with an id that holds across frames, its kind and name, the line of the TSX
+        it comes from, its world placement (position, rotation as a quaternion, scale; y up, metres) and its material
+        (base colour, metallic, roughness, emissive, alpha, unlit); a primitive with its sizes (cuboid, sphere,
+        cylinder, plane), any other mesh as DIR/meshes/ID.glb, a model as its file copied into DIR/models/ with its
+        sidecar; each light with its kind, colour, power and range; the camera with its field of view; the ambient
+        light and the background colour
+      And --frame N takes one frame (0 unless given); --at A-B takes each part's placement on every frame from A to B
+        and the camera's field of view, for keyframes
+      And what doesn't cross is listed by kind in scene.json's `left` (text, splats, particles, shaders, 2D layers)
+      And 11-11 (apps/interchange, 9 unit tests): a test scene of a crate, a metal ball, a pole, a floor, a sun, a
+        point light and a moving camera exported with --at 0-29 as 6 parts on 30 frames, each shape, material, light
+        and the camera as the TSX gives them, and each part's TSX line from the bundle's source stamps
+        (RAEA_SOURCE_STAMPS, which the export sets)
+
+    @done
+    Scenario: BL38. `raea blender open EDIT.tsx` builds the scene in Blender and opens it there
+      Given scene export's folder, built by raea/blender (sdk/blender/src/scene.ts) in a headless Blender
+      Then each primitive is Blender's own mesh of that shape, each model is imported from its .glb, each material a
+        Principled BSDF, each light and the camera Blender's, keyed on each frame of --at, and every object carries
+        its part's id (raea_id), which scene.json ties to its TSX line
+      And the file is saved as out/blender/NAME/NAME.blend beside the scene's export (-o DIR elsewhere), then opened
+        in a new Blender window (--no-window leaves it closed); a .blend, .glb, .gltf, .obj or .fbx given in place of
+        the TSX is opened as it is
+      And 11-11: `raea blender open edit.tsx --no-window` built the test scene's .blend in 5 s in Blender 5.2.4, each
+        object named for its part (else Sun, PointLight, Cuboid as Godot's export names them) under one root empty
+        turned from raea's y up to Blender's z up
+    @done
+    Scenario: BL39. `raea blender back FILE.blend` says what changed in Blender, as edits to the TSX at their lines
+      Then each part moved, turned or scaled, recoloured or made more or less metal or rough, each light whose colour or
+        power changed, the camera's move and field of view, and each part deleted is one line naming the TSX line and
+        the prop with its new value
+      And each object made in Blender (no raea_id) is written as media/NAME.glb with a sidecar naming the .blend, and
+        its line is the <Model> that places it
+      And --json prints the same as data; nothing in the TSX is changed by raea, the agent makes the edits
+      And 11-11: after the crate was moved, the ball recoloured and made rougher, the camera's lens changed and a
+        "Lamp Box" added in Blender, `raea blender back` said each at its TSX line (the camera's field of view 40.107
+        to 33.3985) and wrote the new box as media/Lamp_Box.glb, placed at [-2, 0.25, 1] in raea's axes
+
+    @done
+    Scenario: BL40. A .blend from elsewhere comes in by the guide (bevy/blend-files): contents.py lists it, take.py takes named things
+      Then `raea blender run blender/contents.py FILE.blend` lists each mesh object, collection, geometry-node group
+        and material, and `raea blender run blender/take.py FILE.blend OUT.glb NAME...` writes those objects and
+        collections as one .glb with modifiers applied and the file's licence sidecar
+      And 11-11: on BL38's .blend, contents.py listed its meshes and materials, and take.py wrote crate and ball as a
+        67 KB .glb of 2 meshes. Before, take.py wrote an empty .glb (132 bytes) whenever a taken object had a parent:
+        glTF's export walks down from the scene's top objects, so it now links each one's parents into its scene

@@ -10,7 +10,7 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
   Background:
     Given GodotJS release v1.1.0.beta1-4.6.1 (Godot 4.6.1), its editor builds pinned by size and sha256 in
       apps/engines/src/godot.rs, the typings generated from that build by sdk/godot/tools/gen.sh
-    And until raea builds GodotJS from its vendored source, `raea setup godot` downloads GodotJS's own release builds
+    And `raea setup godot` downloads raea's own builds of GodotJS (GD9), else GodotJS's own release builds
 
   Rule: Godot is installed by raea, pinned
     @done
@@ -100,5 +100,74 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
         4.000 m out, in Godot 4.6.1-stable (raea)" and the 17 typing files matched GodotJS's build's byte for byte
       And linux.py built the editor in 511 s on 16 cores (161,938,768 bytes, sha256 8fd01803...699684), before its
         BUILD_NAME=raea line, so that build reports custom_build; it hasn't run raea's smoke yet
-      And for 0.1.1 `raea setup godot` keeps GodotJS's pinned builds; the pins move to raea's in 0.1.2 once the Windows
-        editor is built too, the Mac one is signed, and each passes the clean-machine smoke; nothing is uploaded before then
+      And 11-11 (Shane: "make sure it ends up in whatever capacity possible in v0.1.1"): the pins move to raea's builds
+        in 0.1.1. windows.py cross-builds the Windows editor on Linux with MinGW-w64, the toolchain Godot's own Windows
+        releases use; the Mac editor is signed with raea's Developer ID and notarized; each passes verify.sh's smoke
+      And `raea setup godot` tries raea's build first and GodotJS's pinned one after it, each checked against its own
+        size and sha256, so a release made before raea's builds are uploaded (they go up with the release's files) still
+        installs, and says which one it installed
+      And 11-11: all three editors report 4.6.1.stable.raea. The Mac's is Godot.app made from Godot's own
+        misc/dist/macos_tools.app, signed with raea's Developer ID and Godot's editor entitlements (its JIT), notarized
+        (Accepted) and stapled (spctl: Notarized Developer ID); from its zip, verify.sh's smoke printed "PASS
+        raea/godot: 3 boxes, the last 4.000 m out, in Godot 4.6.1-stable (raea)" and its 17 typing files matched
+        GodotJS's build's byte for byte. The Linux editor passed the same smoke and typings check under raea's rc4 in
+        debian:trixie-slim on Modal. The Windows editor needs only Windows' own DLLs
+      And package.sh makes the three zips, one folder each (godot-4.6.1-raea-macos-arm64.zip 69,132,728 bytes,
+        -linux-x86_64.zip 78,737,822, -windows-x86_64.zip 73,171,472), whose sizes and sha256 are godot.rs's pins; they
+        are uploaded to v0.1.1's release with its other files. RAEA_GODOT_FROM=URL installs from elsewhere (file://DIR
+        too): setup from a folder of the zips installed raea's build, which passed the smoke; with no override, before
+        the upload, the download failed and setup installed GodotJS's build and said why (apps/engines, unit tests)
+
+  Rule: Godot in a raea project: a shot drawn by Godot, a scene sent to Godot and its changes read back, its scenes taken in
+    Shane, 2026-11-11: "how do we get blender and godot full integrated", then "lets do all this and make sure it ends
+    up in whatever capacity possible in v0.1.1". The TSX stays the scene, as with Blender (docs/blender.feature BL36 to
+    BL40): Godot draws a layer, runs the scene as a Godot project, and is a source of models.
+
+    @done
+    Scenario: GD11. <GodotShot> is a layer of a composition drawn by Godot's Movie Maker, frame for frame
+      Given `import { GodotShot } from "raea/godot/shot"` and <GodotShot script="godot/rally.ts" project="godot" />
+        (a raea/godot script whose default export builds the scene and returns) or <GodotShot scene="res://main.tscn"
+        project="godot" /> (that scene as it plays)
+      Then Godot records the shot's frames at the composition's size and fps for the length of its Sequence (GD7b's
+        --movie), and frame N of the composition shows frame N of the shot
+      And the frames are made once for the script's bundle, the project's files, the props, size, fps and length,
+        kept in the composition's asset store, and made again when any change (native call godot.shot)
+      And `raea godot shot SCRIPT.ts|res://SCENE.tscn --project DIR -o DIR --frames N [--fps F] [--size WxH]` records
+        the same frames from the command line, numbered from DIR/0000.png
+      And 11-11: in the composition of BL36's evidence, the <GodotShot> of GD12's project recorded 30 frames in its
+        30-frame Sequence, and `raea godot shot res://main.tscn --project out/godot/edit` 30 frames at 1920x1080 (the
+        shot's default size; Movie Maker records the window's) that match raea's frames of the scene
+
+    @done
+    Scenario: GD12. `raea godot export EDIT.tsx -o DIR` writes the composition's 3D as a Godot project that runs
+      Given scene export's data (docs/blender.feature BL37)
+      Then DIR holds project.godot (the composition's size, Forward+) and main.tscn, its main scene: each primitive
+        Godot's own mesh (BoxMesh, SphereMesh, CylinderMesh, PlaneMesh) with a StandardMaterial3D, any other mesh an
+        .obj and each model its .glb, which Godot imports, each light and the camera Godot's, the ambient and
+        background a WorldEnvironment; each node named for its part (else for what it is: Sun, PointLight, Cuboid) and
+        carrying its part's id as metadata (raea_id), which scene.json ties to its TSX line
+      And with --at A-B an AnimationPlayer plays each part's placement and the camera's, autoplaying, a channel that
+        holds still left out, so `raea godot run --project DIR --scene res://main.tscn --window` plays it (no script
+        needed), `raea godot shot res://main.tscn --project DIR` records it, and `raea godot open DIR` opens it in the
+        editor
+      And 11-11: BL37's test scene became "6 parts, 3 animation tracks over 30 frames" (the crate's, the ball's and
+        the camera's; still channels left out), with nodes named Sun, PointLight, crate, ball, pole, floor and
+        Camera3D. A --script main loop doesn't load run/main_scene, so the scene is given with --scene; with no
+        script raea runs sdk/godot/src/host/none.ts, and a scene in --window plays until the window is closed
+    @done
+    Scenario: GD13. `raea godot back DIR` says what changed in Godot, as edits to the TSX at their lines
+      Then main.tscn is read by Godot, and each node moved, turned or scaled, recoloured, each light changed, the
+        camera, each part deleted, and each node added (written as media/NAME.glb with a sidecar) is said as BL39 says
+        it, from the same comparison
+      And 11-11: after the crate was moved, the ball recoloured, the camera moved and a box added in Godot's editor,
+        `raea godot back` said each at its TSX line and wrote the box as media/Lamp_Box.glb
+
+    @done
+    Scenario: GD14. A Godot project's scene or mesh comes in as one .glb (bevy/godot-projects)
+      Then `raea godot run godot/scene-glb.ts --project KIT res://PATH.tscn media/X.glb` writes the scene's meshes,
+        materials, skins and clips as one .glb, its cameras and lights left behind (sdk/godot/test/guide-scene-glb.ts,
+        type-checked with the tests and run on a kit)
+      And the guide lists which open Godot demos and kits may be used, by the licence of their art
+      And 11-11: the guide's own example on Godot's 3d/platformer demo (res://stage/stage.tscn) wrote a 759 KB .glb of
+        2,923 meshes with no camera or light. On GD12's project, the camera's clip pointed at the removed camera and
+        glTF's export printed an ERROR, so the script now drops each track whose node it took out
