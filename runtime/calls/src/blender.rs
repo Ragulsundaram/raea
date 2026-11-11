@@ -1,5 +1,5 @@
 //! `blender.post {sid, ops}`: a batch of raea/blender's operations (sdk/blender) posted to the Blender bridge that
-//! `raea blender run SCRIPT.ts` started (apps/tools/src/blender_bridge.rs), and its reply: the results the script
+//! `raea blender run SCRIPT.ts` started (apps/engines/src/blender_bridge.rs), and its reply: the results the script
 //! asked for and the batch's first error. On the JS thread, so the script waits for Blender as Python would.
 
 use std::io::{Read, Write};

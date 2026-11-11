@@ -56,6 +56,7 @@ raea-app-notes = { path = "../../apps/notes" }
 raea-app-sound = { path = "../../apps/sound" }
 raea-app-ci = { path = "../../apps/ci" }
 raea-app-tools = { path = "../../apps/tools" }
+raea-app-engines = { path = "../../apps/engines" }
 # raea solid info|view: a solid file measured and pictured
 raea-app-solid = { path = "../../apps/solid" }
 # raea judge: review sheets judged by clef-omni

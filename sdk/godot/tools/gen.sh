@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sdk/godot's generated files, from the GodotJS editor raea setup godot installs (apps/tools/src/godot.rs pins it):
+# sdk/godot's generated files, from the GodotJS editor raea setup godot installs (apps/engines/src/godot.rs pins it):
 #   src/types/*.d.ts      Godot's whole API as TypeScript, as GodotJS's codegen writes it (--generate-types, headless,
 #                         on an empty project), and src/types/index.d.ts, which references each
 #   src/shim/names.gen.js the "godot" module's names, which the bundles' shim answers (tools/names.ts says why)

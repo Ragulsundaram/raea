@@ -9,7 +9,7 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
 
   Background:
     Given GodotJS release v1.1.0.beta1-4.6.1 (Godot 4.6.1), its editor builds pinned by size and sha256 in
-      apps/tools/src/godot.rs, the typings generated from that build by sdk/godot/tools/gen.sh
+      apps/engines/src/godot.rs, the typings generated from that build by sdk/godot/tools/gen.sh
     And until raea builds GodotJS from its vendored source, `raea setup godot` downloads GodotJS's own release builds
 
   Rule: Godot is installed by raea, pinned

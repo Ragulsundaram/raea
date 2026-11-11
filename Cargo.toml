@@ -160,6 +160,7 @@ members = [
     "apps/workspace/registry",
     "apps/ci",
     "apps/tools",
+    "apps/engines",
     "apps/judge",
     "apps/solid",
     "apps/media",

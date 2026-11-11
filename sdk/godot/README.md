@@ -54,4 +54,4 @@ Things to know:
 - `src/host/main.js`: the main loop `raea godot run` gives Godot.
 - `test/typing.ts` (tsc), `test/run.test.ts` (bun test, against the installed Godot).
 
-The spec is `docs/godot.feature`; the pin and the verbs are `apps/tools/src/godot.rs` and `godot_run.rs`.
+The spec is `docs/godot.feature`; the pin and the verbs are `apps/engines/src/godot.rs` and `godot_run.rs`.

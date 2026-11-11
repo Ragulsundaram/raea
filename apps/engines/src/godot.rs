@@ -34,7 +34,7 @@ fn pin() -> R<Pin> {
 
 /// Where raea keeps the Godot it downloads.
 fn own_dir() -> R<PathBuf> {
-    Ok(crate::agent_mcp::user_home()?.join(".raea/tools/godot"))
+    Ok(raea_app_tools::agent_mcp::user_home()?.join(".raea/tools/godot"))
 }
 
 /// The release a download in own_dir came from (raea.json beside it), so a moved pin downloads again.
@@ -46,7 +46,7 @@ fn own_release() -> Option<String> {
 /// The Godot to use and where it came from: `git config --global raea.godot` (a GodotJS build of your own), else
 /// raea's download. A Godot without GodotJS isn't looked for: it can't run raea/godot's scripts.
 pub fn find() -> Option<(PathBuf, &'static str)> {
-    let configured = crate::blender::run(Command::new("git").args(["config", "--global", "raea.godot"]), "git config").ok().map(|out| PathBuf::from(out.trim()));
+    let configured = raea_app_tools::blender::run(Command::new("git").args(["config", "--global", "raea.godot"]), "git config").ok().map(|out| PathBuf::from(out.trim()));
     if let Some(p) = configured.filter(|p| p.is_file()) {
         return Some((p, "raea.godot in git config"));
     }
@@ -75,9 +75,9 @@ fn download() -> R<(PathBuf, String)> {
     std::fs::create_dir_all(&tmp).map_err(|e| format!("{}: {e}", tmp.display()))?;
     let file = tmp.join(p.asset);
     let url = format!("https://github.com/godotjs/GodotJS/releases/download/{RELEASE}/{}", p.asset);
-    crate::blender::run(Command::new("curl").args(["-fL", "--retry", "3", "-o"]).arg(&file).arg(&url), "downloading Godot with GodotJS")?;
+    raea_app_tools::blender::run(Command::new("curl").args(["-fL", "--retry", "3", "-o"]).arg(&file).arg(&url), "downloading Godot with GodotJS")?;
     let size = std::fs::metadata(&file).map_err(|e| e.to_string())?.len();
-    if size != p.size || crate::blender::sha256(&file)? != p.sha256 {
+    if size != p.size || raea_app_tools::blender::sha256(&file)? != p.sha256 {
         return Err(format!("{} doesn't match the sha256 raea pins ({size} bytes); nothing installed (it's in {})", p.asset, tmp.display()));
     }
     let unpacked = tmp.join("unpacked");

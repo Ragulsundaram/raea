@@ -13634,6 +13634,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-app-engines"
+version = "0.1.0"
+dependencies = [
+ "dunce",
+ "raea-app-tools",
+ "raea-io-home",
+ "raea-runtime-bundle",
+ "raea-runtime-calls",
+ "raea-runtime-export",
+ "serde_json",
+ "zip",
+]
+
+[[package]]
 name = "raea-app-game"
 version = "0.1.0"
 dependencies = [
@@ -13754,7 +13768,6 @@ dependencies = [
 name = "raea-app-tools"
 version = "0.1.0"
 dependencies = [
- "dunce",
  "raea-io-assets",
  "raea-io-gen",
  "raea-io-home",
@@ -13762,7 +13775,6 @@ dependencies = [
  "raea-runtime-bundle",
  "raea-runtime-export",
  "serde_json",
- "zip",
 ]
 
 [[package]]
@@ -13989,6 +14001,7 @@ dependencies = [
  "raea-app-check",
  "raea-app-ci",
  "raea-app-direction",
+ "raea-app-engines",
  "raea-app-game",
  "raea-app-judge",
  "raea-app-media",

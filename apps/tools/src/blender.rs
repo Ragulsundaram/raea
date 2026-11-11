@@ -54,7 +54,7 @@ fn version(bin: &Path) -> R<String> {
     String::from_utf8_lossy(&o.stdout).lines().find(|l| l.starts_with("Blender ")).map(str::to_string).ok_or_else(|| format!("{} --version printed no version", bin.display()))
 }
 
-pub(crate) fn run(cmd: &mut Command, what: &str) -> R<String> {
+pub fn run(cmd: &mut Command, what: &str) -> R<String> {
     let o = cmd.output().map_err(|e| format!("{what}: {e}"))?;
     if !o.status.success() {
         return Err(format!("{what} failed: {}{}", String::from_utf8_lossy(&o.stderr).trim(), String::from_utf8_lossy(&o.stdout).trim()));
@@ -89,7 +89,7 @@ fn newest(listing: &str) -> Option<String> {
     best.map(|(_, v)| v)
 }
 
-pub(crate) fn sha256(file: &Path) -> R<String> {
+pub fn sha256(file: &Path) -> R<String> {
     let out = if cfg!(windows) {
         run(Command::new("certutil").arg("-hashfile").arg(file).arg("SHA256"), "certutil")?.lines().nth(1).unwrap_or_default().replace(' ', "")
     } else {

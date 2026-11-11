@@ -252,7 +252,7 @@ help_stale() {
   built=$(stat -f %m "$R" 2>/dev/null || stat -c %Y "$R")
   # the history is the binary's own checkout's (an L0 export has none)
   local co; co=$(cd "$(dirname "$(realpath "$R")")/../.." 2>/dev/null && pwd); [ -f "$co/engine/cli/src/cli.rs" ] || co=$ROOT
-  newest=$(git -C "$co" log -1 --no-merges --format=%at -- engine/cli/src apps/check/src apps/game/src apps/tools/src runtime/react/src/scene.rs runtime/react/src/scene 2>/dev/null)
+  newest=$(git -C "$co" log -1 --no-merges --format=%at -- engine/cli/src apps/check/src apps/game/src apps/tools/src apps/engines/src runtime/react/src/scene.rs runtime/react/src/scene 2>/dev/null)
   [ -n "$newest" ] && [ "$built" -lt "$newest" ]
 }
 
