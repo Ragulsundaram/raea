@@ -92,3 +92,13 @@ Feature: Godot from TypeScript: raea/godot (sdk/godot) on GodotJS
   Rule: GodotJS is ours to build
     Scenario: GD9. GodotJS's source is vendored at the release's tag, and raea builds the JavaScriptCore and QuickJS-ng editors itself
       Then `raea setup godot` downloads raea's own builds, and the typings are generated from them
+      And sdk/godot/build holds the builds, from source as GodotJS's CI builds its release (Godot 4.6.1-stable 14d1969,
+        GodotJS a8e2567 at v1.1.0.beta1-4.6.1, AccessKit-c 0.18.0): macos.sh (arm64, JavaScriptCore, Metal only) and
+        linux.py (x86_64, QuickJS-ng, on Ubuntu 22.04 on Modal); verify.sh checks an editor against GodotJS's own
+      And on 11-10 macos.sh built the editor in 370 s at -j6 (133,184,648 bytes, sha256 7908bf67...a92310, reporting
+        4.6.1.stable.raea.14d19694e); verify.sh on it: raea's smoke printed "PASS raea/godot: 3 boxes, the last
+        4.000 m out, in Godot 4.6.1-stable (raea)" and the 17 typing files matched GodotJS's build's byte for byte
+      And linux.py built the editor in 511 s on 16 cores (161,938,768 bytes, sha256 8fd01803...699684), before its
+        BUILD_NAME=raea line, so that build reports custom_build; it hasn't run raea's smoke yet
+      And for 0.1.1 `raea setup godot` keeps GodotJS's pinned builds; the pins move to raea's in 0.1.2 once the Windows
+        editor is built too, the Mac one is signed, and each passes the clean-machine smoke; nothing is uploaded before then
