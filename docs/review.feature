@@ -165,3 +165,58 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
     Scenario: R3e. A wrong id is refused with the ones there are
       When the agent marks an id that isn't on the item, or a comment I haven't sent
       Then nothing changes and the refusal names the item's comment ids, or says the person hasn't asked for it yet
+
+  Rule: R4. Review links: the person or their agent shares a cut, and anyone with the link watches and comments on the picture, like frame.io (proposed 11-11, not built; not in v0.1.1)
+    # Shane, 11-11, on Team: "maybe see if we can add to it that you can have claude share out review links so it
+    # really does feel liek frame.io". Reviewers and clients aren't team members: a link takes no place in Team's 5
+    # (docs/pricing.md). The link's page is raea.io's and its routes are raea-api's; this rule is the product, the
+    # routes below are the contract.
+
+    Background:
+      Given a person on Team (Shane, 11-11: "revie links is team only"; a link's file lives in the team's cloud storage
+        and counts toward its pool); on Free or Pro, Share says review links come with Team, and POST /v1/review-links
+        answers 402 plan_required
+
+    Scenario: R4a. The person or their agent shares an item
+      When the person presses Share on an item in raea, or their agent runs `raea show --share ITEM [--to NAME]...`
+        (over ACP: the share_link tool)
+      Then the item's file goes up to their storage if it isn't there, and a link is made: raea.io/r/<token>, 128 random
+        bits, good for 30 days unless set otherwise, downloads off unless allowed, an optional password
+      And the agent gets the link back to hand on, and the item shows "Shared · 0 views" with the link and Stop sharing
+      And raea-api keeps it: POST /v1/review-links {sha256, item, title, days?, download?, password?} -> {id, url},
+        GET /v1/review-links, DELETE /v1/review-links/:id (devices and raea.io; an agent key with files:write may make
+        one for a file it can reach, never list or revoke others)
+
+    Scenario: R4b. A reviewer watches and comments without an account
+      Given the link, opened in any browser
+      When the reviewer gives a name (kept in that browser) and presses C on the picture
+      Then the comment is pinned to that point at that frame, written where it's pinned, and answered and resolved there,
+        as R1's are; the scrubber marks every comment's moment
+      And the page plays from a presigned URL good for an hour that the page renews, frame by frame with J, K, L and
+        arrows, timecode shown; nothing else of the account is reachable from it
+      And Approve marks the version approved by that name
+
+    Scenario: R4c. Comments flow back to the item and its agent
+      When a reviewer comments
+      Then the comment appears on the item in raea as an R1 comment by "<name> (guest)", within seconds while it's open,
+        and a feed post says who commented on what
+      And the person can send guests' comments to the agent as edits (R3): the agent marks them working and done, and
+        the reviewer sees "Done in v2" on the link
+      And the agent can answer a guest on the link: `raea show --on ITEM --reply ID --note LINE`
+
+    Scenario: R4d. A new version replaces the cut on the same link
+      When the agent shows a new render with `--replaces ITEM` (or the person shares a new version)
+      Then the link plays v2 with a version picker; v1's comments stay on v1, and a side-by-side compare shows both
+
+    Scenario: R4e. A link is the reviewer's only right, and it can be taken back
+      Then a link reaches one item's versions, their comments and nothing else: no library, file list, search or account
+      And a stopped or expired link is 404, at once; a wrong password is refused and slowed
+      And guests' comments are plain text, rate limited per link and per address, and kept with the item when the link
+        stops; pages are noindex
+      And an account keeps up to 200 live links; views (name and time) are the owner's to see
+
+  Rule: R4 open questions for Shane
+    Scenario: To decide
+      Then 1. Decided 11-11: Team only.
+      And 2. Downloads off by default, with a per-link switch?
+      And 3. Built after v0.1.1: raea-api and the page first (the private repo), then Share in raea and `raea show --share`
