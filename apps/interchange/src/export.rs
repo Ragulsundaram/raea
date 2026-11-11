@@ -223,12 +223,13 @@ pub fn scene(all: &[Vec<Item>], frames: &[i64], dir: &Path, out: &Path) -> R<Val
     let ambient = all[0].iter().find(|i| i.kind == "ambient").map(|a| json!({ "color": hex(a.props.get("color")).unwrap_or("#ffffff".into()), "nits": light_power("ambient", &a.props) }));
     // what doesn't cross, by kind, counted on the first frame
     let mut left: BTreeMap<&str, usize> = BTreeMap::new();
-    for i in all[0].iter().filter(|i| !matches!(i.kind, "mesh" | "model" | "directional" | "point" | "spot" | "rect" | "camera" | "ambient")) {
-        *left.entry(i.kind).or_default() += 1;
-    }
-    let copies = all[0].iter().filter(|i| i.kind == "mesh" && i.at.is_some()).count();
-    if copies > 0 {
-        left.insert("instances", copies);
+    for i in &all[0] {
+        match i.kind {
+            // a mesh drawn at many places (<Instances>) crosses as its first copy only
+            "mesh" if i.at.is_some() => *left.entry("instances").or_default() += 1,
+            "mesh" | "model" | "directional" | "point" | "spot" | "rect" | "camera" | "ambient" => {}
+            k => *left.entry(k).or_default() += 1,
+        }
     }
     Ok(json!({ "raea": "scene/1", "frames": frames, "parts": parts, "camera": cam, "ambient": ambient, "left": left }))
 }

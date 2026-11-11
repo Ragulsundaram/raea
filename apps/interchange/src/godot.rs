@@ -97,10 +97,11 @@ impl Tscn {
 }
 
 fn material(m: &Value) -> String {
-    let f = |k: &str, d: f64| m[k].as_f64().unwrap_or(d);
-    let mut s = format!("albedo_color = {}\nmetallic = {}\nroughness = {}\n", color(m["color"].as_str().unwrap_or("#cccccc"), f("opacity", 1.0)), num(f("metallic", 0.0)), num(f("roughness", 0.5)));
+    // each number the material gives, else raea's default for it
+    let f = |k: &str| m[k].as_f64().unwrap_or(match k { "opacity" | "emissive_strength" => 1.0, "roughness" => 0.5, _ => 0.0 });
+    let mut s = format!("albedo_color = {}\nmetallic = {}\nroughness = {}\n", color(m["color"].as_str().unwrap_or("#cccccc"), f("opacity")), num(f("metallic")), num(f("roughness")));
     if let Some(e) = m["emissive"].as_str() {
-        let _ = write!(s, "emission_enabled = true\nemission = {}\nemission_energy_multiplier = {}\n", color(e, 1.0), num(f("emissive_strength", 1.0)));
+        let _ = write!(s, "emission_enabled = true\nemission = {}\nemission_energy_multiplier = {}\n", color(e, 1.0), num(f("emissive_strength")));
     }
     if m["opacity"].as_f64().is_some_and(|o| o < 1.0) {
         s.push_str("transparency = 1\n");
@@ -184,9 +185,6 @@ fn tracks(anim: &mut String, k: &mut usize, path: &str, at: &[Value], fps: f64, 
         let v: Vec<f64> = a.as_array()?.iter().filter_map(Value::as_f64).collect();
         (v.len() >= 10).then(|| ((f - f0) as f64 / fps, v))
     }).collect();
-    if keyed.windows(2).all(|w| w[0].1 == w[1].1) {
-        return;
-    }
     for (kind, range) in [("position_3d", 0..3), ("rotation_3d", 3..7), ("scale_3d", 7..10)] {
         // a channel that holds still isn't a track: a part that only turns keys its rotation alone
         if keyed.windows(2).all(|w| w[0].1[range.clone()] == w[1].1[range.clone()]) {

@@ -35,8 +35,9 @@ fn turned(a: &[f64], b: &[f64]) -> f64 {
     2.0 * d.acos().to_degrees()
 }
 
-fn edit(part: &Value, what: &str, prop: &str, from: Value, to: Value, said: String) -> Value {
-    json!({ "id": part["id"], "name": part["source"]["name"], "loc": part["source"]["loc"], "change": what, "prop": prop, "from": from, "to": to, "says": said })
+/// One edit onto the list: the part, what changed, the prop with its old and new values, and the line said for it.
+fn edit(out: &mut Vec<Value>, part: &Value, what: &str, prop: &str, from: Value, to: Value, said: String) {
+    out.push(json!({ "id": part["id"], "name": part["source"]["name"], "loc": part["source"]["loc"], "change": what, "prop": prop, "from": from, "to": to, "says": said }));
 }
 
 fn surface(p: &Value, sent: &Value, now: &Value, out: &mut Vec<Value>) {
@@ -46,17 +47,17 @@ fn surface(p: &Value, sent: &Value, now: &Value, out: &mut Vec<Value>) {
     if let (Some(a), Some(b)) = (sent["color"].as_str(), now["color"].as_str())
         && !a.eq_ignore_ascii_case(b)
     {
-        out.push(edit(p, "recoloured", "color", json!(a), json!(b), format!("color {a} -> {b}")));
+        edit(out, p, "recoloured", "color", json!(a), json!(b), format!("color {a} -> {b}"));
     }
     for (k, prop) in [("roughness", "roughness"), ("metallic", "metalness"), ("intensity", "intensity")] {
         if let (Some(a), Some(b)) = (sent[k].as_f64(), now[k].as_f64())
             && (a - b).abs() > 0.005 * a.abs().max(1.0)
         {
-            out.push(edit(p, if k == "intensity" { "relit" } else { "resurfaced" }, prop, json!(r4(a)), json!(r4(b)), format!("{prop} {} -> {}", r4(a), r4(b))));
+            edit(out, p, if k == "intensity" { "relit" } else { "resurfaced" }, prop, json!(r4(a)), json!(r4(b)), format!("{prop} {} -> {}", r4(a), r4(b)));
         }
     }
     if now["emissive"].as_str().is_some() && sent["emissive"].as_str() != now["emissive"].as_str() {
-        out.push(edit(p, "glows", "emissive", sent["emissive"].clone(), now["emissive"].clone(), format!("emissive {} -> {}", sent["emissive"].as_str().unwrap_or("none"), now["emissive"].as_str().unwrap_or("none"))));
+        edit(out, p, "glows", "emissive", sent["emissive"].clone(), now["emissive"].clone(), format!("emissive {} -> {}", sent["emissive"].as_str().unwrap_or("none"), now["emissive"].as_str().unwrap_or("none")));
     }
 }
 
@@ -64,15 +65,15 @@ fn placement(p: &Value, a: &[f64], b: &[f64], out: &mut Vec<Value>) {
     let d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
     if d.iter().any(|x| x.abs() > 1e-3) {
         let to = [r4(b[0]), r4(b[1]), r4(b[2])];
-        out.push(edit(p, "moved", "position", json!([r4(a[0]), r4(a[1]), r4(a[2])]), json!(to), format!("moved by [{}, {}, {}] to {to:?} (world)", r4(d[0]), r4(d[1]), r4(d[2]))));
+        edit(out, p, "moved", "position", json!([r4(a[0]), r4(a[1]), r4(a[2])]), json!(to), format!("moved by [{}, {}, {}] to {to:?} (world)", r4(d[0]), r4(d[1]), r4(d[2])));
     }
     if turned(&a[3..7], &b[3..7]) > 0.05 {
         let e = euler_xyz(&b[3..7]);
-        out.push(edit(p, "turned", "rotation", json!(euler_xyz(&a[3..7])), json!(e), format!("turned {:.1} degrees: rotation {e:?} (radians, X Y Z; world), quaternion [{}, {}, {}, {}]", turned(&a[3..7], &b[3..7]), r4(b[3]), r4(b[4]), r4(b[5]), r4(b[6]))));
+        edit(out, p, "turned", "rotation", json!(euler_xyz(&a[3..7])), json!(e), format!("turned {:.1} degrees: rotation {e:?} (radians, X Y Z; world), quaternion [{}, {}, {}, {}]", turned(&a[3..7], &b[3..7]), r4(b[3]), r4(b[4]), r4(b[5]), r4(b[6])));
     }
     if (0..3).any(|k| (a[7 + k] - b[7 + k]).abs() > 1e-3 * a[7 + k].abs().max(1.0)) {
         let to = [r4(b[7]), r4(b[8]), r4(b[9])];
-        out.push(edit(p, "scaled", "scale", json!([r4(a[7]), r4(a[8]), r4(a[9])]), json!(to), format!("scale {to:?}")));
+        edit(out, p, "scaled", "scale", json!([r4(a[7]), r4(a[8]), r4(a[9])]), json!(to), format!("scale {to:?}"));
     }
 }
 
@@ -82,7 +83,7 @@ pub fn compare(sent: &Value, now: &Value) -> Vec<Value> {
     let held: Vec<&Value> = now["parts"].as_array().into_iter().flatten().collect();
     for p in sent["parts"].as_array().into_iter().flatten() {
         let Some(n) = held.iter().find(|n| n["id"] == p["id"]) else {
-            out.push(edit(p, "deleted", "", Value::Null, Value::Null, "deleted".into()));
+            edit(&mut out, p, "deleted", "", Value::Null, Value::Null, "deleted".into());
             continue;
         };
         let first = p["at"].as_array().into_iter().flatten().find(|a| !a.is_null()).and_then(nums);
@@ -101,7 +102,7 @@ pub fn compare(sent: &Value, now: &Value) -> Vec<Value> {
         if let (Some(a), Some(b)) = (c["fov"].as_f64(), n.get("fov").and_then(Value::as_f64))
             && (a - b).abs() > 0.05
         {
-            out.push(edit(&me, "lens", "fov", json!(r4(a)), json!(r4(b)), format!("fov {} -> {} (degrees, vertical)", r4(a), r4(b))));
+            edit(&mut out, &me, "lens", "fov", json!(r4(a)), json!(r4(b)), format!("fov {} -> {} (degrees, vertical)", r4(a), r4(b)));
         }
     }
     for n in now["new"].as_array().into_iter().flatten() {
@@ -149,7 +150,11 @@ pub fn said(edits: &[Value], tsx: &Path) -> String {
         return "nothing changed".into();
     }
     edits.iter().map(|e| {
-        let who = e["name"].as_str().map(|n| format!("\"{n}\"")).unwrap_or_else(|| e["id"].as_str().unwrap_or("").to_string());
+        // the part by its name in the TSX, else by its id
+        let who = match (e["name"].as_str(), e["id"].as_str()) {
+            (Some(n), _) => format!("\"{n}\""),
+            (None, id) => id.unwrap_or("").to_string(),
+        };
         let at = line_of(tsx, e).map(|l| format!(" ({l})")).unwrap_or_default();
         format!("{who}{at}: {}", e["says"].as_str().unwrap_or(""))
     }).collect::<Vec<_>>().join("\n")

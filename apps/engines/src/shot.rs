@@ -5,6 +5,7 @@
 //!   raea godot shot SCRIPT.ts|res://SCENE.tscn [--project DIR] -o DIR --frames N [--fps F] [--size WxH] [--scene res://X]
 //!     [--timeout S] [-- ARGS]
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use serde_json::json;
@@ -23,42 +24,36 @@ struct Shot {
     frames: u32,
     fps: f64,
     size: (u32, u32),
-    flags: Vec<(String, Option<String>)>,
+    transparent: bool,
+    /// the flags that take a value, by name
+    flags: BTreeMap<String, String>,
     rest: Vec<String>,
-}
-
-impl Shot {
-    fn flag(&self, k: &str) -> Option<&str> {
-        self.flags.iter().find(|(f, _)| f == k).and_then(|(_, v)| v.as_deref())
-    }
-    fn has(&self, k: &str) -> bool {
-        self.flags.iter().any(|(f, _)| f == k)
-    }
 }
 
 /// args[2] the source, then the flags (each taking a value but --transparent), then -- and the script's own.
 fn parse(args: &[String], usage: &str) -> R<Shot> {
     let src = args.get(2).filter(|a| !a.starts_with('-')).ok_or(usage)?.clone();
-    let mut flags = Vec::new();
-    let mut rest = Vec::new();
+    let (mut flags, mut rest, mut transparent) = (BTreeMap::new(), Vec::new(), false);
     let mut it = args[3..].iter();
     while let Some(a) = it.next() {
         match a.as_str() {
             "--" => rest.extend(it.by_ref().cloned()),
-            "--transparent" => flags.push((a.clone(), None)),
-            f if f.starts_with('-') => flags.push((a.clone(), Some(it.next().ok_or_else(|| format!("{a} needs a value: {usage}"))?.clone()))),
+            "--transparent" => transparent = true,
+            f if f.starts_with('-') => _ = flags.insert(a.clone(), it.next().ok_or_else(|| format!("{a} needs a value: {usage}"))?.clone()),
             _ => return Err(format!("{a}: not a flag of this verb: {usage}")),
         }
     }
-    let get = |k: &str| flags.iter().find(|(f, _): &&(String, Option<String>)| f == k).and_then(|(_, v)| v.clone());
-    let out = std::path::absolute(get("-o").ok_or(usage)?).map_err(|e| e.to_string())?;
-    let frames = get("--frames").and_then(|n| n.parse().ok()).filter(|n| *n > 0).ok_or("--frames needs a number of frames over 0")?;
-    let fps = get("--fps").map_or(Ok(30.0), |f| f.parse::<f64>().ok().filter(|f| *f > 0.0).ok_or("--fps needs frames a second"))?;
-    let size = match get("--size") {
+    let out = std::path::absolute(flags.get("-o").ok_or(usage)?).map_err(|e| e.to_string())?;
+    let frames = flags.get("--frames").and_then(|n| n.parse().ok()).filter(|n| *n > 0).ok_or("--frames needs a number of frames over 0")?;
+    let fps: f64 = match flags.get("--fps") {
+        Some(f) => f.parse().ok().filter(|f: &f64| *f > 0.0).ok_or("--fps needs frames a second")?,
+        None => 30.0,
+    };
+    let size = match flags.get("--size") {
         Some(s) => s.split_once('x').and_then(|(w, h)| Some((w.parse().ok()?, h.parse().ok()?))).ok_or("--size needs WxH")?,
         None => (1920, 1080),
     };
-    Ok(Shot { src, out, frames, fps, size, flags, rest })
+    Ok(Shot { src, out, frames, fps, size, transparent, flags, rest })
 }
 
 /// The frames a run wrote in `dir` (Blender's 0001.png on, Godot's f00000000.png on), by their number: the first
@@ -102,16 +97,16 @@ pub fn blender(args: &[String]) -> R<String> {
     let s = parse(args, BLENDER_USAGE)?;
     let src = std::path::absolute(&s.src).map_err(|e| e.to_string())?;
     let is_blend = s.src.ends_with(".blend");
-    let file = if is_blend { Some(src.clone()) } else { s.flag("--file").map(PathBuf::from) };
+    let file = if is_blend { Some(src.clone()) } else { s.flags.get("--file").map(PathBuf::from) };
     if let Some(f) = file.as_ref().filter(|f| !f.is_file()) {
         return Err(format!("{}: no such .blend", f.display()));
     }
     fresh(&s.out)?;
-    let mut opts = json!({ "out": s.out.to_string_lossy(), "frames": s.frames, "fps": s.fps, "width": s.size.0, "height": s.size.1, "transparent": s.has("--transparent") });
-    if let Some(e) = s.flag("--engine") {
+    let mut opts = json!({ "out": s.out.to_string_lossy(), "frames": s.frames, "fps": s.fps, "width": s.size.0, "height": s.size.1, "transparent": s.transparent });
+    if let Some(e) = s.flags.get("--engine").map(String::as_str) {
         opts["engine"] = json!(e);
     }
-    if let Some(n) = s.flag("--samples") {
+    if let Some(n) = s.flags.get("--samples").map(String::as_str) {
         opts["samples"] = json!(n.parse::<u32>().map_err(|_| "--samples needs a whole number")?);
     }
     let shoot = "import { shoot } from \"@raea/blender/shoot\";\nconst call = (globalThis as any).__raea_call;\n";
@@ -122,7 +117,7 @@ pub fn blender(args: &[String]) -> R<String> {
         format!("import * as M from {};\n{shoot}{}.then(() => shoot({opts})){}\n", blender_ts::spec(&ts), blender_ts::DEFAULT, blender_ts::CLOSE)
     };
     let mut rest = s.rest.clone();
-    let secs = s.flag("--timeout").and_then(|t| t.parse().ok()).unwrap_or_else(|| blender_ts::timeout(&mut rest));
+    let secs = s.flags.get("--timeout").map(String::as_str).and_then(|t| t.parse().ok()).unwrap_or_else(|| blender_ts::timeout(&mut rest));
     let code = blender_ts::session(&entry, file.as_deref(), &rest, secs)?;
     if code != 0 {
         return Err(format!("{} ended with exit {code}", s.src));
@@ -165,12 +160,12 @@ pub fn godot(args: &[String]) -> R<String> {
     let none = raea_io_home::home().join("sdk/godot/src/host/none.ts");
     let (script, scene) = match s.src.strip_prefix("res://") {
         Some(_) => (none.to_string_lossy().into_owned(), Some(s.src.clone())),
-        None => (s.src.clone(), s.flag("--scene").map(str::to_string)),
+        None => (s.src.clone(), s.flags.get("--scene").cloned()),
     };
     fresh(&s.out)?;
     let mut run = vec!["godot".to_string(), "run".into(), script, "--movie".into(), s.out.join("f.png").to_string_lossy().into_owned()];
     run.extend(["--fps".into(), s.fps.round().to_string(), "--frames".into(), s.frames.to_string()]);
-    let _over = match s.flag("--project") {
+    let _over = match s.flags.get("--project").map(String::as_str) {
         Some(p) => {
             run.extend(["--project".into(), p.to_string()]);
             Some(Override::set(Path::new(p), s.size)?)
@@ -183,7 +178,7 @@ pub fn godot(args: &[String]) -> R<String> {
     if let Some(sc) = scene {
         run.extend(["--scene".into(), sc]);
     }
-    if let Some(t) = s.flag("--timeout") {
+    if let Some(t) = s.flags.get("--timeout").map(String::as_str) {
         run.extend(["--timeout".into(), t.to_string()]);
     }
     if !s.rest.is_empty() {
@@ -231,6 +226,6 @@ mod tests {
         assert!(parse(&a("blender shot x.ts --frames 3"), BLENDER_USAGE).is_err());
         assert!(parse(&a("blender shot x.ts -o d"), BLENDER_USAGE).unwrap_err().contains("--frames"));
         let s = parse(&a("godot shot res://m.tscn -o d --frames 4 --size 640x360 --project p -- go"), GODOT_USAGE).unwrap();
-        assert_eq!((s.frames, s.size, s.flag("--project"), s.rest.clone()), (4, (640, 360), Some("p"), vec!["go".to_string()]));
+        assert_eq!((s.frames, s.size, s.flags.get("--project").map(String::as_str), s.rest.clone()), (4, (640, 360), Some("p"), vec!["go".to_string()]));
     }
 }

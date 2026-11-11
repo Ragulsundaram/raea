@@ -27,6 +27,7 @@ fn raea_base() -> String {
 }
 
 /// One platform's download: who built it, the asset, its sha256 and size, and the program inside its one top folder.
+#[derive(Clone, Copy)]
 struct Pin {
     by: &'static str,
     asset: &'static str,
@@ -44,6 +45,14 @@ impl Pin {
     }
 }
 
+// raea's Mac build is arm64 and notarized; GodotJS's a universal app, ad-hoc signed
+const MAC_RAEA: Pin = Pin { by: "raea", asset: "godot-4.6.1-raea-macos-arm64.zip", sha256: "17e66b8f99134a67db29ce82b88ace7f4c2e4ae651c80a3876ac6bd5e68a8a75", size: 69_132_728, program: "Godot.app/Contents/MacOS/Godot" };
+const MAC_GODOTJS: Pin = Pin { by: "GodotJS", asset: "macos-editor-app-4.6.1-jsc.zip", sha256: "8a3022cb07c9740b2acc4a0b6bba6be78fb2fe46ba172b13abd51e6829cdca95", size: 143_940_673, program: "Godot.app/Contents/MacOS/Godot" };
+const LINUX_RAEA: Pin = Pin { by: "raea", asset: "godot-4.6.1-raea-linux-x86_64.zip", sha256: "9c86b3e6af0f8cc8a7158685103ccbe15d10aaf246067ec47509909647726b54", size: 78_737_822, program: "godot.linuxbsd.editor.x86_64" };
+const LINUX_GODOTJS: Pin = Pin { by: "GodotJS", asset: "linux-editor-4.6.1-qjs-ng.zip", sha256: "daa91d6cff5862ed9e0b3776694fbe4ea0ebb474d244f46ffb3aa5af0318989d", size: 78_737_089, program: "godot.linuxbsd.editor.x86_64" };
+const WINDOWS_RAEA: Pin = Pin { by: "raea", asset: "godot-4.6.1-raea-windows-x86_64.zip", sha256: "cf360e7a350f04a1cdb8d1ac475ebfc81518b5b49831ab2ed693f5d8127265e5", size: 73_171_472, program: "godot.windows.editor.x86_64.exe" };
+const WINDOWS_GODOTJS: Pin = Pin { by: "GodotJS", asset: "windows-editor-4.6.1-qjs-ng.zip", sha256: "041b761a945b6a34d40f508dbd1accca462d943d2941c3a1a4568f84dd29c1d4", size: 83_915_786, program: "godot.windows.editor.x86_64.exe" };
+
 fn pins() -> R<Vec<Pin>> {
     pins_for(std::env::consts::OS, std::env::consts::ARCH)
 }
@@ -52,21 +61,11 @@ fn pins() -> R<Vec<Pin>> {
 /// builds are among its files still installs). Both hold the program at the same path. A platform GodotJS doesn't
 /// build for is told how to bring its own build (GD2), never given a stock Godot.
 fn pins_for(os: &str, arch: &str) -> R<Vec<Pin>> {
-    let raea = |asset, sha256, size, program| Pin { by: "raea", asset, sha256, size, program };
-    let theirs = |asset, sha256, size, program| Pin { by: "GodotJS", asset, sha256, size, program };
-    // GodotJS's Mac build: a universal app, ad-hoc signed; raea's: arm64, notarized
-    let mac = theirs("macos-editor-app-4.6.1-jsc.zip", "8a3022cb07c9740b2acc4a0b6bba6be78fb2fe46ba172b13abd51e6829cdca95", 143_940_673, "Godot.app/Contents/MacOS/Godot");
     match (os, arch) {
-        ("macos", "aarch64") => Ok(vec![raea("godot-4.6.1-raea-macos-arm64.zip", "17e66b8f99134a67db29ce82b88ace7f4c2e4ae651c80a3876ac6bd5e68a8a75", 69_132_728, "Godot.app/Contents/MacOS/Godot"), mac]),
-        ("macos", _) => Ok(vec![mac]),
-        ("linux", "x86_64") => Ok(vec![
-            raea("godot-4.6.1-raea-linux-x86_64.zip", "9c86b3e6af0f8cc8a7158685103ccbe15d10aaf246067ec47509909647726b54", 78_737_822, "godot.linuxbsd.editor.x86_64"),
-            theirs("linux-editor-4.6.1-qjs-ng.zip", "daa91d6cff5862ed9e0b3776694fbe4ea0ebb474d244f46ffb3aa5af0318989d", 78_737_089, "godot.linuxbsd.editor.x86_64"),
-        ]),
-        ("windows", "x86_64") => Ok(vec![
-            raea("godot-4.6.1-raea-windows-x86_64.zip", "cf360e7a350f04a1cdb8d1ac475ebfc81518b5b49831ab2ed693f5d8127265e5", 73_171_472, "godot.windows.editor.x86_64.exe"),
-            theirs("windows-editor-4.6.1-qjs-ng.zip", "041b761a945b6a34d40f508dbd1accca462d943d2941c3a1a4568f84dd29c1d4", 83_915_786, "godot.windows.editor.x86_64.exe"),
-        ]),
+        ("macos", "aarch64") => Ok(vec![MAC_RAEA, MAC_GODOTJS]),
+        ("macos", _) => Ok(vec![MAC_GODOTJS]),
+        ("linux", "x86_64") => Ok(vec![LINUX_RAEA, LINUX_GODOTJS]),
+        ("windows", "x86_64") => Ok(vec![WINDOWS_RAEA, WINDOWS_GODOTJS]),
         (os, arch) => Err(format!("GodotJS has no build for {os} {arch}: build it (github.com/godotjs/GodotJS) and `git config --global raea.godot PATH`")),
     }
 }
@@ -75,8 +74,8 @@ fn pins_for(os: &str, arch: &str) -> R<Vec<Pin>> {
 /// downloads again.
 fn own_is_pinned() -> bool {
     let Some(text) = own_dir("godot").ok().and_then(|d| std::fs::read_to_string(d.join("raea.json")).ok()) else { return false };
-    let had = serde_json::from_str::<serde_json::Value>(&text).ok().and_then(|v| v["sha256"].as_str().map(str::to_string));
-    pins().is_ok_and(|ps| ps.iter().any(|p| had.as_deref() == Some(p.sha256)))
+    let Ok(had) = serde_json::from_str::<serde_json::Value>(&text) else { return false };
+    pins().is_ok_and(|ps| ps.iter().any(|p| had["sha256"] == p.sha256))
 }
 
 /// The Godot to use and where it came from: `git config --global raea.godot` (a GodotJS build of your own), else
