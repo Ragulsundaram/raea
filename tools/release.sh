@@ -6,7 +6,8 @@
 # out as the installer puts it under ~/.raea. Built from the committed tree at REF (never anyone's unfinished edit);
 # the runtime's packages (sdk/react/js/node_modules, installed, not committed) come from this checkout.
 #
-#   tools/release.sh VERSION BIN_DIR [REF]     BIN_DIR holds a release build's raea and its bundler
+#   tools/release.sh VERSION BIN_DIR [REF]     BIN_DIR holds a release build's raea and its bundler, or a candidate's,
+#                                              unpacked from its archive (a promoted release, tools/release/promoted-from.sh)
 #                                              (libraea_bundle.dylib, .so, or raea.exe and raea_bundle.dll),
 #                                              raea-perceive (`raea song` runs it; off Apple since #43), and the app
 #                                              targets' two
@@ -110,7 +111,13 @@ case $platform in
     # dist/NAME-symbols/FILE.debug, which the stripped file names (gdb and addr2line find it); never shipped
     mkdir -p "$out/$name-symbols"
     for f in "$stage"/bin/*; do
-      d="$out/$name-symbols/$(basename "$f").debug"
+      n=$(basename "$f"); d="$out/$name-symbols/$n.debug"
+      # already stripped, with its debuglink: a promoted release's binary, packed once as its candidate
+      # (tools/release/promoted-bins.sh), whose symbols come with it in BIN_DIR/symbols; the link names the same file
+      if readelf -S "$f" 2>/dev/null | grep -q '\.gnu_debuglink'; then
+        if [ -f "$bin/symbols/$n.debug" ]; then cp "$bin/symbols/$n.debug" "$d"; else echo "release.sh: note: $n came stripped, without its symbols" >&2; fi
+        continue
+      fi
       objcopy --only-keep-debug "$f" "$d" && strip --strip-debug --discard-all "$f" && objcopy --add-gnu-debuglink="$d" "$f"
     done
     # what a Linux machine needs beside it: the bundled Noto Sans JP is a Latin subset, so kanji and kana come from the
