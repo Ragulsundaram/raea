@@ -16,3 +16,6 @@ serde_json = "1"
 # the verbs' flags read as a render reads its own
 raea-runtime-bundle = { path = "../../runtime/bundle" }
 raea-runtime-export = { path = "../../runtime/export" }
+# Godot with GodotJS, unpacked from its release zip (`raea setup godot`), and the script path the bundler imports
+zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
+dunce = "1"

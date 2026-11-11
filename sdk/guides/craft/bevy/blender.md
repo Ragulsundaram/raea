@@ -28,7 +28,8 @@ project's `review/NOTES.md` as a gap to build into solids, so the workaround doe
 
 ## Headless by default: one saved script per asset step — HEADLESS
 
-- Each step is a script in the project's `blender/` folder, run with `raea blender run blender/X.py IN OUT ARGS`.
+- Each step is a script in the project's `blender/` folder, run with `raea blender run blender/X.py IN OUT ARGS`
+  (or a `.ts` one, below).
   The first time you name a library script that isn't in the project, raea copies it there from
   `sdk/guides/craft/bevy/blender/`. From then on it is the project's script, to edit for this project.
 - Re-run the step whenever its source changes. The `.glb` in `media/` is output, never edited by hand.
@@ -39,6 +40,66 @@ project's `review/NOTES.md` as a gap to build into solids, so the workaround doe
 - `raea solid export FILE.ts -o media/X.glb [--set k=v,...] [--part NAME] [--colour #RRGGBB]` writes a solid as one
   `.glb` for a script. It refuses an empty solid or one `raea solid info` finds an error in, then reads the file back
   and checks the volume, pieces and box against the solid. The solid stays the source: export it again when it changes.
+
+## A step in TypeScript: raea/blender — HEADLESS
+
+A step can be a `.ts` script: `raea blender run blender/X.ts [FILE.blend] [ARGS...]` runs its default export against
+a headless Blender through `raea/blender`, Blender's whole Python API (`bpy`, `bmesh`, `mathutils`, `bpy_extras`,
+`gpu`) typed from Blender's own (5.2.1). tsc finds what Python finds only when the step runs: a member that isn't
+there, an enum value Blender doesn't have, a set on a read-only property, a wrong argument type. The rules above
+hold for it: ARGS are Blender's `sys.argv` after `--`, it writes one `.glb` and its sidecar, and an error ends the run
+with exit 1. The library scripts below are Python; a project's step can be either.
+
+```ts
+import { bpy, py } from "raea/blender";
+
+// blender/lowpoly.ts: raea blender run blender/lowpoly.ts IN.glb OUT.glb RATIO
+export default async function () {
+  const [src, out, ratio] = await py.exec<string[]>("import sys; result = sys.argv[sys.argv.index('--') + 1:]");
+  if (!src || !out || !(Number(ratio) > 0)) throw new Error("usage: raea blender run blender/lowpoly.ts IN.glb OUT.glb RATIO");
+  // the licence sidecar first: a source without one fails the run before anything is written
+  const meta = await py.exec<{ steps?: object[] }>(
+    `import json, os
+side = next((p for p in (src + ".json", os.path.splitext(src)[0] + ".json") if os.path.exists(p)), None)
+if side is None: raise FileNotFoundError("no licence sidecar beside " + src)
+result = json.load(open(side))`,
+    { src },
+  );
+  bpy.ops.wm.read_factory_settings({ use_empty: true });
+  bpy.ops.import_scene.gltf({ filepath: src });
+  for await (const ob of bpy.data.objects) {
+    if ((await ob.type) !== "MESH") continue;
+    const lod = ob.modifiers.new("lod", "DECIMATE"); // a DecimateModifier, typed as Python gives it
+    lod.ratio = Number(ratio);
+  }
+  bpy.ops.export_scene.gltf({ filepath: out, export_apply: true });
+  const steps = [...(meta.steps ?? []), { step: "lowpoly.ts", ratio: Number(ratio) }];
+  await py.exec("import json; json.dump(meta, open(path, 'w'), indent=2)", { meta: { ...meta, steps }, path: `${out}.json` });
+}
+```
+
+Where it reads differently from Python:
+- **Writes and calls are sent in order without waiting; `await` reads a value** (`await ob.location` is a `Vector`).
+  A batch stops at its first error, which the next `await` throws as a `BlenderError` with Python's type and message;
+  one no `await` saw still fails the run.
+- **A path is read again each time it is used.** `bpy.context.active_object` follows whichever object is active, and
+  `bpy.data.objects.$["Cube"]` stops finding the object once it is renamed. `py.pin(path)` holds the object, as a
+  Python variable does. What a call returns (`materials.new(...)`) is already a handle.
+- **Keyword arguments** are a plain object, last: `primitive_uv_sphere_add({ radius: 2 })`,
+  `keyframe_insert({ data_path: "location", frame: 1 })`.
+- **Items:** `coll.$["Cube"]` by name, `coll[0]` by index, `for await (const o of coll)` to walk; an item's fields are
+  read with `await` (`await o.name`).
+- **Types:** where Python works the type out at run time, cast: `ob.data as Ptr<types.Mesh>`. A call that makes a
+  thing by its type returns that class (`modifiers.new("lod", "DECIMATE")`, `lights.new("key", "AREA")`, and
+  `nodes.new("ShaderNodeBsdfPrincipled")` with its sockets typed by name). A node looked up by name is the base class,
+  so make the nodes a step sets with `nodes.new`.
+- **Many keys at once** (a pose clip, a bake): `fcurve_ensure_for_datablock`, then `keyframe_points.add(n)` and one
+  `foreach_set("co", flat)`, instead of a `keyframe_insert` per key.
+- **`mathutils`** runs in TypeScript with Blender's maths, so maths on values already read needs no round trip.
+- **What a path can't say:** `py.exec(code, vars)` runs Python and gives back an expression's value, else `result`;
+  `py.module("addon_utils")` is a module; `py.with(cm, body)` is a `with` block (`temp_override`).
+- **A known gap:** an enum whose items Blender works out at the time (`Curve.fill_mode` on a 2D curve takes `BOTH`)
+  is typed with its static items only. Cast the value: `curve.fill_mode = "BOTH" as any`.
 
 ## The scripts (`sdk/guides/craft/bevy/blender/`)
 

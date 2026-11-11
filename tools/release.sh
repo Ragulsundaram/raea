@@ -144,6 +144,8 @@ for p in $(git show "$ref:sdk/tsconfig.base.json" | jq -r '.compilerOptions.path
   pkgs+=("sdk/$p/src" "sdk/$p/package.json")
   git cat-file -e "$ref:sdk/$p/bevy" 2>/dev/null && pkgs+=("sdk/$p/bevy")
   git cat-file -e "$ref:sdk/$p/examples" 2>/dev/null && pkgs+=("sdk/$p/examples")
+  # and its python/ (@raea/blender's bridge, which runs inside Blender: `raea blender run SCRIPT.ts` starts it)
+  git cat-file -e "$ref:sdk/$p/python" 2>/dev/null && pkgs+=("sdk/$p/python")
 done
 [ ${#pkgs[@]} -gt 0 ] || { echo "release: no @raea packages in sdk/tsconfig.base.json at $ref" >&2; exit 1; }
 # the committed files raea reads at run time

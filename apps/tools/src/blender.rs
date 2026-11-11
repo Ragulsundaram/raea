@@ -7,7 +7,7 @@ use std::process::Command;
 
 type R<T> = Result<T, String>;
 
-pub const USAGE: &str = "raea setup blender [--check] [--download]   (find Blender or download the LTS into ~/.raea/tools/blender, and install its MCP add-on)\n       raea blender run SCRIPT.py [ARGS...]   (blender --background --python SCRIPT.py -- ARGS, headless; blender/X.py missing from the project is copied from the library: convert, decimate, repair, split, bake, rig, cloth)";
+pub const USAGE: &str = "raea setup blender [--check] [--download]   (find Blender or download the LTS into ~/.raea/tools/blender, and install its MCP add-on)\n       raea blender run SCRIPT.py [ARGS...]   (blender --background --python SCRIPT.py -- ARGS, headless; blender/X.py missing from the project is copied from the library: convert, decimate, repair, split, bake, rig, cloth)\n       raea blender run SCRIPT.ts [FILE.blend] [ARGS...]   (a TypeScript script against Blender's whole Python API through raea/blender: bpy, bmesh, mathutils, typed; a headless Blender, FILE.blend opened, quit when the script ends)";
 
 /// The LTS series raea downloads; the newest patch in blender.org/release/Blender<LTS>/ is taken. Moved when Blender
 /// ships a new LTS (blender.org/download/lts).
@@ -54,7 +54,7 @@ fn version(bin: &Path) -> R<String> {
     String::from_utf8_lossy(&o.stdout).lines().find(|l| l.starts_with("Blender ")).map(str::to_string).ok_or_else(|| format!("{} --version printed no version", bin.display()))
 }
 
-fn run(cmd: &mut Command, what: &str) -> R<String> {
+pub(crate) fn run(cmd: &mut Command, what: &str) -> R<String> {
     let o = cmd.output().map_err(|e| format!("{what}: {e}"))?;
     if !o.status.success() {
         return Err(format!("{what} failed: {}{}", String::from_utf8_lossy(&o.stderr).trim(), String::from_utf8_lossy(&o.stdout).trim()));
@@ -89,7 +89,7 @@ fn newest(listing: &str) -> Option<String> {
     best.map(|(_, v)| v)
 }
 
-fn sha256(file: &Path) -> R<String> {
+pub(crate) fn sha256(file: &Path) -> R<String> {
     let out = if cfg!(windows) {
         run(Command::new("certutil").arg("-hashfile").arg(file).arg("SHA256"), "certutil")?.lines().nth(1).unwrap_or_default().replace(' ', "")
     } else {

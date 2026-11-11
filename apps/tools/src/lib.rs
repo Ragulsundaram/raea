@@ -13,3 +13,9 @@ pub mod agent_mcp;
 pub mod agent_hooks;
 /// `raea setup blender` and `raea blender run`
 pub mod blender;
+/// the Blender a TypeScript script drives (`raea blender run SCRIPT.ts`, sdk/blender)
+pub mod blender_bridge;
+/// `raea setup godot`, `raea godot types` and `raea godot open`: Godot with GodotJS (sdk/godot)
+pub mod godot;
+/// `raea godot run SCRIPT.ts`: a TypeScript script in Godot through GodotJS
+pub mod godot_run;

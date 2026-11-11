@@ -23,6 +23,7 @@ pieces; then write the file. Each file's example is a complete composition you c
 | interiors: rooms, cabinets along walls, windows and bays, chairs turned to tables, layout checks, wall decor, the garden outside, daylight, sounds placed in the scene | `bevy/rooms` |
 | a whole scene to build and make believable: the brief, which tool makes which object, build order, review sheets, the judge, when to stop | `bevy/scenes` |
 | the words to paste for a whole scene: the brief template, the builder prompt, the judge prompt | `bevy/prompts` |
+| a Godot project: its scenes and resources scripted from TypeScript, run headless, recorded as frames to use as footage | `bevy/godot` |
 | shapes: boxes to modelled solids, blended organic bodies (`sdf`), trees, terrain, rocks and plants (`grow`), 3D letters | `bevy/meshes` |
 | moving things: spins, springs, reveals, things arriving later, model clips | `bevy/animation` |
 | a 3D game: state, input, many entities, collisions, state machines | `bevy/games` |
