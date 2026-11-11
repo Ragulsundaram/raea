@@ -16,7 +16,7 @@ raea renders the composition three times. The first render, as it is, is kept in
 
 Each stretch of frames that shows one video file becomes a clip of that file, starting where the composition starts it and playing at its rate. It is placed and scaled as `object-fit` shows it in raea (`cover`, `contain`, a crop). Clips covering the whole frame go on the main track; the others go on tracks above it. A video's own sound stays on its clip at the composition's volume; every other sound becomes an audio clip with its gain and fades. The output names what doesn't carry over, such as the Tone graph's music, which has no file, or a clip that moves or fades within its shot (placed as its first frame shows it).
 
-CapCut rewrites its project list when it quits, so `raea export capcut` refuses to write into CapCut's projects while CapCut is open. Quit it first, or pass `--no-register` or `-o`. The previous project list is kept in `~/.raea/capcut/backups` first.
+CapCut rewrites its project list when it quits, so `raea export capcut` refuses to write into CapCut's projects while CapCut is open. Quit it first, or pass `--no-register` or `-o`. The previous project list is kept first in `~/.raea/capcut/backups` (`%LOCALAPPDATA%\raea\capcut\backups` on Windows), never in raea's own folder.
 
 <!-- generated:begin by tools/manual-ref/cli.ts from `raea help --json`; edit only the flag descriptions -->
 

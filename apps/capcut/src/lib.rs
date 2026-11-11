@@ -186,8 +186,7 @@ fn export(args: &[String]) -> R<String> {
     let listed = if !in_store || args.iter().any(|a| a == "--no-register") {
         "not entered in CapCut's project list".to_string()
     } else {
-        let backups = raea_io_home::home().join("capcut/backups");
-        match raea_io_capcut::register(&root, &written.dir, &written.meta, written.info_bytes, &backups) {
+        match raea_io_capcut::register(&root, &written.dir, &written.meta, written.info_bytes, &backups()) {
             Ok(b) => format!("entered in CapCut's project list (its list before: {})", b.display()),
             Err(e) => format!("not entered in CapCut's project list: {e}"),
         }
@@ -211,6 +210,16 @@ fn export(args: &[String]) -> R<String> {
         said.push_str(&format!("\n  note  {n}"));
     }
     Ok(said)
+}
+
+/// Where CapCut's project list is copied before a draft is entered in it: the person's own folder, ~/.raea/capcut/backups
+/// ($RAEA_CAPCUT_BACKUPS; %LOCALAPPDATA%\raea\capcut\backups on Windows, which sets no HOME). Never raea's home, which
+/// is its install or, from a checkout, the source tree (11-11: a list's backup landed in the repository).
+fn backups() -> PathBuf {
+    match std::env::var_os("LOCALAPPDATA").filter(|d| cfg!(windows) && !d.is_empty() && std::env::var_os("RAEA_CAPCUT_BACKUPS").is_none()) {
+        Some(d) => PathBuf::from(d).join("raea").join("capcut").join("backups"),
+        None => raea_io_home::env_path("RAEA_CAPCUT_BACKUPS", ".raea/capcut/backups"),
+    }
 }
 
 /// A movie raea drew, as clips of it wherever it draws, full frame on tracks named `name`; none when it draws nothing.
