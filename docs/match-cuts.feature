@@ -78,7 +78,13 @@ Feature: Match cuts on the thirds: a piece's cuts planned as a chain of hooks, c
 
   Rule: The person picks from a board
 
+    @done
     Scenario: MC4. board.tsx: any project's chain and places drawn on the thirds to pick from (`raea show board.tsx`)
+      # Status 11-10: built. Board({ chain, places, title, intro }) draws the eye's way with its rests at each place, the
+      # eleven plan checks, each shot's frame with its in and out hooks, and the place library with picks. Picks and
+      # notes go back with app.result. The bench's board.tsx is three lines over good.chain.ts and places.ts, and
+      # match-cuts.sh mounts it headless (raea app check --target web, @raea/app replaced by a stand-in with the board's
+      # two calls) and fails when it throws.
       Given the plan
         | crate | file                                  | lines | job |
         | -     | sdk/guides/craft/match-cuts/board.tsx | 220   | Board({ chain, places }): the eye's path through the piece, each shot's frame with its in and out hooks, the place library with picks and notes sent back with app.result |

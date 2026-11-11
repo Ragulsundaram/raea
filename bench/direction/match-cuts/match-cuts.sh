@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# The match-cut checks' proof (docs/match-cuts.feature MC2, MC3), in a copy of this folder with the kit copied
+# The match-cut checks' proof (docs/match-cuts.feature MC2, MC3, MC4), in a copy of this folder with the kit copied
 # (sdk/guides/craft/match-cuts to checks/match-cuts), as a project copies it:
 #  1. the plan checks (chain.ts) pass on good.chain.ts, and each cheat in cheats.ts fails the one check it names;
 #     `bun checks/match-cuts/plan.ts` runs them by name.
 #  2. the render check (thirds.ts) on the graybox of that chain finds nothing, and finds each of its cheats.
+#  3. the board (board.tsx, MC4) mounts and draws the chain and its places.
 #
 #   RAEA_BIN=path/to/raea bash bench/direction/match-cuts/match-cuts.sh     (KEEP=1 keeps the copy)
 set -uo pipefail
@@ -22,8 +23,13 @@ bad=0
 
 echo "1. the plan checks"
 bun cheats.ts || bad=$((bad + 1))
+out=$(bun checks/match-cuts/plan.ts good.chain.ts 2>&1)
+if [ $? -eq 0 ] && grep -q "11 pass, 0 fail" <<<"$out"; then echo "ok   plan.ts runs every check"; else echo "FAIL plan.ts good.chain.ts: $out"; bad=$((bad + 1)); fi
 out=$(bun checks/match-cuts/plan.ts good.chain.ts --only lands,glyph 2>&1)
 if [ $? -eq 0 ] && grep -q "2 pass, 0 fail" <<<"$out"; then echo "ok   plan.ts runs two checks by name"; else echo "FAIL plan.ts --only lands,glyph: $out"; bad=$((bad + 1)); fi
+# slideTo: a camera moved so a point falls on each kind of place lands it there
+out=$(bun -e 'import { slideTo, toFrame, centreOf } from "./checks/match-cuts/chain"; const cam = { eye: [1, 2, 6], look: [0, 0.5, 0], fov: 45 }, p = [0.4, 0.9, -1.2]; let worst = 0; for (const at of ["TL", "MR", "BC", "H1", "V2", "CC"] as const) { const f = toFrame(p, slideTo(cam, at, p, 16 / 9), 16 / 9), [u, v] = centreOf(at); worst = Math.max(worst, Math.abs(f.u - u), Math.abs(f.v - v)); } console.log(worst < 1e-9 ? "ok" : `off by ${worst}`)' 2>&1)
+[ "$out" = ok ] && echo "ok   slideTo puts a point on its place" || { echo "FAIL slideTo: $out"; bad=$((bad + 1)); }
 bun checks/match-cuts/plan.ts good.chain.ts --only nope >/dev/null 2>&1
 [ $? -ne 0 ] && echo "ok   plan.ts refuses a check it doesn't have" || { echo "FAIL plan.ts ran a check named nope"; bad=$((bad + 1)); }
 
@@ -54,6 +60,14 @@ case_ graybox n1.1 none
 for c in off drift renamed late unfilled behind jlate lstop; do case_ "$c" n1.1 some; done
 # the chain's own cheat: a hook that names no part (checks/morning-nopart.ts), on the graybox that holds
 case_ graybox n1.2 some
+
+echo "3. the board (board.tsx) mounts"
+# @raea/app is the raea app's, which shows the board; outside it, a stand-in with the two calls the board makes
+printf '%s\n' 'export const app = { result: async (_: string) => {} };' 'export const useItem = () => ({ title: "The cuts", ask: "Pick places", status: "open", answered: false });' >checks/match-cuts/app-stub.ts
+sed -i.bak 's|from "@raea/app"|from "./app-stub"|' checks/match-cuts/board.tsx
+if "$raea" app check board.tsx --target web --png out/board >out/board.log 2>&1 && [ -s out/board/00-mount.png ]; then echo "ok   the board mounts and draws (out/board/00-mount.png)"
+else echo "FAIL the board doesn't mount: $(tail -3 out/board.log)"; bad=$((bad + 1)); fi
+mv checks/match-cuts/board.tsx.bak checks/match-cuts/board.tsx
 
 [ $bad -eq 0 ] && echo "match-cuts: all ok" || echo "match-cuts: $bad failed"
 exit $((bad > 0))
