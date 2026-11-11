@@ -98,8 +98,8 @@ Where it reads differently from Python:
 - **`mathutils`** runs in TypeScript with Blender's maths, so maths on values already read needs no round trip.
 - **What a path can't say:** `py.exec(code, vars)` runs Python and gives back an expression's value, else `result`;
   `py.module("addon_utils")` is a module; `py.with(cm, body)` is a `with` block (`temp_override`).
-- **A known gap:** an enum whose items Blender works out at the time (`Curve.fill_mode` on a 2D curve takes `BOTH`)
-  is typed with its static items only. Cast the value: `curve.fill_mode = "BOTH" as any`.
+- **An enum Blender works out at the time** (`Curve.fill_mode`: `BOTH` on a 2D curve) takes its static items or any
+  other string, so `curve.fill_mode = "BOTH"` type-checks and Blender says whether it fits the data.
 
 ## The scripts (`sdk/guides/craft/bevy/blender/`)
 
