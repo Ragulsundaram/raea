@@ -1,0 +1,15 @@
+[package]
+name = "raea-sys-mlx"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "raea's MLX facility: models run on Apple silicon's GPU through MLX (mlx-rs), beside raea-sys-ml's ONNX Runtime"
+license = "FSL-1.1-ALv2"
+
+[dependencies]
+anyhow = "1"
+
+# MLX is Apple silicon's: on other systems the crate is empty and pulls nothing in
+[target.'cfg(target_os = "macos")'.dependencies]
+mlx-rs = "=0.34.0"
+

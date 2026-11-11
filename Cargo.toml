@@ -78,6 +78,7 @@ members = [
     "systems/tone",
     "systems/mix",
     "systems/ml",
+    "systems/mlx",
     "systems/speech",
     "systems/layout",
     "systems/vision",

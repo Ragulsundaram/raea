@@ -52,6 +52,8 @@ raea-sys-mix = "systems"
 raea-sys-tone = "systems"
 raea-seedling = "systems"
 raea-sys-ml = "systems"
+# MLX on Apple silicon, beside raea-sys-ml's ONNX Runtime (empty on other systems)
+raea-sys-mlx = "systems"
 raea-sys-speech = "systems"
 raea-sys-layout = "systems"
 raea-sys-vision = "systems"
@@ -227,6 +229,7 @@ raea-sys-rt = true
 raea-sys-mix = true
 raea-sys-tone = true
 raea-sys-ml = true
+raea-sys-mlx = true
 raea-sys-layout = true
 raea-sys-vision = true
 # a file's encoder columns (Fingerprint's heads read them)
