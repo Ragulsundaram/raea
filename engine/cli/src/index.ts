@@ -72,7 +72,7 @@ A video edit as a React + TypeScript project, rendered by raea.
 
 - edit.tsx: the composition. Change anything: layout, timing, which component plays when.
 - cuts.ts: the clips (\`raea cut\` writes it, with cuts.json and words.json beside it; re-run it rather than editing
-  by hand, or captions and checks lose their timing). components/: parts you added (\`raea part add\`), yours to change.
+  by hand, or captions and checks lose their timing). components/: components you added (\`raea component add\`), yours to change.
 - brand/brand.css: the brand's tokens (\`raea brand DOMAIN\` reads them from the brand's site). edit.tsx loads them with the project's
   Tailwind: \`<style>{css}</style>\`, css from "./styles.gen" (raea render writes it). Style only with the brand
   classes: colour text-brand-accent, bg-brand-accent, bg-brand-surface (bg-brand-bg), text-brand-on-surface,
@@ -105,6 +105,14 @@ Composition: registerRoot(() => <Composition id component width height fps durat
 Not there: React hooks come from "react" (useMemo, useState), not from raea.
 `;
 
+/** The workspace a folder is in: the nearest folder at or above it holding .raea/workspace, through the shell's fs. */
+async function workspaceAbove(c: Ctx, from: string): Promise<string | undefined> {
+  for (let d = from.replace(/\/$/, ""); d; d = d.slice(0, d.lastIndexOf("/"))) {
+    if (await c.fs.exists(`${d}/.raea/workspace`)) return d;
+  }
+  return undefined;
+}
+
 /** The `raea` command's handler (the shell wraps it with just-bash's defineCommand, so this package needs no dependency). */
 export function raeaHandler(host?: Host, engine?: Engine) {
   return async (args: string[], ctx: unknown) => {
@@ -119,10 +127,10 @@ export function raeaHandler(host?: Host, engine?: Engine) {
       if (!engine) throw new Error(`raea ${a[0]} is the engine's (the native raea), and this shell has none`);
       return engine(a, ctx);
     };
-    // a set is a folder of examples/parts (`raea part add reel` copies it whole); a part is one file of a set that says
-    // `// raea part add NAME: ...` at its top, and copies alone
-    const said = (src: string) => (/^\/\/ raea part add [\w-]+: (.*)$/m.exec(src)?.[1] ?? "").split(". ")[0];
-    const single = (n: string) => Object.values(REGISTRY).map((set) => set[`${n}.tsx`]).find((src) => src && new RegExp(`^// raea part add ${n}:`, "m").test(src));
+    // a set is a folder of examples/components (`raea component add reel` copies it whole); a component is one file of a
+    // set that says `// raea component add NAME: ...` at its top (`raea part add`, before 11-12), and copies alone
+    const said = (src: string) => (/^\/\/ raea (?:component|part) add [\w-]+: (.*)$/m.exec(src)?.[1] ?? "").split(". ")[0];
+    const single = (n: string) => Object.values(REGISTRY).map((set) => set[`${n}.tsx`]).find((src) => src && new RegExp(`^// raea (?:component|part) add ${n}:`, "m").test(src));
     const parts = () =>
       Object.entries(REGISTRY)
         .flatMap(([set, files]) => [
@@ -169,42 +177,57 @@ export function raeaHandler(host?: Host, engine?: Engine) {
           } else await put("AGENTS.md", NOTES);
           return out(made.length ? `made ${made.join(", ")}\n` : "nothing to make: the project's files are here\n");
         }
-        case "part": {
-          if (args[1] === "list" || args[1] === undefined) return out(parts());
-          if (args[1] !== "add") return out("", 2, "raea part list | raea part add NAME ... [--force]\n");
+        // `raea component` copies raea's sets and components into the project's components/ (docs/layout.feature LY4),
+        // or with --shared into the workspace's shared/components/, which every project imports as @shared/components/
+        // `raea part` was its name until 11-12, and still works, saying so
+        case "part":
+        case "component": {
+          const was = args[0] === "part" ? "(raea part is raea component now)\n" : "";
+          if (args[1] === "list" || args[1] === undefined) return out(parts(), 0, was);
+          if (args[1] !== "add") return out("", 2, `${was}raea component list | raea component add NAME ... [--shared] [--force]\n`);
           const names = clean(args.slice(2));
-          if (!names.length) return out("", 2, "raea part add NAME ...  (raea part list shows them)\n");
+          if (!names.length) return out("", 2, `${was}raea component add NAME ...  (raea component list shows them)\n`);
           const force = args.includes("--force");
-          await c.fs.mkdir(p("components"), { recursive: true });
+          let home = "components";
+          // what imports it: a composition in compositions/ reaches ../components/, one at the root ./components/
+          let from = (await c.fs.exists(p("compositions"))) ? "../components" : "./components";
+          if (args.includes("--shared")) {
+            const ws = await workspaceAbove(c, c.cwd);
+            if (!ws) return out("", 1, `${was}raea component add --shared: no workspace above ${c.cwd} (no .raea/workspace): add it to the project instead\n`);
+            home = `${ws}/shared/components`;
+            from = "@shared/components";
+          }
+          await c.fs.mkdir(p(home), { recursive: true });
           const done: string[] = [];
+          const shown = (rel: string) => (home.startsWith("/") ? `shared/components/${rel.slice(home.length + 1)}` : rel);
           for (const n of names) {
             const set = REGISTRY[n];
             if (set) {
               // a set is the project's own once copied: never overwritten unasked, and said so loudly
-              const dir = `components/${n}`;
-              if (!force && (await c.fs.exists(p(dir)))) return out(done.join(""), 1, `raea part add: ${dir}/ is already here (yours now; --force replaces its files)\n`);
+              const dir = `${home}/${n}`;
+              if (!force && (await c.fs.exists(p(dir)))) return out(done.join(""), 1, `raea component add: ${shown(dir)}/ is already here (yours now; --force replaces its files)\n`);
               await c.fs.mkdir(p(dir), { recursive: true });
               for (const [f, src] of Object.entries(set)) await c.fs.writeFile(p(`${dir}/${f}`), src);
-              done.push(`${dir}/  ${Object.keys(set).length} files; import from "./${dir}"\n`);
+              done.push(`${shown(dir)}/  ${Object.keys(set).length} files; import from "${from}/${n}"\n`);
               continue;
             }
             const src = single(n);
-            if (!src) return out(done.join(""), 1, `raea part add: no part or set "${n}" (raea part list shows them)\n`);
-            const dest = p(`components/${n}.tsx`);
+            if (!src) return out(done.join(""), 1, `raea component add: no component or set "${n}" (raea component list shows them)\n`);
+            const dest = p(`${home}/${n}.tsx`);
             if (!force && (await c.fs.exists(dest))) {
-              done.push(`components/${n}.tsx is already here (yours now; --force replaces it)\n`);
+              done.push(`${shown(`${home}/${n}.tsx`)} is already here (yours now; --force replaces it)\n`);
               continue;
             }
             await c.fs.writeFile(dest, src);
-            done.push(`components/${n}.tsx  import it: import ${n.replace(/(^|-)(\w)/g, (_, __, ch) => ch.toUpperCase())} from "./components/${n}";\n`);
+            done.push(`${shown(`${home}/${n}.tsx`)}  import it: import ${n.replace(/(^|-)(\w)/g, (_, __, ch) => ch.toUpperCase())} from "${from}/${n}";\n`);
           }
-          return out(done.join(""));
+          return out(done.join(""), 0, was);
         }
-        // `add` is npm packages (the engine's package manager); a registry part's name is pointed at `raea part add`
+        // `add` is npm packages (the engine's package manager); a registry component's name is pointed at `raea component add`
         case "add": {
           const r = await native();
           const part = clean(args.slice(1)).find((n) => REGISTRY[n] || single(n));
-          return r.exitCode && part ? { ...r, stderr: r.stderr + `(a raea part? raea part add ${part})\n` } : r;
+          return r.exitCode && part ? { ...r, stderr: r.stderr + `(a raea component? raea component add ${part})\n` } : r;
         }
         case "cut": {
           const spans: number[][] = [];

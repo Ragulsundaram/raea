@@ -92,6 +92,13 @@ impl std::fmt::Display for Refusal {
 }
 
 const EXTS: [&str; 5] = ["tsx", "ts", "jsx", "js", "mjs"];
+/// The prefix a project imports its workspace's shared files by (docs/layout.feature LY2): @shared/components/desk.
+pub const SHARED: &str = "@shared/";
+
+/// The workspace a folder is in: the nearest folder at or above it holding .raea/workspace.
+fn workspace_of(dir: &Path) -> Option<PathBuf> {
+    dir.ancestors().find(|d| d.join(".raea/workspace").is_file()).map(Path::to_path_buf)
+}
 const MEDIA: [&str; 12] = ["mp4", "mov", "m4v", "webm", "m4a", "mp3", "wav", "aac", "png", "jpg", "jpeg", "svg"];
 
 pub struct Loader {
@@ -125,6 +132,9 @@ impl Loader {
 
     /// An import (`specifier`) from a module (`referrer`: a ModuleId's url, or a path for the entry) to the module it names.
     pub fn resolve(&self, specifier: &str, referrer: &str) -> Result<ModuleId, Refusal> {
+        if let Some(rest) = specifier.strip_prefix(SHARED) {
+            return self.shared(rest, specifier, referrer);
+        }
         if !(specifier.starts_with("./") || specifier.starts_with("../") || specifier.starts_with('/') || specifier.starts_with("file://")) {
             if self.prebuilt.contains_key(specifier) {
                 return Ok(ModuleId::Prebuilt(specifier.to_string()));
@@ -140,10 +150,30 @@ impl Loader {
         let base = base.canonicalize().unwrap_or(base);
         let raw = specifier.strip_prefix("file://").unwrap_or(specifier);
         let want = lexical(&if raw.starts_with('/') { PathBuf::from(raw) } else { base.join(raw) });
-        if !want.starts_with(&self.root) {
-            return Err(Refusal::new(RefusalKind::OutsideSpace, format!("`{specifier}` (imported by {referrer}) is outside the space: import files inside {}", self.root.display()), Some(specifier), Some(referrer)));
+        // inside the space, or inside its workspace's shared/ (a file there imports its neighbours relatively)
+        let shared = workspace_of(&self.root).map(|w| w.join("shared"));
+        if !want.starts_with(&self.root) && !shared.as_ref().is_some_and(|s| want.starts_with(s)) {
+            return Err(Refusal::new(RefusalKind::OutsideSpace, format!("`{specifier}` (imported by {referrer}) is outside the space: import files inside {}, and the workspace's shared files as @shared/<kind>/<name>", self.root.display()), Some(specifier), Some(referrer)));
         }
-        // as written, then with each extension, then as a folder's index
+        self.file(want, specifier, referrer)
+    }
+
+    /// `@shared/<kind>/<name>`: the workspace's shared/ (docs/layout.feature LY2), found by walking up from the space to
+    /// the folder holding .raea/workspace, resolved as a relative import is.
+    fn shared(&self, rest: &str, specifier: &str, referrer: &str) -> Result<ModuleId, Refusal> {
+        let Some(ws) = workspace_of(&self.root) else {
+            return Err(Refusal::new(RefusalKind::UnknownLibrary, format!("`{specifier}` (imported by {referrer}) names the workspace's shared/, and {} is in no workspace (no .raea/workspace above it): copy the file into the project, or `raea workspace adopt` the folder", self.root.display()), Some(specifier), Some(referrer)));
+        };
+        let dir = ws.join("shared");
+        let want = lexical(&dir.join(rest));
+        if !want.starts_with(&dir) {
+            return Err(Refusal::new(RefusalKind::OutsideSpace, format!("`{specifier}` (imported by {referrer}) climbs out of the workspace's shared/"), Some(specifier), Some(referrer)));
+        }
+        self.file(want, specifier, referrer)
+    }
+
+    /// A file by its path: as written, then with each extension, then as a folder's index.
+    fn file(&self, want: PathBuf, specifier: &str, referrer: &str) -> Result<ModuleId, Refusal> {
         let mut tries = vec![want.clone()];
         tries.extend(EXTS.iter().map(|e| want.with_extension(e)));
         tries.extend(EXTS.iter().map(|e| want.join(format!("index.{e}"))));

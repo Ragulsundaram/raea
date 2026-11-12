@@ -96,7 +96,7 @@ pub fn mezz(args: &[String]) -> R<String> {
 
 
 /// The agent shell's own verbs (engine/cli/src/index.ts) this binary runs; the rest come one by one (docs/agent-surfaces.md)
-pub const SHELL: &[&str] = &["init", "cut", "frame", "part", "brand", "library", "show"];
+pub const SHELL: &[&str] = &["init", "cut", "frame", "component", "part", "brand", "library", "show"];
 
 /// One of SHELL's verbs: @raea/cli's handler, run by engine/cli/src/native.ts on raea's JavaScriptCore with Node's core, so the
 /// verb's one source is its TypeScript. native.ts answers the host's ops it needs, and runs this binary for the engine's verbs.

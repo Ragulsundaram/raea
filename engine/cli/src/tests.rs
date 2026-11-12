@@ -8,6 +8,9 @@ fn shell_runs() {
     // `raea help` lists SHELL's verbs (help_lists_every_verb)
     let parts = shell(&["part".to_string(), "list".to_string()]).unwrap();
     assert!(parts.contains("captions"), "{parts}");
+    // raea component is its name now (docs/layout.feature LY4); raea part still answers
+    let components = shell(&["component".to_string(), "list".to_string()]).unwrap();
+    assert!(components.contains("captions") && components.contains("into components/reel/"), "{components}");
 }
 
 #[test]
@@ -68,6 +71,7 @@ fn a_verb_refuses_what_it_doesnt_take() {
         &["song", "s.wav", "--plot", "p.png", "--backend", "x"],
         &["cut", "take.mp4", "one line", "another", "--append"],
         &["part", "add", "captions", "face-frame", "--force"],
+        &["component", "add", "reel", "--shared", "--force"],
         &["mezz", "--check", "a.mov", "b.mov"],
         &["traces", "show", "last"],
         &["media", "ffmpeg", "-i", "x", "--anything"],

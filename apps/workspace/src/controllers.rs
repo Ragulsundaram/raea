@@ -1,4 +1,5 @@
-//! A workspace's controllers on disk (docs/projects.feature PJ2): controllers/<id>.ts, each `export default
+//! A workspace's controllers on disk (docs/projects.feature PJ2): shared/controllers/<id>.ts (docs/layout.feature; a
+//! workspace from before shared/ keeps controllers/ at its root), each `export default
 //! controller({...})` from "raea/brief", checked by core/brief's normalize. A project overrides a field's value in its
 //! .raea/project (`[controller "delivery.format"] aspect-ratio = 16:9`), so the project's value wins, as git config's
 //! own scopes do. Every change is a commit by who made it ("you", or the agent's name with --by).
@@ -16,7 +17,7 @@ fn workspace_dir() -> R<PathBuf> {
 
 /// Every controller in the workspace, checked, in file order.
 pub fn load(ws: &Path, eval: Eval) -> R<Vec<(PathBuf, Controller)>> {
-    let mut files: Vec<PathBuf> = std::fs::read_dir(ws.join("controllers")).into_iter().flatten().flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "ts")).collect();
+    let mut files: Vec<PathBuf> = std::fs::read_dir(raea_app_registry::shared_dir(ws, "controllers")).into_iter().flatten().flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "ts")).collect();
     files.sort();
     files.into_iter().map(|f| read(&f, eval).map(|c| (f, c))).collect()
 }
@@ -188,9 +189,9 @@ fn set(ws: &Path, path: &str, value: &str, project: bool, by: &str, eval: Eval) 
 
 fn write(ws: &Path, file: &Path, by: &str, eval: Eval) -> R<String> {
     let c = read(file, eval)?;
-    let to = ws.join("controllers").join(format!("{}.ts", c.id));
+    let to = raea_app_registry::shared_dir(ws, "controllers").join(format!("{}.ts", c.id));
     let new = !to.exists();
-    std::fs::create_dir_all(ws.join("controllers")).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(raea_app_registry::shared_dir(ws, "controllers")).map_err(|e| e.to_string())?;
     std::fs::write(&to, module(&c)).map_err(|e| format!("{}: {e}", to.display()))?;
     commit(ws, &[&to], &format!("{} controller {}", if new { "add" } else { "rewrite" }, c.id), by)?;
     let n = |k: usize, what: &str| format!("{k} {what}{}", if k == 1 { "" } else { "s" });
@@ -198,7 +199,7 @@ fn write(ws: &Path, file: &Path, by: &str, eval: Eval) -> R<String> {
 }
 
 fn rm(ws: &Path, id: &str, by: &str) -> R<String> {
-    let file = ws.join("controllers").join(format!("{id}.ts"));
+    let file = raea_app_registry::shared_dir(ws, "controllers").join(format!("{id}.ts"));
     if !file.is_file() {
         return Err(format!("no controller {id}: raea controller ls lists them"));
     }

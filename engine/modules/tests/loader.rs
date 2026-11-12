@@ -92,3 +92,33 @@ fn a_parse_error_says_where() {
     assert!(e.contains("bad.tsx") && e.contains("can't be parsed"), "{e}");
 }
 
+
+#[test]
+fn shared_imports_resolve_to_the_workspaces_shared_folder() {
+    // docs/layout.feature LY2: a project imports its workspace's shared/ by @shared/, and a shared file its neighbours
+    let w = space("shared", &[
+        (".raea/workspace", "[workspace]\n\tname = W\n"),
+        ("shared/components/desk.tsx", "import { leg } from \"./leg\";\nexport default () => leg;"),
+        ("shared/components/leg.ts", "export const leg = 1;"),
+        ("shared/components/props/index.ts", "export const p = 1;"),
+        ("projects/a/compositions/main.tsx", ""),
+    ]);
+    let root = w.canonicalize().unwrap();
+    let l = Loader::new(&w.join("projects/a"), libs()).unwrap();
+    let entry = root.join("projects/a/compositions/main.tsx").display().to_string();
+    assert_eq!(l.resolve("@shared/components/desk", &entry).unwrap(), ModuleId::File(root.join("shared/components/desk.tsx")));
+    assert_eq!(l.resolve("@shared/components/props", &entry).unwrap(), ModuleId::File(root.join("shared/components/props/index.ts")));
+    let desk = root.join("shared/components/desk.tsx").display().to_string();
+    assert_eq!(l.resolve("./leg", &desk).unwrap(), ModuleId::File(root.join("shared/components/leg.ts")));
+    // a relative climb to another project is still outside, and says @shared/
+    let other = l.resolve("../../b/x", &entry).unwrap_err().message;
+    assert!(other.contains("outside the space") && other.contains("@shared/"), "{other}");
+    assert!(l.resolve("@shared/../projects/b/x", &entry).unwrap_err().message.contains("climbs out"));
+    assert!(l.resolve("@shared/components/nope", &entry).unwrap_err().message.contains("isn't there"));
+    // with no workspace above, @shared/ says so
+    let loose = space("shared-loose", &[("edit.tsx", "")]);
+    let l = Loader::new(&loose, libs()).unwrap();
+    let e = loose.join("edit.tsx").display().to_string();
+    let r = l.resolve("@shared/components/desk", &e).unwrap_err();
+    assert!(r.kind == RefusalKind::UnknownLibrary && r.message.contains("in no workspace"), "{}", r.message);
+}

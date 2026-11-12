@@ -140,3 +140,31 @@ fn the_root_with_none_set() {
     std::fs::create_dir_all(synced.join("Library/Mobile Documents/com~apple~CloudDocs/Documents")).unwrap();
     assert_eq!(default_root(&synced), synced.join("raea"));
 }
+
+#[test]
+fn a_new_workspace_and_project_have_the_layout() {
+    // docs/layout.feature LY1: a folder per kind in the project and in the workspace's shared/, no media/ brand/ parts/
+    let ws = scratch("layout");
+    crate::workspace::make_workspace(&ws, "Layout", "monorepo").unwrap();
+    for k in crate::workspace::KINDS {
+        assert!(ws.join("shared").join(k).join(".gitkeep").is_file(), "shared/{k}");
+    }
+    assert!(!ws.join("controllers").exists() && !ws.join("artifacts").exists());
+    let attrs = std::fs::read_to_string(ws.join(".gitattributes")).unwrap();
+    assert!(attrs.contains("**/assets/** filter=lfs"), "{attrs}");
+    crate::workspace::new_project_in(&ws, "Desk Test", None).unwrap();
+    let p = ws.join("projects/desk-test");
+    for k in crate::workspace::KINDS.iter().chain(["out"].iter()) {
+        assert!(p.join(k).join(".gitkeep").is_file(), "{k}");
+    }
+    for gone in ["media", "brand", "parts"] {
+        assert!(!p.join(gone).exists(), "{gone}");
+    }
+    assert!(std::fs::read_to_string(p.join("tsconfig.json")).unwrap().contains("\"@shared/*\": [\"../../shared/*\"]"));
+    assert!(std::fs::read_to_string(p.join("AGENTS.md")).unwrap().contains("@shared/components/desk"));
+    // committed: the workspace's repo has every kept folder
+    let tracked = std::process::Command::new("git").args(["ls-files"]).current_dir(&ws).output().unwrap();
+    let tracked = String::from_utf8_lossy(&tracked.stdout);
+    assert!(tracked.contains("projects/desk-test/components/.gitkeep") && tracked.contains("shared/assets/.gitkeep"), "{tracked}");
+    let _ = std::fs::remove_dir_all(&ws);
+}

@@ -73,6 +73,8 @@ pub(super) fn lint(reg: &Registry, files: &[File], used_by: &BTreeMap<String, BT
     }
     let comp_files: BTreeSet<&str> = reg.compositions.iter().map(|c| c.file.as_str()).collect();
     let controller_files: BTreeSet<&str> = reg.controllers.iter().map(|c| c.file.as_str()).collect();
+    // the workspace's shared/, which a project reaches as @shared/
+    let shared = super::up(&reg.dir, ".raea/workspace").map(|w| w.join("shared")).map(|s| s.canonicalize().unwrap_or(s));
 
     for f in files {
         if let Some(why) = &f.facts.broken {
@@ -90,14 +92,43 @@ pub(super) fn lint(reg: &Registry, files: &[File], used_by: &BTreeMap<String, BT
         for (spec, line) in f.facts.imports.iter().filter(|(s, _)| is_path(s)) {
             match resolve(&f.path, spec) {
                 None => out.push(warn(&f.rel, *line, "unresolved", format!("imports {spec}, which isn't there"), "fix the path, or add the file")),
-                Some(to) if !to.starts_with(&reg.dir) => out.push(warn(
-                    &f.rel,
-                    *line,
-                    "outside",
-                    format!("imports {} from outside the project", tilde(&to)),
-                    "copy it into the project (raea part add, for raea's parts), so the project renders on its own",
-                )),
+                // the workspace's shared/ by its name is how a project reaches it (docs/layout.feature LY2)
+                Some(_) if spec.starts_with(super::SHARED) => {}
+                Some(to) if !to.starts_with(&reg.dir) => {
+                    let in_shared = shared.as_ref().and_then(|s| to.strip_prefix(s).ok()).map(|r| r.with_extension("").display().to_string());
+                    out.push(warn(
+                        &f.rel,
+                        *line,
+                        "outside",
+                        format!("imports {} from outside the project", tilde(&to)),
+                        &match in_shared {
+                            Some(r) => format!("import it by the workspace's name for it: \"@shared/{r}\""),
+                            None => "move it to the workspace's shared/ and import it as @shared/<kind>/<name>, or copy it into the project (raea component add, for raea's sets)".into(),
+                        },
+                    ))
+                }
                 _ => {}
+            }
+        }
+    }
+
+    // where each kind is kept (docs/layout.feature LY3): a project in the layout has a folder per kind, and a file
+    // elsewhere is said once with the folder it belongs in; a project from before the layout is said once, as a whole
+    if reg.project && reg.dir.join(".raea/project").is_file() {
+        let laid = reg.dir.join("compositions").is_dir() || reg.dir.join("components").is_dir();
+        let home = |rel: &str, kind: &str| rel.starts_with(&format!("{kind}/"));
+        let components: BTreeSet<&str> = used_by.keys().map(String::as_str).filter(|f| f.ends_with(".tsx") && !comp_files.contains(f)).collect();
+        let stray: Vec<(&str, &str)> = comp_files
+            .iter()
+            .filter(|f| !home(f, "compositions"))
+            .map(|f| (*f, "compositions"))
+            .chain(components.iter().filter(|f| !home(f, "components")).map(|f| (*f, "components")))
+            .collect();
+        if !laid && !stray.is_empty() {
+            out.push(Lint { file: String::new(), line: 0, rule: "old-layout", level: Level::Info, says: format!("keeps {} files loose, from before compositions/ and components/", stray.len()), fix: "`raea project tidy --dry-run` shows where each goes, then `raea project tidy` moves them".into(), action: None });
+        } else {
+            for (f, kind) in stray {
+                out.push(Lint { file: f.to_string(), line: 1, rule: "misplaced", level: Level::Info, says: format!("a {} outside {kind}/", &kind[..kind.len() - 1]), fix: format!("move it into {kind}/ (`raea project tidy` moves it and its imports)"), action: None });
             }
         }
     }
@@ -165,7 +196,12 @@ pub(super) fn lint(reg: &Registry, files: &[File], used_by: &BTreeMap<String, BT
 
     // controllers: where they're kept, one id each, and every override naming one that's there
     let ws = super::up(&reg.dir, ".raea/workspace");
-    let home = ws.clone().unwrap_or_else(|| reg.dir.clone()).join("controllers");
+    // a project keeps its own (its controllers/); the workspace's own folder keeps the shared ones (docs/layout.feature LY3)
+    let home = match &ws {
+        Some(w) if w != &reg.dir => reg.dir.join("controllers"),
+        Some(w) => super::shared_dir(w, "controllers"),
+        None => reg.dir.join("controllers"),
+    };
     let mut ids: BTreeMap<String, Vec<&str>> = BTreeMap::new();
     for c in &reg.controllers {
         let f = files.iter().find(|f| f.rel == c.file).expect("a controller's file was read");

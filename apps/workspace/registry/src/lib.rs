@@ -22,6 +22,17 @@ pub use read::{Facts, Prop};
 /// The nearest folder at or above a path that holds a marker (.raea/workspace, .raea/project), as the record finds it.
 pub use raea_core_facts::record::up;
 
+/// The workspace's shared folder of one kind (docs/layout.feature: shared/compositions, components, controllers, assets,
+/// artifacts), which every project can call on as @shared/<kind>/. A workspace from before shared/ keeps that kind at
+/// its root (controllers/, artifacts/) until `raea workspace tidy` moves it, and it's read there meanwhile.
+pub fn shared_dir(ws: &Path, kind: &str) -> PathBuf {
+    let old = ws.join(kind);
+    if !ws.join("shared").is_dir() && old.is_dir() {
+        return old;
+    }
+    ws.join("shared").join(kind)
+}
+
 /// A name as a folder: lowercase, dashes. A controller's id from its title is this (core/brief fills it the same way).
 pub fn slug(s: &str) -> String {
     let mut out = String::new();
@@ -131,7 +142,14 @@ pub fn stem(file: &str) -> String {
 /// The file a relative or absolute import names: as written, or with .tsx, .ts, .jsx or .js (in place of an extension
 /// or after the name), or its folder's index.
 pub(crate) fn resolve(from: &Path, spec: &str) -> Option<PathBuf> {
-    let base = if spec.starts_with('/') { PathBuf::from(spec) } else { from.parent()?.join(spec) };
+    // @shared/<kind>/<name>: the workspace's shared/ (docs/layout.feature LY2), as the engine's loader resolves it
+    let base = if let Some(rest) = spec.strip_prefix(SHARED) {
+        up(from.parent()?, ".raea/workspace")?.join("shared").join(rest)
+    } else if spec.starts_with('/') {
+        PathBuf::from(spec)
+    } else {
+        from.parent()?.join(spec)
+    };
     let mut tries = vec![base.clone()];
     for ext in ["tsx", "ts", "jsx", "js"] {
         tries.push(base.with_extension(ext));
@@ -142,10 +160,13 @@ pub(crate) fn resolve(from: &Path, spec: &str) -> Option<PathBuf> {
     Some(std::fs::canonicalize(&found).unwrap_or(found))
 }
 
-/// An import of a file (not a package): relative or absolute.
+/// An import of a file (not a package): relative, absolute, or the workspace's shared/ (@shared/...).
 pub(crate) fn is_path(spec: &str) -> bool {
-    spec.starts_with("./") || spec.starts_with("../") || spec.starts_with('/')
+    spec.starts_with("./") || spec.starts_with("../") || spec.starts_with('/') || spec.starts_with(SHARED)
 }
+
+/// The prefix a project imports its workspace's shared files by: @shared/components/desk (docs/layout.feature LY2).
+pub const SHARED: &str = "@shared/";
 
 /// A version's newest render manifest: NAME[-vN][.play].render.json beside it, or the folder's render.json for edit.tsx.
 fn manifest(path: &Path) -> Option<Value> {

@@ -156,7 +156,17 @@ pub(crate) fn commit(repo: &Path, paths: &[&str], what: &str) -> R<()> {
     git(repo, &["commit", "-q", "-m", &format!("raea: {what}"), "--"]).map(|_| ())
 }
 
-const AGENTS_PROJECT: &str = "# Agents\n\nRun `raea context .` here before any work: the taste, this project's brief.ts and script.ts, its look and the guides\nits modes need, in the order to read them. Specs are TypeScript (`export default brief({...})` from \"raea/brief\").\n";
+const AGENTS_PROJECT: &str = "# Agents\n\nRun `raea context .` here before any work: the taste, this project's brief.ts and script.ts, its look and the guides\nits modes need, in the order to read them. Specs are TypeScript (`export default brief({...})` from \"raea/brief\").\n\nWhere files go (docs/layout.feature):\n\n- compositions/: what renders, a registerRoot <Composition> or a default export; versions are NAME-v2.tsx\n- components/: what compositions import; every prop is a component whose props animate it\n- controllers/: this project's controllers, over the workspace's shared ones by id\n- assets/: media in (footage, stills, audio, models, fonts) and the brand kit in assets/brand/\n- artifacts/: the small React apps posted to the feed\n- out/: renders\n\nThe workspace's shared/ holds the same five folders for every project: import them as\n`@shared/components/desk`, never by a relative path out of this folder.\n";
+
+/// The kinds of file a project, and the workspace's shared/, keep a folder each for (docs/layout.feature).
+pub const KINDS: [&str; 5] = ["compositions", "components", "controllers", "assets", "artifacts"];
+
+/// LFS for media in and renders out, at any depth: in each project and in shared/ (a pattern with a slash is anchored to
+/// the workspace root, so the old media/** never matched a project's media/)
+const GITATTRIBUTES: &str = "**/assets/** filter=lfs diff=lfs merge=lfs -text\n**/out/** filter=lfs diff=lfs merge=lfs -text\n**/media/** filter=lfs diff=lfs merge=lfs -text\n";
+
+/// A project's tsconfig: @shared/ resolves to the workspace's shared/ for an editor and tsc, as the engine resolves it.
+const TSCONFIG_PROJECT: &str = "{\n  \"compilerOptions\": {\n    \"jsx\": \"react-jsx\",\n    \"module\": \"esnext\",\n    \"moduleResolution\": \"bundler\",\n    \"target\": \"es2022\",\n    \"strict\": true,\n    \"noEmit\": true,\n    \"baseUrl\": \".\",\n    \"paths\": { \"@shared/*\": [\"../../shared/*\"] }\n  }\n}\n";
 
 /// `raea workspace …`
 pub fn workspace(args: &[String]) -> R<String> {
@@ -229,7 +239,7 @@ fn count(n: usize) -> String {
     if n == 1 { "1 project".into() } else { format!("{n} projects") }
 }
 
-fn make_workspace(dir: &Path, name: &str, layout: &str) -> R<()> {
+pub(crate) fn make_workspace(dir: &Path, name: &str, layout: &str) -> R<()> {
     // never a workspace in another repo's own folder (on a case-insensitive disk ~/Raea is ~/raea, raea's checkout); a
     // repo further up, as a home folder kept in git, is fine: the workspace is a repo of its own inside it
     let parent = dir.parent().unwrap_or(Path::new("/"));
@@ -250,11 +260,17 @@ fn make_workspace(dir: &Path, name: &str, layout: &str) -> R<()> {
     set(&file, "workspace.name", name)?;
     set(&file, "workspace.layout", layout)?;
     include(dir, &file)?;
-    write_new(&dir.join("controllers/.gitkeep"), "")?;
+    // what every project here can call on (docs/layout.feature LY1, LY2): imported as @shared/<kind>/...
+    for k in KINDS {
+        write_new(&dir.join("shared").join(k).join(".gitkeep"), "")?;
+    }
     write_new(&dir.join("projects/.gitkeep"), "")?;
     write_new(&dir.join("taste.ts"), &format!("import {{ taste }} from \"raea/brief\";\n\n// {name}'s house rules: every project here follows them, after the person's own taste.\nexport default taste({{\n  title: {:?},\n  sections: [],\n}});\n", format!("{name}: house rules")))?;
-    write_new(&dir.join(".gitattributes"), "media/** filter=lfs diff=lfs merge=lfs -text\nout/** filter=lfs diff=lfs merge=lfs -text\n")?;
-    commit(dir, &[".raea/workspace", "controllers/.gitkeep", "projects/.gitkeep", "taste.ts", ".gitattributes"], &format!("workspace {name}"))
+    write_new(&dir.join(".gitattributes"), GITATTRIBUTES)?;
+    let kept: Vec<String> = KINDS.iter().map(|k| format!("shared/{k}/.gitkeep")).collect();
+    let mut files: Vec<&str> = vec![".raea/workspace", "projects/.gitkeep", "taste.ts", ".gitattributes"];
+    files.extend(kept.iter().map(String::as_str));
+    commit(dir, &files, &format!("workspace {name}"))
 }
 
 /// The workspace's projects: (name, path, storage), from .raea/workspace.
@@ -327,6 +343,12 @@ pub fn project(args: &[String]) -> R<String> {
 fn new_project(name: &str, storage: Option<&str>) -> R<String> {
     let here = std::env::current_dir().map_err(|e| e.to_string())?;
     let ws = up(&here, ".raea/workspace").ok_or("not in a workspace: raea workspace init NAME makes one")?;
+    new_project_in(&ws, name, storage)
+}
+
+/// A new project in the workspace at `ws` (the folder holding .raea/workspace).
+pub(crate) fn new_project_in(ws: &Path, name: &str, storage: Option<&str>) -> R<String> {
+    let ws = ws.to_path_buf();
     let slugged = slug(name);
     if slugged.is_empty() {
         return Err(format!("{name:?} has no letters or digits to name a folder by"));
@@ -344,11 +366,15 @@ fn new_project(name: &str, storage: Option<&str>) -> R<String> {
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
     write_new(&dir.join("brief.ts"), &format!("import {{ brief }} from \"raea/brief\";\n\nexport default brief({{\n  title: {name:?},\n}});\n"))?;
     write_new(&dir.join("AGENTS.md"), AGENTS_PROJECT)?;
-    for d in ["media", "brand", "out"] {
+    write_new(&dir.join("tsconfig.json"), TSCONFIG_PROJECT)?;
+    // the project's layout (docs/layout.feature LY1): a folder for each kind of file, and its renders
+    for d in KINDS.iter().chain(["out"].iter()) {
         write_new(&dir.join(d).join(".gitkeep"), "")?;
     }
     let id = register(&ws, &dir, &rel, storage)?;
-    let files = [".raea/project", "brief.ts", "AGENTS.md", "media/.gitkeep", "brand/.gitkeep", "out/.gitkeep"];
+    let kept: Vec<String> = KINDS.iter().chain(["out"].iter()).map(|d| format!("{d}/.gitkeep")).collect();
+    let mut files: Vec<&str> = vec![".raea/project", "brief.ts", "AGENTS.md", "tsconfig.json"];
+    files.extend(kept.iter().map(String::as_str));
     if storage == "submodule" {
         git(&dir, &["init", "-q"])?;
         commit(&dir, &files, &format!("project {name}"))?;

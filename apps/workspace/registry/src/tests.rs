@@ -148,3 +148,37 @@ fn real_folder() {
     let r = scan(Path::new(&dir), &[]);
     println!("{}\n({} ms)", r.text(), t.elapsed().as_millis());
 }
+
+#[test]
+fn a_project_in_the_layout_reaches_shared_and_says_whats_out_of_place() {
+    // docs/layout.feature LY2, LY3: @shared/ resolves and isn't "outside"; a relative climb into shared/ is told its
+    // @shared/ name; a composition outside compositions/ is misplaced; a project from before the layout is said once
+    let t = tempdir::Dir::new();
+    let w = |rel: &str, text: &str| {
+        let f = t.0.join(rel);
+        std::fs::create_dir_all(f.parent().unwrap()).unwrap();
+        std::fs::write(f, text).unwrap();
+    };
+    w(".raea/workspace", "[workspace]\n\tname = W\n");
+    w("shared/components/desk.tsx", "export function Desk() { return <div />; }\n");
+    w("projects/a/.raea/project", "[project]\n\tid = pj-a\n");
+    w("projects/a/compositions/main.tsx", "import { Desk } from \"@shared/components/desk\";\nimport { Leg } from \"../components/leg\";\nimport { Desk as D2 } from \"../../../shared/components/desk\";\nexport default () => <><Desk /><Leg /><D2 /></>;\n");
+    w("projects/a/components/leg.tsx", "export function Leg() { return <i />; }\n");
+    w("projects/a/loose.tsx", "export default () => <b />;\n");
+    let r = scan(&t.0.join("projects/a"), &[]);
+    let says = |rule: &str| r.lint.iter().filter(|l| l.rule == rule).map(|l| format!("{} {}: {}", l.file, l.says, l.fix)).collect::<Vec<_>>();
+    assert!(says("unresolved").is_empty(), "{:?}", says("unresolved"));
+    let outside = says("outside");
+    assert_eq!(outside.len(), 1, "{outside:?}");
+    assert!(outside[0].contains("\"@shared/components/desk\""), "{outside:?}");
+    assert_eq!(says("misplaced"), ["loose.tsx a composition outside compositions/: move it into compositions/ (`raea project tidy` moves it and its imports)"]);
+    assert!(!r.lint.iter().any(|l| l.rule == "orphan" && l.file == "components/leg.tsx"));
+
+    w("projects/old/.raea/project", "[project]\n\tid = pj-old\n");
+    w("projects/old/promo.tsx", "import { Card } from \"./card\";\nexport default () => <Card />;\n");
+    w("projects/old/card.tsx", "export function Card() { return <i />; }\n");
+    let r = scan(&t.0.join("projects/old"), &[]);
+    let old: Vec<_> = r.lint.iter().filter(|l| l.rule == "old-layout").collect();
+    assert!(old.len() == 1 && old[0].says.contains("2 files loose") && old[0].fix.contains("raea project tidy"), "{:?}", r.lint);
+    assert!(!r.lint.iter().any(|l| l.rule == "misplaced"));
+}

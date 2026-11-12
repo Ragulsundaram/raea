@@ -113,7 +113,7 @@ fn held(project: &Path, given: Vec<PathBuf>, host: &Host) -> (Vec<Rule>, Vec<Fin
         }
     }
     let ws = record::up(project, ".raea/workspace");
-    for (dir, scope) in ws.iter().map(|w| (w.join("controllers"), "workspace")).chain([(project.join("controllers"), "project")]) {
+    for (dir, scope) in ws.iter().map(|w| (raea_app_registry::shared_dir(w, "controllers"), "workspace")).chain([(project.join("controllers"), "project")]) {
         // a workspace's own folder is its project's too: read once
         if scope == "project" && ws.as_deref() == Some(project) {
             continue;
