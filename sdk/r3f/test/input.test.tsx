@@ -179,6 +179,15 @@ describe("the scene graph", () => {
     expect(meshes.map((m) => (m.children![0].props.indices as number[]).length)).toEqual([6, 6, 6, 6, 6, 6]);
     end(r.key);
   });
+  test("an opacity past 1 or below 0 (an overshooting easing) is clamped, as three draws it", () => {
+    const r = partsOf(() => <>
+      <mesh><boxGeometry /><meshBasicMaterial transparent opacity={1.03} /></mesh>
+      <mesh><boxGeometry /><meshStandardMaterial transparent opacity={-0.02} /></mesh>
+    </>);
+    const ops = flat(r.parts).filter((p) => p.type === "Mesh").map((m) => m.children!.find((c) => "opacity" in c.props)!.props.opacity);
+    expect(ops).toEqual([1, 0]);
+    end(r.key);
+  });
 });
 
 describe("textures", () => {
