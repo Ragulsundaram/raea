@@ -305,6 +305,7 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       Then invites wait there for Accept or Decline (R5b) and joined projects show with Open in raea (R5d), GitHub and
         Leave
 
+    @done
     Scenario: R6e. A status the person sets on any file (built 11-11: the feed's library/file-status.ts)
       When the person picks Needs review, In progress or Approved (or No status) at the top of a file's panel
       Then the file keeps it whether or not it's on a link, as a reserved tag status:<name> beside its own tags (synced
@@ -312,6 +313,7 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       And a library's grid filters by it: All, each status with its count, and No status; filtered, the grid reads the
         rest of the library first and counts only once it has every page
 
+    @done
     Scenario: R6f. A cloud library's file goes out from its panel (built 11-11: the feed's library/ShareFile.tsx)
       # Shane, 11-11: "assumedly theres local only and cloud libraries. only cloud libraries can be shared."
       When the person presses Share for review in the Review row of a file in a cloud library
@@ -322,6 +324,7 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
         the host refuses one (host library.shareable) whatever the page asks; so is a Google Drive file, and a file
         on another machine is shared from there
 
+    @done
     Scenario: R6g. Several files on one link (built 11-11: the feed's library/ShareBar.tsx, raea-api review-sets.ts)
       # frame.io's presentation link: a folder of cuts, a round of stills
       When the person picks tiles in a cloud library (a box at the poster's corner, or ⌘/shift-click; once any is
@@ -333,5 +336,15 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       And Review links lists live links of several items above its cards, with Copy link and Stop sharing; stopping a
         set leaves its items shared, and an item stopped on its own drops out of its set's page
 
-    Scenario: R6h. Not built yet
-      Then a library organising the cloud copies of a workspace's projects and their synced code
+    @done
+    Scenario: R6h. A project saved to raea is a library with its code beside it (built 11-11: the feed's library/Projects.tsx)
+      # Shane, 11-11: libraries "could be how we organize cloud content and sync code"
+      Given the workspace has projects saved to raea (history on GitHub, media in raea's storage: Settings → Projects)
+      Then the Library's column lists them under Projects, below Libraries
+      And a project's page says where its code stands, read from git on this Mac with nothing fetched: its GitHub repo
+        and Pushed, or the commits to push and to pull and the changes in its own folder not committed yet; the
+        column's row shows a dot until it's pushed, and both are read again when the window comes back
+      And one press makes its library: a cloud library over the project's folder, so its renders, stills and sounds
+        are searched, given a status and shared for review like any cloud library's (R6e, R6f, R6g)
+      And that library is listed once, under Projects, never again under Libraries
+      And a project not saved to raea isn't listed; its folder can still be added to any library
