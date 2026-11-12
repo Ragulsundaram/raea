@@ -87,8 +87,11 @@ impl Videos {
     /// frame (a looped or held clip run long) gives its last frame, as raea-runtime-js's page does.
     pub fn frame(&mut self, v: &raea_core_wire::tree::VideoAt) -> R<Option<raea_io_media::Frame>> {
         if !self.decoders.contains_key(&v.file) {
-            let be = raea_io_media::backend(&std::env::var("RAEA_MEDIA").unwrap_or_else(|_| if cfg!(target_vendor = "apple") { "apple".into() } else { "soft".into() }))?;
-            let d = be.open_video(&v.file).map_err(|e| format!("{}: {e}", v.file.display()))?;
+            // RAEA_MEDIA's, the platform's, the portable one, then the ffmpeg CLI, the first that opens it: a WebM is read
+            // by ffmpeg alone (#113: it was refused, "no video track", where the platform's was the only one asked)
+            let mut why = Vec::new();
+            let d = raea_io_media::preferred().into_iter().find_map(|b| b.open_video(&v.file).map_err(|e| why.push(format!("{}: {e}", b.name()))).ok());
+            let d = d.ok_or_else(|| format!("{}: can't be decoded ({})", v.file.display(), why.join("; ")))?;
             self.decoders.insert(v.file.clone(), d);
         }
         let d = self.decoders.get_mut(&v.file).unwrap();

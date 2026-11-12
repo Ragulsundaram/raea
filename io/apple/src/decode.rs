@@ -15,6 +15,8 @@ pub(crate) struct Decoder {
     pub(crate) since_restart: usize,
     /// VideoToolbox hands over NV12 planes (no conversion) instead of BGRA
     pub(crate) nv12: bool,
+    /// the track's frames carry alpha (ProRes 4444, HEVC with alpha): BGRA's alpha kept, not made 255 (#113)
+    pub(crate) alpha: bool,
     /// surface mode: NV12 left in VideoToolbox's IOSurface-backed, Metal-compatible buffers (no copy)
     pub(crate) surface: bool,
     /// the presentation times, read once from the compressed samples (for index_at)
@@ -216,7 +218,7 @@ impl Decoder {
                         dst[x * 4] = row[x * 4 + 2];
                         dst[x * 4 + 1] = row[x * 4 + 1];
                         dst[x * 4 + 2] = row[x * 4];
-                        dst[x * 4 + 3] = 255;
+                        dst[x * 4 + 3] = if self.alpha { row[x * 4 + 3] } else { 255 };
                     }
                 }
                 rgba

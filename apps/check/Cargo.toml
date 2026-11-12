@@ -13,6 +13,8 @@ raea-core-brief = { path = "../../core/brief" }
 raea-core-facts = { path = "../../core/facts" }
 # a check's record named by when it was (UTC, DR3)
 raea-io-trace = { path = "../../io/trace" }
+# ffmpeg's flag for every decoded frame, by its version
+raea-io-ffmpeg = { path = "../../io/ffmpeg" }
 # caption contrast and loudness, measured as `raea world` measures a render (DR2)
 raea-sys-measure = { path = "../../systems/measure" }
 # the flashing screen (WCAG 2.3.1), split out to keep this crate small

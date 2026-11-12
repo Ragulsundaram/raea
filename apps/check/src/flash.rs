@@ -5,17 +5,6 @@ use raea_app_check_flash::FlashScreen;
 /// the area sample and the point sample side by side
 const FLASH_W: usize = 192;
 
-/// Every decoded frame, once: -fps_mode from FFmpeg 5.1 on, -vsync before it.
-fn passthrough() -> [&'static str; 2] {
-    let out = Command::new("ffmpeg").args(["-hide_banner", "-version"]).output().map(|o| o.stdout).unwrap_or_default();
-    let head = String::from_utf8_lossy(&out);
-    let version = head.split("version ").nth(1).and_then(|v| {
-        let mut parts = v.trim_start_matches('n').split(|c: char| !c.is_ascii_digit());
-        Some((parts.next()?.parse::<u32>().ok()?, parts.next()?.parse::<u32>().ok()?))
-    });
-    [if version.is_some_and(|v| v < (5, 1)) { "-vsync" } else { "-fps_mode" }, "passthrough"]
-}
-
 /// A frame's number and time from showinfo's log, exact: its `pts` in ticks of the time base. `pts_time` is rounded to six
 /// significant digits, which is enough to push a legal third flash across the one-second line.
 pub(crate) fn showinfo_frame(line: &str, base: Option<(i64, i64)>) -> Option<(usize, f64)> {
@@ -46,7 +35,7 @@ pub(crate) fn flashing(video: &str, probe: &Probe, issues: &mut Vec<Issue>, pass
     let w = FLASH_W;
     let h = (((w as f64 * probe.h / probe.w.max(1.0)) / 2.0).round() as usize * 2).max(6);
     let graph = format!("showinfo,split=2[area][point];[area]scale={w}:{h}:flags=area[a];[point]scale={w}:{h}:flags=neighbor[b];[a][b]hstack=inputs=2,format=rgb24");
-    let sync = passthrough();
+    let sync = raea_io_ffmpeg::passthrough();
     let mut child = Command::new("ffmpeg")
         .args(["-hide_banner", "-nostats", "-nostdin", "-loglevel", "level+info", "-i", video, "-map", "0:v:0", "-vf", &graph, sync[0], sync[1], "-f", "rawvideo", "-"])
         .stdin(std::process::Stdio::null())

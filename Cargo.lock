@@ -13618,6 +13618,7 @@ dependencies = [
  "raea-app-check-flash",
  "raea-core-brief",
  "raea-core-facts",
+ "raea-io-ffmpeg",
  "raea-io-trace",
  "raea-sys-measure",
  "serde_json",
