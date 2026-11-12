@@ -107,3 +107,8 @@ cargo build --release -p raea-cli     # the binary is target/release/raea
 | Linux on x86_64 | Supported. An app's window needs a display (X11, Wayland, or Xvfb on a server) |
 | Windows 10 and 11 on x86_64 | Supported through `install.ps1` |
 | Intel Macs, Linux on ARM | Not yet |
+
+raea draws on the GPU through Metal on the Mac, Vulkan on Linux, and DirectX 12 or Vulkan on Windows. Intel graphics
+from the 6th generation (2015) on, and AMD and NVIDIA cards from about 2012 on, have one of those. On a computer
+without one, such as a 3rd-generation Intel Core PC on Windows, the app's window and 3D can't run, and only 2D video
+renders, on the CPU and more slowly.
