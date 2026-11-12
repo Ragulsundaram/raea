@@ -166,26 +166,33 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       When the agent marks an id that isn't on the item, or a comment I haven't sent
       Then nothing changes and the refusal names the item's comment ids, or says the person hasn't asked for it yet
 
-  Rule: R4. Review links: the person or their agent shares a cut, and anyone with the link watches and comments on the picture, like frame.io (proposed 11-11, not built; not in v0.1.1)
+  Rule: R4. Review links: the person or their agent shares a cut, and anyone with the link watches and comments on the picture, like frame.io (built 11-11: raea-api review.ts, raea.io/r/, the app's Share button and Settings → Sharing; ships after v0.1.1)
     # Shane, 11-11, on Team: "maybe see if we can add to it that you can have claude share out review links so it
-    # really does feel liek frame.io". Reviewers and clients aren't team members: a link takes no place in Team's 5
-    # (docs/pricing.md). The link's page is raea.io's and its routes are raea-api's; this rule is the product, the
-    # routes below are the contract.
+    # really does feel liek frame.io". Then, the same day: "important for pro and team plans to share review links
+    # since it requires cloud to do so anyway". Reviewers and clients aren't team members: a link takes no place in
+    # Team's 5 (docs/pricing.md). The link's page is raea.io's and its routes are raea-api's; this rule is the
+    # product, the routes below are the contract.
 
     Background:
-      Given a person on Team (Shane, 11-11: "revie links is team only"; a link's file lives in the team's cloud storage
-        and counts toward its pool); on Free or Pro, Share says review links come with Team, and POST /v1/review-links
-        answers 402 plan_required
+      Given a person on Pro or Team (a link's file lives in their raea storage and counts toward it); on Free, Share
+        offers Upgrade to Pro and POST /v1/review-links answers 402 plan_required, asked by the file's hash before any
+        upload. A link made before a downgrade stays listed, changeable and stoppable
+      And their agents share only when the person has turned on Settings → Sharing → Let agents share (off until then,
+        kept in ~/.raea/app-prefs.json); an agent never answers invites or leaves projects for them
 
     Scenario: R4a. The person or their agent shares an item
-      When the person presses Share on an item in raea, or their agent runs `raea show --share ITEM [--to NAME]...`
-        (over ACP: the share_link tool)
-      Then the item's file goes up to their storage if it isn't there, and a link is made: raea.io/r/<token>, 128 random
-        bits, good for 30 days unless set otherwise, downloads off unless allowed, an optional password
-      And the agent gets the link back to hand on, and the item shows "Shared · 0 views" with the link and Stop sharing
-      And raea-api keeps it: POST /v1/review-links {sha256, item, title, days?, download?, password?} -> {id, url},
-        GET /v1/review-links, DELETE /v1/review-links/:id (devices and raea.io; an agent key with files:write may make
-        one for a file it can reach, never list or revoke others)
+      When the person presses Share at the top right of an item in raea (a video, a still or a sound), or their agent
+        calls the share_link tool over ACP
+      Then the item's file goes up to their storage if it isn't there, and a link is made: raea.io/r/<token>, 128 bits
+        (an HMAC of the link's id, so only its hash is stored and the owner can always be shown the URL again), good
+        for 30 days unless set (7, 30 or 90 in the panel; 1 to 365 over the API), downloads off unless allowed, an
+        optional password
+      And the agent gets the link back to hand on, and the Share panel shows it with Copy, Open, its views, comments
+        and expiry, Settings and Stop sharing
+      And raea-api keeps it: POST /v1/review-links {sha256, type, item, title, project?, days?, download?, password?}
+        -> link, GET /v1/review-links[?item=], GET/PATCH/DELETE /v1/review-links/:id, POST :id/comments, PATCH
+        :id/comments/:cid (devices and raea.io; an agent key with the share scope may make one for a file it can reach)
+      And Settings → Sharing lists every link, live and ended, with Copy, Open and Stop
 
     Scenario: R4b. A reviewer watches and comments without an account
       Given the link, opened in any browser
@@ -198,15 +205,19 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
 
     Scenario: R4c. Comments flow back to the item and its agent
       When a reviewer comments
-      Then the comment appears on the item in raea as an R1 comment by "<name> (guest)", within seconds while it's open,
-        and a feed post says who commented on what
-      And the person can send guests' comments to the agent as edits (R3): the agent marks them working and done, and
-        the reviewer sees "Done in v2" on the link
-      And the agent can answer a guest on the link: `raea show --on ITEM --reply ID --note LINE`
+      Then the Share panel lists it (name, moment, version) with Reply, shown on the page as the owner's, and Mark done
+        (built 11-11)
+      And the agent reads them with share_links {link} and answers or resolves with share_change {link, reply | resolve}
+        (built 11-11)
+      And not built yet: the comment as an R1 comment on the item by "<name> (guest)", a feed post saying who commented,
+        and sending guests' comments to the agent as edits (R3) so the reviewer sees "Done in v2"
 
     Scenario: R4d. A new version replaces the cut on the same link
-      When the agent shows a new render with `--replaces ITEM` (or the person shares a new version)
-      Then the link plays v2 with a version picker; v1's comments stay on v1, and a side-by-side compare shows both
+      When the agent shares a newer item of the same version chain (share_link on it), or the person opens one and the
+        Share panel says "The link shows v1. This one is newer" and they press Make it v2
+      Then the link plays v2 with a version picker; v1's comments stay on v1 (the link is kept under the chain's first
+        item; the same file again is no new version)
+      And not built yet: a side-by-side compare of two versions on the page
 
     Scenario: R4e. A link is the reviewer's only right, and it can be taken back
       Then a link reaches one item's versions, their comments and nothing else: no library, file list, search or account
@@ -217,6 +228,35 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
 
   Rule: R4 open questions for Shane
     Scenario: To decide
-      Then 1. Decided 11-11: Team only.
-      And 2. Downloads off by default, with a per-link switch?
-      And 3. Built after v0.1.1: raea-api and the page first (the private repo), then Share in raea and `raea show --share`
+      Then 1. Decided 11-11: Pro and Team (it was Team only earlier the same day)
+      And 2. Downloads off by default, with a per-link switch (built that way; say if it should default on)
+      And 3. Built 11-11 after v0.1.1's binaries: raea-api and the page (the private repo), Share in raea and the agents'
+        share tools (raea-feed). `raea show --share` on the CLI is not built; agents share through the feed's tools
+
+  Rule: R5. Collaborators: on Team, the owner invites people into a project, and they work in it from their own raea (built 11-11; ships after v0.1.1)
+    # Shane, 11-11: "for team plans allow to invite collaborators to a project". A project is plain Git on the owner's
+    # GitHub with its media in the owner's raea storage (docs/projects.feature PJ3), so access is two halves: raea's
+    # (the media, through raea-api's LFS) and GitHub's (the history).
+
+    Background:
+      Given an owner on Team whose project is on GitHub with raea's storage (it gets both when it's made while signed in
+        with GitHub); on Pro the People tab offers Upgrade to Team and POST /v1/projects/:repo/collaborators answers 402
+
+    Scenario: R5a. The owner invites someone
+      When the owner types a GitHub username or an email on the People tab of an item's Share panel, or in Settings →
+        Sharing → People on, or their agent calls project_collaborators {invite} (when allowed)
+      Then raea-api keeps the invite for that raea account (they must have one; Free is fine), up to 20 people a project
+        and 100 invites a day, and the owner's own GitHub sign-in invites them to the repo with push access
+      And the panel names the exact repo being shared and says what GitHub did (invited, already there, or why not)
+
+    Scenario: R5b. The person invited accepts in their own raea
+      When they open Settings → Sharing → Invites to you and press Accept (never an agent)
+      Then raea-api marks them joined and their raea accepts GitHub's invite to the same repo with their sign-in
+      And from then on they reach the repo's media and its file locks through raea-api's LFS while the owner is on Team
+      And Settings → Sharing → Shared with you lists the project with Open on GitHub and Leave
+      And not built yet: cloning a shared project into the sidebar from there
+
+    Scenario: R5c. The owner removes someone
+      When the owner presses Remove (or an allowed agent calls project_collaborators {remove})
+      Then their raea access ends at once, and the panel says to take them off the repo on github.com too (raea-api
+        holds no GitHub token, so it can't)
