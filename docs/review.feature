@@ -322,6 +322,16 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
         the host refuses one (host library.shareable) whatever the page asks; so is a Google Drive file, and a file
         on another machine is shared from there
 
-    Scenario: R6g. Not built yet
-      Then a share link of several items (a folder of cuts, frame.io's presentation link), and a library organising the
-        cloud copies of a workspace's projects and their synced code
+    Scenario: R6g. Several files on one link (built 11-11: the feed's library/ShareBar.tsx, raea-api review-sets.ts)
+      # frame.io's presentation link: a folder of cuts, a round of stills
+      When the person picks tiles in a cloud library (a box at the poster's corner, or ⌘/shift-click; once any is
+        picked a click picks) and presses Share for review in the bar at the grid's foot
+      Then one file goes out on its own link, and two or more on one link the person names
+      And each file is a review link of its own (a file already on a live link joins with that link), and the set's
+        page at raea.io/r/<token> shows them as a wall of posters, each opening its own page (versions, comments,
+        Approve) with All items leading back
+      And Review links lists live links of several items above its cards, with Copy link and Stop sharing; stopping a
+        set leaves its items shared, and an item stopped on its own drops out of its set's page
+
+    Scenario: R6h. Not built yet
+      Then a library organising the cloud copies of a workspace's projects and their synced code
