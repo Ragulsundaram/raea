@@ -13615,12 +13615,17 @@ dependencies = [
 name = "raea-app-check"
 version = "0.1.0"
 dependencies = [
+ "raea-app-check-flash",
  "raea-core-brief",
  "raea-core-facts",
  "raea-io-trace",
  "raea-sys-measure",
  "serde_json",
 ]
+
+[[package]]
+name = "raea-app-check-flash"
+version = "0.1.0"
 
 [[package]]
 name = "raea-app-ci"

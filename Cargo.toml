@@ -156,6 +156,7 @@ members = [
     "runtime/scene2d",
     "runtime/shared",
     "apps/check",
+    "apps/check/flash",
     "apps/direction",
     "apps/notes",
     "apps/sound",
