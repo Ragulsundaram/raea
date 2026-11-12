@@ -1,0 +1,258 @@
+diff --git a/src/canvas.ts b/src/canvas.ts
+index 0bd05fcb2730a53ad4893f7d3cf0adad12a510db..5357f3fe7607697a81c88c807777bf9fa31a3a31 100644
+--- a/src/canvas.ts
++++ b/src/canvas.ts
+@@ -37,6 +37,8 @@
+ //   ctx.beginPath();
+ //   ctx.arc(x, y, 4, 0, Math.PI * 2);
+ //   ctx.fill();
++import { BevyElement } from "./nodes";
++
+ 
+ // Mirrors `protocol::DrawCmd` on the Rust side (tag = "cmd"). Coordinates are in
+ // the canvas's own pixel space, top-left origin.
+@@ -243,17 +245,17 @@ export interface CanvasHost {
+  *  handle to the element. Survives re-renders and Fast Refresh (node ids are
+  *  stable); drawing through a handle whose node has unmounted is a silent
+  *  no-op on the Bevy side. */
+-export class BevyCanvasElement {
+-  /** The host-element type, `"canvas"` (the renderer's `Instance` shape). */
+-  readonly type = "canvas";
++export class BevyCanvasElement extends BevyElement {
+   readonly #host: CanvasHost;
+   #ctx: RetainedCanvasContext | null = null;
+ 
+   constructor(
+     /** The element's reconciler node id. */
+-    readonly id: number,
++    id: number,
+     host: CanvasHost,
+   ) {
++    // its type is "canvas" (the renderer's `Instance` shape), its kind the same
++    super(id, "canvas", undefined, {});
+     this.#host = host;
+   }
+ 
+diff --git a/src/index.ts b/src/index.ts
+index 329c833ef3cb6c8f938e7ebdf66862e87507c946..e36f26028eb19555608cefe12020570c398cb988 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -84,6 +84,8 @@ export type * from "./jsx";
+ // or imperatively through a `<canvas ref={…}>`'s persistent `BevyCanvasElement`
+ // handle (`getContext()` → a `RetainedCanvasContext` that batches and
+ // flushes at will; paint accumulates on the retained surface).
++// The committed tree on the instances (raea's patch): what a ref holds is a BevyElement.
++export { BevyElement, BevyNode, BevyTextNode, containerNode } from "./nodes";
+ export {
+   BevyCanvasElement,
+   CanvasContext,
+diff --git a/node_modules/bevy-react/src/nodes.ts b/src/nodes.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3fb86d0779c0b2d9767097c460658443dc73cca7
+--- /dev/null
++++ b/src/nodes.ts
+@@ -0,0 +1,64 @@
++// The tree as React last committed it, kept on the instances themselves (raea's patch, docs/layout-reads.feature
++// LR4): each element and text instance knows its parent, its children in order, and its latest props or text. A host
++// can then answer DOM-shaped reads (children, querySelector, textContent) from the instances a ref already holds,
++// without parsing the op stream. Containers get an element of their own, so a top-level instance has a parent.
++
++/** A node of the committed tree: an element or a text run. */
++export class BevyNode {
++  parentNode: BevyElement | null = null;
++  constructor(
++    /** The node's reconciler id (what its ops name). */
++    readonly id: number,
++  ) {}
++}
++
++/** A host element: what a ref holds (a `<canvas>`'s is BevyCanvasElement, one of these too). */
++export class BevyElement extends BevyNode {
++  childNodes: BevyNode[] = [];
++  constructor(
++    id: number,
++    /** The JSX type ("div", "span", "text" ...). */
++    readonly type: string,
++    /** The wire kind it was created as (`type`, except inside a `<text>`). */
++    readonly kind: string | undefined,
++    /** Its props as React last committed them. */
++    public props: Record<string, unknown>,
++  ) {
++    super(id);
++  }
++}
++
++/** A text run: a bare string child. */
++export class BevyTextNode extends BevyNode {
++  constructor(
++    id: number,
++    public data: string,
++  ) {
++    super(id);
++  }
++}
++
++const containers = new Map<number, BevyElement>();
++
++/** The element standing for container `id` (the root a tree is mounted in). */
++export function containerNode(id: number): BevyElement {
++  let c = containers.get(id);
++  if (!c) containers.set(id, (c = new BevyElement(id, "root", "root", {})));
++  return c;
++}
++
++/** `child` put under `parent`, before `before` (at the end without it), taken from wherever it was. */
++export function link(parent: BevyElement, child: BevyNode, before?: BevyNode): void {
++  if (child.parentNode) unlink(child.parentNode, child);
++  const at = before ? parent.childNodes.indexOf(before) : -1;
++  if (at < 0) parent.childNodes.push(child);
++  else parent.childNodes.splice(at, 0, child);
++  child.parentNode = parent;
++}
++
++/** `child` taken out of `parent`. */
++export function unlink(parent: BevyElement, child: BevyNode): void {
++  const at = parent.childNodes.indexOf(child);
++  if (at >= 0) parent.childNodes.splice(at, 1);
++  if (child.parentNode === parent) child.parentNode = null;
++}
+diff --git a/src/renderer.ts b/src/renderer.ts
+index 84aefa67ab2c6b886dce6445d305dd328a89c0a3..d97b868fd151c8c3bbd12e0e716c42859fb03a19 100644
+--- a/src/renderer.ts
++++ b/src/renderer.ts
+@@ -23,6 +23,13 @@ import {
+ } from "./bridge";
+ import { installDevtools, noteOwner } from "./devtools";
+ import { setupRefreshRuntime } from "./hmr";
++import {
++  BevyElement,
++  BevyTextNode,
++  containerNode,
++  link,
++  unlink,
++} from "./nodes";
+ 
+ // `process.env.NODE_ENV` is replaced at build time by esbuild's `define`; the
+ // declaration is type-only (erased) and keeps tsc happy without @types/node.
+@@ -34,19 +41,13 @@ const DEV = process.env.NODE_ENV !== "production";
+ // refresh runtime has already patched. No-op in production builds.
+ if (DEV) setupRefreshRuntime();
+ 
+-interface Instance {
+-  id: number;
+-  type: string;
+-  /** The wire kind the node was created as (`type`, except inside a
+-   *  `<text>`: a nested `<text>` is a `textSpan`, an `<image>` an
+-   *  `inlineImage`) — every update op names it, since Rust decodes the props
+-   *  against that element. Absent on a `<canvas>` handle (its kind is its
+-   *  type). */
+-  kind?: string;
+-}
+-interface TextInstance {
+-  id: number;
+-}
++// An instance is a BevyElement (nodes.ts): its id, type and wire kind (`type`,
++// except inside a `<text>`: a nested `<text>` is a `textSpan`, an `<image>` an
++// `inlineImage`; every update op names it, since Rust decodes the props against
++// that element; absent on a `<canvas>` handle, whose kind is its type), with
++// the committed tree kept on it.
++type Instance = BevyElement;
++type TextInstance = BevyTextNode;
+ interface Container {
+   id: number;
+   // Marks the devtools panel's own container: its commits flush with
+@@ -194,8 +195,11 @@ const hostConfig: Reconciler.HostConfig<
+       text,
+     });
+     // A `<canvas>`'s instance is its persistent element handle (what a ref
+-    // resolves to via `getPublicInstance`); it satisfies `Instance`.
+-    return type === "canvas" ? createCanvasElement(id) : { id, type, kind };
++    // resolves to via `getPublicInstance`), a BevyElement too.
++    if (type !== "canvas") return new BevyElement(id, type, kind, props);
++    const canvas = createCanvasElement(id);
++    canvas.props = props;
++    return canvas;
+   },
+ 
+   createTextInstance(
+@@ -213,19 +217,22 @@ const hostConfig: Reconciler.HostConfig<
+         ? { op: "createTextSpan", id, text }
+         : { op: "createText", id, text },
+     );
+-    return { id };
++    return new BevyTextNode(id, text);
+   },
+ 
+   appendInitialChild(parent: Instance, child: Instance | TextInstance) {
+     push({ op: "append", parent: parent.id, child: child.id });
++    link(parent, child);
+   },
+   finalizeInitialChildren: () => false,
+ 
+   appendChild(parent: Instance, child: Instance | TextInstance) {
+     push({ op: "append", parent: parent.id, child: child.id });
++    link(parent, child);
+   },
+   appendChildToContainer(container: Container, child: Instance | TextInstance) {
+     push({ op: "append", parent: container.id, child: child.id });
++    link(containerNode(container.id), child);
+   },
+ 
+   insertBefore(
+@@ -239,6 +246,7 @@ const hostConfig: Reconciler.HostConfig<
+       child: child.id,
+       before: before.id,
+     });
++    link(parent, child, before);
+   },
+   insertInContainerBefore(
+     container: Container,
+@@ -251,11 +259,13 @@ const hostConfig: Reconciler.HostConfig<
+       child: child.id,
+       before: before.id,
+     });
++    link(containerNode(container.id), child, before);
+   },
+ 
+   removeChild(parent: Instance, child: Instance | TextInstance) {
+     push({ op: "remove", parent: parent.id, child: child.id });
+     dropHandlers(child.id);
++    unlink(parent, child);
+   },
+   removeChildFromContainer(
+     container: Container,
+@@ -263,6 +273,7 @@ const hostConfig: Reconciler.HostConfig<
+   ) {
+     push({ op: "remove", parent: container.id, child: child.id });
+     dropHandlers(child.id);
++    unlink(containerNode(container.id), child);
+   },
+ 
+   // react-reconciler 0.33 removed `prepareUpdate`; `commitUpdate` now receives both
+@@ -278,6 +289,7 @@ const hostConfig: Reconciler.HostConfig<
+     _internalHandle: unknown,
+   ) {
+     const id = instance.id;
++    instance.props = newProps;
+     const op = buildUpdateOp(
+       id,
+       oldProps,
+@@ -302,6 +314,7 @@ const hostConfig: Reconciler.HostConfig<
+ 
+   commitTextUpdate(textInstance: TextInstance, _old: string, next: string) {
+     push({ op: "updateText", id: textInstance.id, text: next });
++    textInstance.data = next;
+   },
+ 
+   // Clear an inline-text element's content (React calls this when a `<text>`
+@@ -310,7 +323,9 @@ const hostConfig: Reconciler.HostConfig<
+     push({ op: "updateText", id: instance.id, text: "" });
+   },
+ 
+-  clearContainer: () => {},
++  clearContainer: (container: Container) => {
++    containerNode(container.id).childNodes = [];
++  },
+   detachDeletedInstance: (instance: Instance) => dropHandlers(instance.id),
+ 
+   // No-op scope/blur hooks the reconciler still expects.

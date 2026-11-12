@@ -1,0 +1,12 @@
+[package]
+name = "raea-runtime-cssurls"
+version = "0.1.0"
+edition = "2024"
+description = "A stylesheet's url()s that name a composition's files, written as the page reads them (a file URL on Windows, #28)"
+license = "FSL-1.1-ALv2"
+
+[dependencies]
+# raea_io_home::src: a path on the Mac and Linux, a file URL on Windows
+raea-io-home = { path = "../../io/home" }
+# media_path: /media/ from the edit's folder
+raea-core-scene = { path = "../../core/scene" }

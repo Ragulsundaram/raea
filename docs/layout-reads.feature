@@ -126,7 +126,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
 
   Rule: a ref has the DOM a web component reads
 
-    @needs:LR1
+    @needs:LR1 @done
     Scenario: LR3. Geometry on refs
       Then a ref's element has getBoundingClientRect() (a DOMRect: x, y, width, height, top, left, right, bottom and
         toJSON) and getClientRects()
@@ -134,7 +134,22 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         clientLeft and clientTop; scrollWidth, scrollHeight, scrollLeft and scrollTop
       And each value means what it means in Chrome: getBoundingClientRect includes transforms, offset* doesn't, and
         both are in the composition's CSS px
-      And #54's repro logs `335 function`, as Chrome does
+      And #54's repro measures its span as Chrome does (the issue's `335` was its own font; with the harness's Inter
+        both put "here" at x 342)
+      And 11-12, built:
+        - bevy-react 0.8.1 gets a patch (sdk/react/js/patches, applied by bun install). Its instances become a tree:
+          BevyElement and BevyTextNode, with parentNode, childNodes, props and text as React last committed them.
+          That gives refs a class to carry the DOM, and it's LR4's tree.
+        - sdk/raea/src/dom-reads.ts puts the reads on BevyElement's prototype, from the entry, as canvas2d.ts
+          installs the 2D context. The values are Chrome's: offset*, client* and scroll* are whole px, a
+          non-atomic inline's client* and scroll* are 0, an element that isn't displayed reads 0 with a null
+          offsetParent, and offsetParent is the nearest positioned ancestor or the composition's root for the body.
+        - getClientRects answers one rect, so an inline element's line fragments come joined. Per-line rects come
+          with LR7's Range.
+        - bench/layout-reads/probes/geometry.tsx prints every read as words, and they match Chrome's: offset, client
+          and border of a padded, bordered box; the bounds of a rotated box; the offsets and offsetParent of a box
+          inside it; a span's offsets with client 0; and a scroller's scroll sizes.
+        - The bundle crate was at its 2000-line limit: the stylesheet url() rewriter moved to raea-runtime-cssurls.
 
     Scenario: LR4. The tree on refs
       Then a ref's element has children, childNodes, firstChild, lastChild, firstElementChild, lastElementChild,

@@ -15,13 +15,12 @@ mod outside;
 mod pid;
 mod rewrite;
 pub mod styles;
-mod urls;
 pub use cache::*;
 pub use entry::*;
 pub use fresh::*;
 pub use outside::*;
 pub use rewrite::*;
-pub use urls::*;
+pub use raea_runtime_cssurls::*;
 pub use raea_core_scene::media_path;
 #[cfg(test)]
 mod tests;
@@ -41,7 +40,7 @@ pub fn brand_css(dir: &Path, w: u32) -> Option<String> {
         let f = here.join("brand").join("brand.css");
         if let Ok(css) = std::fs::read_to_string(&f) {
             let kept: Vec<&str> = css.lines().filter(|l| !l.trim_start().starts_with("@import")).collect();
-            // its fonts and images as files: /media/ from the edit, the rest from brand/ (urls.rs)
+            // its fonts and images as files: /media/ from the edit, the rest from brand/ (raea-runtime-cssurls)
             let kept = css_file_urls(&kept.join("\n"), dir, &here.join("brand"), |_| ());
             return Some(format!("{kept}\n:root {{ --brand-scale: {}; }}\n", 2.5 * w as f64 / 1080.0));
         }
@@ -59,7 +58,7 @@ pub fn bundle_css(js: &str) -> Option<String> {
 
 /// A page's own CSS: the space's brand kit (brand_css), then the CSS the bundle `js` imported (bundle_css)
 pub fn page_css(dir: &Path, w: u32, js: &Path) -> Option<String> {
-    // its url()s as files from the edit's folder (urls.rs), where the CSS files it imports are found
+    // its url()s as files from the edit's folder (raea-runtime-cssurls), where the CSS files it imports are found
     let bundled = std::fs::read_to_string(js).ok().and_then(|t| bundle_css(&t)).map(|c| css_file_urls(&c, dir, dir, |_| ()));
     // then the layers RAEA_HIDE_LAYERS hides (the layer pass's oracle)
     let parts: Vec<String> = [brand_css(dir, w), bundled, raea_sys_layers::hidden_css()].into_iter().flatten().collect();

@@ -52,6 +52,7 @@ mkdir -p "$O"
 PORT=$((20000 + RANDOM % 20000))
 python3 -m http.server $PORT --bind 127.0.0.1 --directory "$C" > /dev/null 2>&1 &
 SRV=$!
+disown $SRV 2> /dev/null # (its kill at the end says nothing)
 if [ -n "${KEEP:-}" ]; then trap 'kill $SRV 2> /dev/null' EXIT; else trap 'kill $SRV 2> /dev/null; rm -rf "$O"' EXIT; fi
 
 pass=0 fail=0

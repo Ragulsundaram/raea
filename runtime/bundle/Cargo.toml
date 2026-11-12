@@ -15,6 +15,8 @@ modules = ["raea-native/modules"]
 dunce = "1"
 # raea's home (the checkout's, or an install's share/raea): the SDK packages, the bundler's library, Tailwind's package
 raea-io-home = { path = "../../io/home" }
+# a stylesheet's url()s as the page reads them (#28), its own crate
+raea-runtime-cssurls = { path = "../../runtime/cssurls" }
 raea-core-scene = { path = "../../core/scene" }
 raea-native = { path = "../../engine/native", default-features = false }
 # an imported long-GOP source's optimized copy, named in the export cache's key (its probe: AVFoundation on Apple, the

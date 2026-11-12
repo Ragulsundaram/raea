@@ -13,9 +13,13 @@ pub fn entry(file: &str, o: &CompOpts) -> String {
     format!(
         r#"import {{ frameCallbacks, pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
 import {{ canvas2d }} from "./motion/canvas2d";
+import * as BevyReact from "bevy-react";
 import {{ mount, addEventListener, BevyCanvasElement }} from "bevy-react";
 canvas2d(BevyCanvasElement); // a <canvas> ref's getContext("2d") is the web's (motion canvas2d.ts, #55)
-import "./motion/page-layout"; // a composition reads its layout from its frame's page (page.layout, docs/layout-reads.feature LR1)
+// a ref has the DOM a web component reads (getBoundingClientRect, offsetWidth ...), from the frame's page (page.layout):
+// on bevy-react's BevyElement, which raea's patch adds (a bridge without it keeps plain handles; layout-reads LR1, LR3)
+import {{ domReads }} from "./motion/dom-reads";
+domReads((BevyReact as any).BevyElement);
 import {{ Component, useEffect, useMemo, useState }} from "react";
 import * as M from "./src/{file}";
 import {{ Clock, getCompositions, tickClocks }} from "./motion";

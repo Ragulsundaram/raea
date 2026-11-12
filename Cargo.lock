@@ -14808,6 +14808,7 @@ dependencies = [
  "raea-io-media",
  "raea-native",
  "raea-runtime-bundle-lib",
+ "raea-runtime-cssurls",
  "raea-sys-layers",
  "regex",
  "serde_json",
@@ -14844,6 +14845,14 @@ dependencies = [
  "raea-sys-ml",
  "raea-sys-speech",
  "serde_json",
+]
+
+[[package]]
+name = "raea-runtime-cssurls"
+version = "0.1.0"
+dependencies = [
+ "raea-core-scene",
+ "raea-io-home",
 ]
 
 [[package]]
