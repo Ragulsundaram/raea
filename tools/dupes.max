@@ -19,5 +19,5 @@
 #   io/capcut store.rs:67 (tasklist's stdout, lower-cased; sdk/ui/parity main.rs:88 trims a command's stdout),
 #   io/capcut build.rs:24 parse (serde_json::from_str + expect; engine/native node.rs:172 js_string, to_string), and
 #   apps/capcut plan.rs:67 (a box moved more than 1 px; systems/layout mod.rs:406, within 1.5 px)
-exact=294
+exact=293
 near=59
