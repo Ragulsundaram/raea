@@ -22,13 +22,15 @@ export interface Part {
 }
 
 const hex = (c: THREE.Color) => "#" + c.getHexString();
+/** three draws an opacity outside [0, 1] clamped (an easing that overshoots gives 1.03); raea's materials refuse it */
+const unit = (v: number) => Math.min(1, Math.max(0, v));
 const side = (s: THREE.Side) => (s === THREE.BackSide ? "back" : s === THREE.DoubleSide ? "double" : undefined);
 
 /** the props every surface shares: colour, opacity and blending, side, fog */
 function drawn(m: THREE.Material & { color?: THREE.Color; map?: THREE.Texture | null }, p: Props) {
   if (m.color) p.color = hex(m.color);
   if (m.opacity < 1 || m.transparent) {
-    p.opacity = m.opacity;
+    p.opacity = unit(m.opacity);
     p.transparent = true;
   }
   if (m.blending === THREE.AdditiveBlending) p.alphaMode = "add";
@@ -177,7 +179,7 @@ export function materialOf(m: THREE.Material, vertexColors: boolean, at?: NodeAt
       return { type: "MeshBasicMaterial", props: { color: "#808080" } };
     case "ShadowMaterial": {
       const s = m as THREE.ShadowMaterial;
-      return { type: "MeshBasicMaterial", props: { color: hex(s.color), opacity: s.opacity, transparent: true }, catchShadow: true } as Part;
+      return { type: "MeshBasicMaterial", props: { color: hex(s.color), opacity: unit(s.opacity), transparent: true }, catchShadow: true } as Part;
     }
     default: {
       // a TSL node material (three/webgpu): one with no node of its own is its classic material; one with a graph is
