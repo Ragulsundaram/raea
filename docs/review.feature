@@ -166,7 +166,7 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       When the agent marks an id that isn't on the item, or a comment I haven't sent
       Then nothing changes and the refusal names the item's comment ids, or says the person hasn't asked for it yet
 
-  Rule: R4. Review links: the person or their agent shares a cut, and anyone with the link watches and comments on the picture, like frame.io (built 11-11: raea-api review.ts, raea.io/r/, the app's Share button and Settings → Sharing; ships after v0.1.1)
+  Rule: R4. Review links: the person or their agent shares a cut, and anyone with the link watches and comments on the picture, like frame.io (built 11-11: raea-api review.ts, raea.io/r/, the app's Share button and the Library's Review links, R6)
     # Shane, 11-11, on Team: "maybe see if we can add to it that you can have claude share out review links so it
     # really does feel liek frame.io". Then, the same day: "important for pro and team plans to share review links
     # since it requires cloud to do so anyway". Reviewers and clients aren't team members: a link takes no place in
@@ -192,7 +192,7 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       And raea-api keeps it: POST /v1/review-links {sha256, type, item, title, project?, days?, download?, password?}
         -> link, GET /v1/review-links[?item=], GET/PATCH/DELETE /v1/review-links/:id, POST :id/comments, PATCH
         :id/comments/:cid (devices and raea.io; an agent key with the share scope may make one for a file it can reach)
-      And Settings → Sharing lists every link, live and ended, with Copy, Open and Stop
+      And the Library's Review links (R6) lists every link, live and ended, where each stands with its reviewers
 
     Scenario: R4b. A reviewer watches and comments without an account
       Given the link, opened in any browser
@@ -209,8 +209,10 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
         (built 11-11)
       And the agent reads them with share_links {link} and answers or resolves with share_change {link, reply | resolve}
         (built 11-11)
-      And not built yet: the comment as an R1 comment on the item by "<name> (guest)", a feed post saying who commented,
-        and sending guests' comments to the agent as edits (R3) so the reviewer sees "Done in v2"
+      And the comment becomes an R1 comment on the item by "<name> (guest)" (id rv-<comment>, kind edit, so it goes to
+        the agent as an edit, R3), replies and resolves sync both ways, and when the agent's version answers it the
+        reviewer sees "Done in v2" (built 11-11: the feed's share/sync.ts, every 60 s and on focus)
+      And not built yet: a feed post saying who commented
 
     Scenario: R4d. A new version replaces the cut on the same link
       When the agent shares a newer item of the same version chain (share_link on it), or the person opens one and the
@@ -250,13 +252,55 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       And the panel names the exact repo being shared and says what GitHub did (invited, already there, or why not)
 
     Scenario: R5b. The person invited accepts in their own raea
-      When they open Settings → Sharing → Invites to you and press Accept (never an agent)
+      When they open the Library's Shared with you (R6) and press Accept on the invite (never an agent)
       Then raea-api marks them joined and their raea accepts GitHub's invite to the same repo with their sign-in
       And from then on they reach the repo's media and its file locks through raea-api's LFS while the owner is on Team
-      And Settings → Sharing → Shared with you lists the project with Open on GitHub and Leave
-      And not built yet: cloning a shared project into the sidebar from there
+      And Shared with you lists the project with Open in raea, GitHub and Leave
 
     Scenario: R5c. The owner removes someone
       When the owner presses Remove (or an allowed agent calls project_collaborators {remove})
       Then their raea access ends at once, and the panel says to take them off the repo on github.com too (raea-api
         holds no GitHub token, so it can't)
+
+    Scenario: R5d. Open in raea brings a shared project into the sidebar (built 11-11: the feed's host/clone.ts)
+      When the person invited presses Open in raea on a project in Shared with you
+      Then raea clones the repo with their GitHub sign-in, history first and media after in the background (LFS through
+        raea-api while the owner is on Team), into their raea folder, and shows it in the sidebar
+      And a whole workspace's repo becomes its own workspace, "<name> (<owner>)", a name kept on this Mac only
+      And a single project's repo joins the workspace "Shared with you" as a submodule, its commit saying who shared it
+      And once it's here the button says Open and goes to it; a refusal says why (signed out of GitHub, GitHub refused
+        the clone, not a raea project)
+
+  Rule: R6. The Library: where the person's media lives and goes out, like frame.io (built 11-11: the feed's library/Hub.tsx)
+    # Shane, 11-11: "we want frame.io capability of storage while using our vector search capabilities and statuses
+    # and exploring the libraries like this", "we dont want share links to be buried in the settings". Libraries come
+    # forward: they are how cloud content is organised. The sidebar has a Library row under Inbox; Settings → Sharing
+    # keeps only the switches (Let agents share, People on) and points here.
+
+    Scenario: R6a. One place with its own column
+      When the person clicks Library in the sidebar
+      Then a column lists Search, Review links, Shared with you and, under Libraries with a + to make one, every
+        library with where it lives (this Mac or raea's cloud) and how many files it holds
+      And the row and the column's Review links count reviewers' comments still open
+      And it opens on the page last looked at, else Review links when there are comments to address, else Search
+
+    Scenario: R6b. Search reaches every library by meaning
+      When the person types what's in the shot, or a sound as they'd describe it with Sounds only on
+      Then every library on this Mac and in raea's cloud is searched at once (docs/libraries.feature), to the moment,
+        as a grid of tiles; until the search model is ready it searches by words and says so
+
+    Scenario: R6c. Review links is a board of every link, where each stands
+      Then every link shows as a card: the cut's poster, its version, its title and its state with its reviewers,
+        Approved (on the version it shows now), To address (comments still open here, plus any not synced yet),
+        Waiting, or Ended (expired or stopped), with views, comments, the project and when it ends
+      And the cards filter by state (All leaves out Ended) and by words, and sort what needs the person first
+      And picking a card opens a side panel with Open item, Copy, Open, Settings and Stop sharing
+
+    Scenario: R6d. Shared with you is where invites and other people's projects are
+      Then invites wait there for Accept or Decline (R5b) and joined projects show with Open in raea (R5d), GitHub and
+        Leave
+
+    Scenario: R6e. Not built yet
+      Then a share link of several items (a folder of cuts, frame.io's presentation link), a library organising the
+        cloud copies of a workspace's projects and their synced code, and a status per file (needs review, approved) in
+        a library's own grid
