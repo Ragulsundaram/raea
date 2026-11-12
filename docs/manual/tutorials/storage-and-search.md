@@ -43,12 +43,13 @@ Then an embedding model turns each shot's picture, sound and words into vectors,
 When you search, your words become a vector in that same space. raea compares it with every shot's picture, sound and
 words, matches your words as keywords too, and ranks the results together. So a chip pulled apart, with cheese stretching between the halves, finds that
 shot, even if no file is named that. The vectors are kept in turbopuffer, a vector database, one namespace for each
-workspace, while the indexing runs on your own computers.
+workspace, while the indexing runs on your own computers, or on raea's own for files only its storage holds.
 
 ## Free, Pro and Team
 
-On Free, your libraries and their index stay on your computer. On Pro and Team, they're kept in raea's storage, so you
-can search them on raea.io too, and on Team every teammate searches the same media.
+On Free, your libraries and their index stay on your computer. On Pro and Team, each library can stay there too, or
+live in raea's cloud, where you can search it on raea.io and from any device, and share its files for review.
 
 That's the last tutorial. The rest of the docs go deeper: [How an agent should use raea](../start/agents.md) for the
-loop, and the [CLI](../reference/cli/index.md) and [SDK](../reference/sdk/index.md) references.
+loop, the [storage and search API](../guides/api.md), and the [CLI](../reference/cli/index.md) and
+[SDK](../reference/sdk/index.md) references.
