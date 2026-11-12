@@ -70,6 +70,8 @@ export {
 export { Overlay, overlays } from "@raea/video/overlay";
 export type { FrameInput, InputTimeline, Perception, Rect } from "@raea/app/clock";
 export { Mix, type MixProps } from "@raea/audio/mix";
+// a frame held until the composition continues it (docs/layout-reads.feature LR9)
+export { delayRender, continueRender, cancelRender, HOLD_TIMEOUT_MS } from "./hold";
 export {
   Animate, Stagger, propsFingerprint, track, move, delay, reverse, curve, curveFn, timeline, sequence, sequenceGap, parallel, stagger, gridDelay, sampleAnimation,
   rise, pop, slam, slide, wipe, fill, tick, strike, pushIn, fade, moves, toMove,

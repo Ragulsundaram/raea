@@ -31,14 +31,14 @@ The composition, the app, and the specs and notes an agent writes.
 
 | Import | What it's for | Exports |
 | --- | --- | --- |
-| [`raea`](raea.md) | The main entry: compositions, sequences, time, interpolation, springs, footage, sound and words. | 18 components, 8 hooks, 52 functions, 8 values, 91 types |
+| [`raea`](raea.md) | The main entry: compositions, sequences, time, interpolation, springs, footage, sound and words. | 18 components, 8 hooks, 55 functions, 9 values, 91 types |
 | [`raea/app`](app.md) | The App, its plugins and schedules, and the registry a video's compositions are kept in. | 1 component, 4 functions, 3 classes, 17 values, 8 types |
 | [`raea/brief`](brief.md) | The specs an agent writes as data: brief, script, taste, plan and controller, checked against raea's schemas. | 5 functions, 28 types |
 | [`raea/note`](note.md) | A person's note as a file in the project: their words kept as written, and the asks the agent restates it as. | 1 function, 4 types |
 
 ## Time and motion
 
-Frames, animation, springs, states and input.
+Frames, animation, springs, states and input, and holding a frame until it's ready.
 
 | Import | What it's for | Exports |
 | --- | --- | --- |
@@ -47,6 +47,7 @@ Frames, animation, springs, states and input.
 | [`raea/math`](math.md) | Numbers through time: interpolation, easing, springs, curves and the vector types Bevy uses. | 7 functions, 3 values, 7 types |
 | [`raea/state`](state.md) | State machines stepped by frame, for game logic and workflows, typed so a wrong transition doesn't compile. | 2 hooks, 6 functions, 1 value, 20 types |
 | [`raea/input`](input.md) | The frame's input: keys, pointer, wheel and gamepads, the same live and in a scripted render. | 1 hook, 2 functions, 2 types |
+| [`raea/hold`](hold.md) | Holding a frame until it's ready: delayRender, continueRender and cancelRender. | 3 functions, 1 value |
 
 ## Video, sound and text
 

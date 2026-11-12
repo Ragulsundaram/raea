@@ -38,7 +38,7 @@ See [Your first video](../../start/first-video.md) for the whole loop, and
 import { AbsoluteFill, ACTION_KEY, actionsIn, Animate } from "raea"
 ```
 
-`raea` exports 18 components, 8 hooks, 52 functions, 8 values, 91 types. Source: [sdk/raea/src/index.tsx](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/index.tsx).
+`raea` exports 18 components, 8 hooks, 55 functions, 9 values, 91 types. Source: [sdk/raea/src/index.tsx](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/src/index.tsx).
 
 ## Components
 
@@ -353,6 +353,22 @@ function actionsIn(input: FrameInput): { name: string; args: any; }[]
 function applyActions<S>(actions: PanelActions<S>, state: S, input: FrameInput): S
 ```
 
+### `cancelRender`
+
+Fail the render: the error goes where a composition's throw goes (a data-raea-error the render reports and stops on).
+
+```ts
+function cancelRender(err: unknown): void
+```
+
+### `continueRender`
+
+Release a hold delayRender opened; the last one released wakes the frame. A handle already released does nothing.
+
+```ts
+function continueRender(handle: number): void
+```
+
 ### `curveFn`
 
 A curve name as a function (the engine's easing::Easing::parse, the same names).
@@ -367,6 +383,14 @@ The same move later by `frames`.
 
 ```ts
 function delay(m: MoveLike, frames: number): Move
+```
+
+### `delayRender`
+
+Hold the frame until `continueRender(handle)`. `label` names it if it's still open when its time runs out.
+
+```ts
+function delayRender(label?: string, options?: { timeoutInMilliseconds?: number; } | undefined): number
 ```
 
 ### `fade`
@@ -809,6 +833,10 @@ publishing { send: { n, text } } (a higher n is a new message); a panel drives t
 ### `firstDecider`
 
 The default decider: the first candidate.
+
+### `HOLD_TIMEOUT_MS`
+
+How long a hold may stay open before the render fails naming it, unless delayRender is told otherwise.
 
 ### `MEDIA_ROOT`
 

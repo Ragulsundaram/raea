@@ -215,6 +215,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
 
   Rule: the frame waits for the measure
 
+    @done
     Scenario: LR9. delayRender and continueRender
       Then "raea" exports delayRender(label?), continueRender(handle) and cancelRender(error) on the hold that @raea/r3f
         already uses (__raeaHold)
@@ -222,6 +223,19 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And a handle still open after the hold's timeout fails the render, naming its label
       And a component written for this pattern (measure in an effect, then continue) draws its measured layout on the
         held frame itself, not the frame after
+      And 11-12, built:
+        - sdk/raea/src/hold.ts. delayRender(label?, { timeoutInMilliseconds }) opens a hold. Its timer (30 s,
+          HOLD_TIMEOUT_MS) fails the render as `cancelRender: "LABEL" was held for N ms and never continued`.
+          continueRender releases it, and the last release wakes the frame. A handle released twice does nothing.
+          cancelRender sends a data-raea-error, which the render reports as a composition's throw.
+        - Settle's guard against a stalled frame (20 s with nothing moving) would have failed a held frame before
+          the hold's own timeout. A frame whose marker is at the frame but not done now waits up to HOLD_SECS
+          (120 s), then fails saying it was held. The same applies to <R3F> scenes that never finish loading,
+          which used to fail at 20 s.
+        - bench/layout-reads/probes/hold.tsx holds its frame, sets its words after a 300 ms timer, and continues.
+          The frames match Chrome's words. A composition whose hold is never continued fails in 2.6 s with its
+          label (timeout 2000 ms).
+        - The manual has a page for it, docs/manual/reference/sdk/hold.md.
 
   Rule: it's finished when the harness passes, nothing got slower, and users can read about it
 

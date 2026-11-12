@@ -39,6 +39,9 @@ Read the files a task needs with `raea guide motion/NAME`, one or two at a time,
    `useState`, `useEffect` and timers don't animate a render. `Math.random()` is seeded for each frame: a render
    repeats, but every frame draws new numbers, so it suits grain or a flicker, and something that should hold still
    (a scatter, a layout) is seeded from an index. `Date` (`Date.now()`, `new Date()`) is the frame's time.
+   A frame that needs one more step before it's taken (text measured in an effect, a fetch) holds it with
+   `delayRender("what it waits for")` and releases it with `continueRender(handle)` (`raea/hold`); a hold never
+   released fails the render after 30 s, naming its label.
 3. **Clamp every interpolate.** The default extrapolation extends the line forever, so use
    `{extrapolateLeft: "clamp", extrapolateRight: "clamp"}` unless you mean otherwise. Inputs must strictly increase.
 4. **Settle with `Easing.out(Easing.cubic)`.** The plain curves (`Easing.cubic`, `Easing.quad`) ease in, and

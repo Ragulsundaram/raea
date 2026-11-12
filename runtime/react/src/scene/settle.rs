@@ -31,6 +31,9 @@ pub const SETTINGS_SECS: f64 = 120.0;
 /// One JS call running longer than this is a hang (a loop that never returns), not progress.
 pub const HANG_SECS: f64 = 600.0;
 
+/// The longest a frame may be held (delayRender, a suspended scene) with nothing else moving.
+pub const HOLD_SECS: f64 = 120.0;
+
 /// Run React until its commits settle and the marker says `want` (or anything, for None). A layout read the composition
 /// makes meanwhile is told this host lays no page out: a host with a page settles with [`settle_with`].
 pub fn settle(app: &mut App, want: Option<i64>, secs: f64) -> R<Option<Map<String, Value>>> {
@@ -52,6 +55,8 @@ pub fn settle_with(app: &mut App, want: Option<i64>, secs: f64, answer: &mut cra
     let mut moved = (u64::MAX, u64::MAX, f64::NAN);
     // the marker as last seen (frame, done), for the refusal's message
     let mut marked = (-2i64, -2i64);
+    // the frame is held (below): its marker at the frame, not done
+    let mut held = false;
     // the count before the first update: a flush is in the channel before it's counted, so one that landed before this
     // read is applied by the update below, and one after it wakes the wait. (A first pass that waited for a flush
     // before updating lost the frame's flush whenever React was quicker than this read: the wait then ran its 0.5 s
@@ -135,7 +140,10 @@ pub fn settle_with(app: &mut App, want: Option<i64>, secs: f64, answer: &mut cra
             moved = now;
             still = std::time::Instant::now();
         }
-        let left = secs - still.elapsed().as_secs_f64();
+        // a held frame (delayRender, a scene still loading: its marker at the frame, not done) waits up to
+        // HOLD_SECS, so a hold's own timeout (30 s unless it says) fails the render naming it first (layout-reads LR9)
+        held = want.is_some_and(|w| marked.0 == w && marked.1 != w);
+        let left = if held { secs.max(HOLD_SECS) } else { secs } - still.elapsed().as_secs_f64();
         if left <= 0.0 {
             break;
         }
@@ -148,6 +156,9 @@ pub fn settle_with(app: &mut App, want: Option<i64>, secs: f64, answer: &mut cra
     // a call past HANG_SECS is a hang, named: which runtime's call, and how long it has run
     if let Some(d) = crate::js_call_for().filter(|d| d.as_secs_f64() >= HANG_SECS) {
         return Err(format!("the composition hangs on frame {want:?}: {} has run for {:.0} s without returning (past {HANG_SECS} s: an endless loop, or a native call that never returns; `sample <pid>` shows where), its marker at frame {} (done {})", crate::js_call_who(), d.as_secs_f64(), marked.0, marked.1));
+    }
+    if held {
+        return Err(format!("frame {want:?} was held for {HOLD_SECS} s and never released: a delayRender never continued, or a scene that never finished loading"));
     }
     Err(format!("the composition made no progress on frame {want:?} for {secs} s, its marker at frame {} (done {}) (does it throw? its [js] lines are above, and `raea traces show last` has the run's log)", marked.0, marked.1))
 }
