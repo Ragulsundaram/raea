@@ -1,0 +1,167 @@
+@spec
+Feature: Layout reads: a composition measures its text and layout as Chrome does (#54)
+  Public #54 (from #13, @kevinschaich): a composition can't measure anything before it draws. snapcn's 61 free
+  components (MIT) were run through raea, and 27 of them measure:
+  - In 5 of them, `document.createElement("canvas").getContext("2d").measureText()` throws, because a composition has
+    no `document`. `document.fonts.ready` and `document.fonts.load` are missing too.
+  - In 6 of them, a ref read in an effect has no geometry and no DOM API. `getBoundingClientRect`, `offset*`,
+    `children`, `querySelectorAll` and `style` are all missing.
+  - The others guard with `typeof document` and fall back to guessed widths, so their layout drifts from Chrome's.
+  They measure inside an effect while the first frame is held, so the read must be synchronous and the frame taken
+  must be the measured one.
+
+  Shane, 2026-11-12, asked for the future-proof answer, and took this one: real layout reads, answered from the same
+  Blitz layout that draws the frame. "lets do that ... so we do the big job completely and dont miss anything", aimed
+  at 0.1.3.
+
+  Why this design and not the others:
+  - Chrome is the bar (docs/blitz-bevy.feature). Estimated widths drift, which is the bug in the report.
+  - One bridge, no parallel paths (B3). Putting compositions on @raea/ui's DOM would run a second runtime beside
+    bevy-react, which also carries the 3D parts.
+  - The Blitz page that draws the frame already has every box and every font, and `raea check`'s manifest reads that
+    same layout. A ref then reads what the render and the checks read.
+
+  How it works today, which the design has to fit:
+  - A composition's JS runs on its own thread (runtime/react/src/thread.rs). bevy-react sends each commit's ops as one
+    JSON batch from `resetAfterCommit`, which is before React runs the layout effects. `__raea_flush` puts the batch on
+    a channel and counts it (FLUSHED).
+  - On the main thread, `settle` (runtime/react/src/scene/settle.rs) steps the React App: `apply_commits` turns the
+    batches into entities, and settle waits on FLUSHED until the frame's marker lands. The marker is held while
+    `__raeaHold.n` > 0.
+  - Only after that does the host sync its BevyPage from the React World and lay it out (runtime/export/src/
+    bevy_frame.rs; runtime/live/src/draw.rs; runtime/world/src/page.rs). `BevyPage::client_box(id)` already reads one
+    element's box by React id.
+  - `__raea_call` handlers have no World and no page. `page.viewBox` answers from a static the last layout wrote.
+  - The ref handle is bevy-react's, `{ id, type, kind }`, or BevyCanvasElement for a `<canvas>`. sdk/raea/src/
+    canvas2d.ts already installs the web's 2D context on it from the entry (#55), and this plan extends handles the
+    same way.
+
+  Background:
+    Given the bar is headless Chrome at deviceScaleFactor 1, with the composition's size as its viewport and the same
+      font files
+    And a composition that reads no layout pays nothing for this: no snapshot is made unless something asks for one
+
+  Rule: it is measured against Chrome from the start
+
+    Scenario: LR0. A harness runs snapcn's measuring components in raea and in Chrome
+      Given bench/layout-reads holds snapcn's 27 measuring components (MIT, with its licence) and #54's repro
+      Then each one renders in raea and in headless Chrome
+      And for each it records whether it threw, the numbers it measured (logged under a "measure" tag), and its
+        elements' boxes on frames 0, mid and last
+      And it prints one line per component (pass, or what differs and by how much), and exits 1 on a failure
+      And the first run is the baseline, recorded here: what throws and what drifts
+      And the bar: nothing throws, a measured number is within 0.5 px of Chrome's, and a box within 1 px; a gap that
+        remains is stated per component, with its cause
+
+  Rule: a read gets the layout that draws the frame, synchronously
+
+    @needs:LR0
+    Scenario: LR1. A synchronous layout call answered by the page
+      Given the composition's JS asks `page.layout` while an effect runs
+      Then the JS thread blocks until the main thread answers
+      And the main thread answers from inside settle's wait, without waiting for the frame's marker. It applies the
+        batches in the inbox, syncs the BevyPage from the React World, lays it out, and returns the boxes of every
+        element at once, keyed by React id
+      And that wait wakes on a layout request, as it wakes on a flush (the FLUSHED condvar)
+      And the JS caches the answer until its next op_flush, so a burst of reads costs one layout
+      And a request that gets no answer within HANG_SECS fails the render, saying which call hung
+      And the page the host owns is lent to settle for the wait, on the main thread (BevyPage isn't Send): a
+        scoped thread-local, or a parameter, chosen when it's built
+      And with no page to answer (a host that lays nothing out), the call says so, and the ref's reads throw an error
+        that names the host, instead of returning guesses
+
+    @needs:LR1
+    Scenario: LR2. Every host that runs a composition answers
+      Then each host below answers LR1's call, or states plainly why it can't:
+        | host                    | where                                  |
+        | render and export       | runtime/export/src/bevy_frame.rs       |
+        | preview and live play   | runtime/live/src/draw.rs               |
+        | the world's page        | runtime/world/src/page.rs              |
+        | bake                    | runtime/bake                           |
+        | the lite entry          | runtime/bundle/src/entry.rs            |
+        | the portable bundle     | the iPhone's player                    |
+        | an exported game        | raea-app-game's player                 |
+      And in live play a read costs at most one frame's wait, which is stated with its measurement
+
+  Rule: a ref has the DOM a web component reads
+
+    @needs:LR1
+    Scenario: LR3. Geometry on refs
+      Then a ref's element has getBoundingClientRect() (a DOMRect: x, y, width, height, top, left, right, bottom and
+        toJSON) and getClientRects()
+      And it has offsetWidth, offsetHeight, offsetLeft, offsetTop and offsetParent; clientWidth, clientHeight,
+        clientLeft and clientTop; scrollWidth, scrollHeight, scrollLeft and scrollTop
+      And each value means what it means in Chrome: getBoundingClientRect includes transforms, offset* doesn't, and
+        both are in the composition's CSS px
+      And #54's repro logs `335 function`, as Chrome does
+
+    Scenario: LR4. The tree on refs
+      Then a ref's element has children, childNodes, firstChild, lastChild, firstElementChild, lastElementChild,
+        nextSibling, previousSibling, nextElementSibling, previousElementSibling, parentNode and parentElement,
+        tagName, nodeName and nodeType, id, className, classList, dataset, getAttribute and hasAttribute,
+        textContent, contains, matches, closest, querySelector and querySelectorAll
+      And these are answered in JS from the bridge's own instances, which hold the tree as React last committed it,
+        with no call to Rust
+      And the selectors cover tag, #id, .class, [attr], [attr=v], descendant, child, :first-child, :last-child,
+        :nth-child() and :not(), and an unsupported selector throws a SyntaxError, as Chrome's does
+
+    @needs:LR1
+    Scenario: LR5. style and getComputedStyle
+      Then el.style reads the element's style prop, and writing it (a property, setProperty or cssText) sends an
+        update op, as canvas2d.ts sends a canvas's draws. React's next commit to the same key wins, as in Chrome
+      And getComputedStyle(el) answers from the page's computed style, carried in the LR1 snapshot only when it's
+        asked for
+
+  Rule: the composition has a document
+
+    Scenario: LR6. measureText measures with the real fonts
+      Then `document.createElement("canvas").getContext("2d")` is @raea/ui's 2D context, the one canvas2d.ts installs
+      And its measureText returns TextMetrics (width, actualBoundingBoxLeft, actualBoundingBoxRight,
+        actualBoundingBoxAscent, actualBoundingBoxDescent, fontBoundingBoxAscent and fontBoundingBoxDescent)
+        shaped from the font files the page draws with, through a synchronous native call
+      And a composition's <canvas> ref measures the same way, so canvas text no longer depends on the `fonts` event's
+        estimates
+      And with the same font, the width is within 0.5 px of Chrome's
+
+    @needs:LR1
+    Scenario: LR7. document's other parts
+      Then document.fonts has ready, load(font) and check(font). ready and load resolve once the faces the composition
+        asked for (loadFont, @font-face, packaged fonts) are in the page
+      And document has body, documentElement, getElementById, querySelector and querySelectorAll over the
+        composition's tree, plus createElement and createTextNode
+      And an element made with createElement and appended into the composition is laid out and measurable, then
+        drawn or removed as in Chrome. Components measure that way: they append a hidden copy, read it, and remove it
+      And window has innerWidth, innerHeight and devicePixelRatio for the composition's size, and getComputedStyle
+
+    Scenario: LR8. Observers, from the same layout
+      Then ResizeObserver calls back after a layout in which an observed element's size changed, with
+        contentRect, borderBoxSize and contentBoxSize
+      And MutationObserver and IntersectionObserver are present. Each calls back if the harness shows a component needs
+        it, and otherwise exists but never fires, which is stated in the manual
+
+  Rule: the frame waits for the measure
+
+    Scenario: LR9. delayRender and continueRender
+      Then "raea" exports delayRender(label?), continueRender(handle) and cancelRender(error) on the hold that @raea/r3f
+        already uses (__raeaHold)
+      And a frame is taken only after every handle is continued
+      And a handle still open after the hold's timeout fails the render, naming its label
+      And a component written for this pattern (measure in an effect, then continue) draws its measured layout on the
+        held frame itself, not the frame after
+
+  Rule: it's finished when the harness passes, nothing got slower, and users can read about it
+
+    @needs:LR3,LR4,LR5,LR6,LR7,LR8,LR9
+    Scenario: LR10. The harness passes, and no render got slower
+      Then LR0's harness passes, with any remaining gap listed in LR0
+      And a composition that doesn't read layout renders exactly as before: identical frames on the P26 set, and no
+        more time than before
+      And a composition that measures every frame (karaoke-captions, 300 frames) has its cost per read and per frame
+        measured and written here
+      And sdk/raea/conformance covers the JS side, and Rust tests cover the call, the wait and the hang guard
+
+    @needs:LR10
+    Scenario: LR11. Docs, skills, and the issues
+      Then the manual and the skills' sdk reference say what a composition's DOM has, and what it lacks
+      And #54 is answered with the harness's before and after, and closed
+      And #13 is answered with what now matches Chrome
