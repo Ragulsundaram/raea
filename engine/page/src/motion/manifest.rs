@@ -148,8 +148,12 @@ impl BlitzPage {
         while let Some(n) = stack.pop() {
             let Some(node) = doc.get_node(n) else { continue };
             stack.extend(node.children.iter().rev().copied());
+            // an element's box only: the document and text nodes have none to ask for (blitz-dom panics on their transform)
+            if !node.is_element() || node.attr(LocalName::from("data-raea-src")).is_some() {
+                continue;
+            }
             let on = doc.get_client_bounding_rect(n).is_some_and(|b| b.width > 0.0 && b.height > 0.0 && b.x < w && b.y < h && b.x + b.width > 0.0 && b.y + b.height > 0.0);
-            if !node.is_element() || node.attr(LocalName::from("data-raea-src")).is_some() || !on || alpha(doc, n) <= 0.01 {
+            if !on || alpha(doc, n) <= 0.01 {
                 continue;
             }
             let Some(s) = node.primary_styles() else { continue };

@@ -7,9 +7,11 @@
 #   RAEA_BLACK_FAULT=1  each frame's first draw comes back black: the render must redraw (its stderr says so) and come
 #                       out the same as the plain render (SSIM >= 0.999)
 #   RAEA_BLACK_FAULT=2  every draw black and the GPU canary failing: the render must be refused, with the reason
+#   RAEA_BLACK_FAULT=3  every draw black and the canary passing (the page cases): the render must finish and warn that the
+#                       page shows something (#96), not panic reading the page's text nodes
 # A black frame that says ok, or a different one with no word, is a failure.
 #
-#   sdk/raea/bench/black-frame/check.sh [CASE ...]     (default: page scene; RAEA_BIN, default raea)
+#   sdk/raea/bench/black-frame/check.sh [CASE ...]     (default: page text-first scene; RAEA_BIN, default raea)
 # Prints a line per case and fault (PASS or MISS) and exits 1 when any misses.
 set -u
 export RAEA_SIGN=0 RAEA_MARK=0
@@ -17,7 +19,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 BIN=${RAEA_BIN:-raea}
 OUT=$(mktemp -d "${TMPDIR:-/tmp}/raea-black-frame.XXXXXX")
 trap 'rm -rf "$OUT"' EXIT
-[ $# -gt 0 ] || set -- page scene
+[ $# -gt 0 ] || set -- page text-first scene
 bad=0
 for c in "$@"; do
   d=$OUT/$c
@@ -45,6 +47,15 @@ for c in "$@"; do
     echo "PASS $c fault 2: refused ($(grep -m1 REFUSED "$d/f2.log" | cut -c1-160))"
   else
     echo "MISS $c fault 2: not refused$([ -f "$d/f2/frame-00000.png" ] && echo ", a frame written")"; bad=1
+  fi
+  # every draw black with a healthy canary: kept, and the page's paint named
+  [ "$c" = page ] || [ "$c" = text-first ] || continue
+  mkdir -p "$d/f3"
+  (cd "$HERE" && RAEA_BLACK_FAULT=3 "$BIN" render "$c.tsx" --at 0 -o "$d/f3/") > "$d/f3.log" 2>&1
+  if grep -q "black-frame" "$d/f3.log" && grep -q "though the page shows" "$d/f3.log" && ! grep -q panicked "$d/f3.log"; then
+    echo "PASS $c fault 3: warned ($(grep -m1 'though the page shows' "$d/f3.log" | cut -c1-140))"
+  else
+    echo "MISS $c fault 3: $(grep -m1 -E 'panicked|REFUSED' "$d/f3.log" | cut -c1-160 || echo 'no warning said')"; bad=1
   fi
 done
 exit $bad
