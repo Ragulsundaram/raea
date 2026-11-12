@@ -219,7 +219,9 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
         Share panel says "The link shows v1. This one is newer" and they press Make it v2
       Then the link plays v2 with a version picker; v1's comments stay on v1 (the link is kept under the chain's first
         item; the same file again is no new version)
-      And not built yet: a side-by-side compare of two versions on the page
+      And Compare on the page shows two versions side by side, each side picking its own (the other side's swaps
+        them), played, stepped and scrubbed together by one transport with the right side's comments, the sound from
+        the side whose speaker is on (built 11-11: raea.io's review/compare.tsx)
 
     Scenario: R4e. A link is the reviewer's only right, and it can be taken back
       Then a link reaches one item's versions, their comments and nothing else: no library, file list, search or account
