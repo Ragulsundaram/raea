@@ -305,7 +305,23 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
       Then invites wait there for Accept or Decline (R5b) and joined projects show with Open in raea (R5d), GitHub and
         Leave
 
-    Scenario: R6e. Not built yet
-      Then a share link of several items (a folder of cuts, frame.io's presentation link), a library organising the
-        cloud copies of a workspace's projects and their synced code, and a status the person sets on any file (needs
-        review, approved) whether or not it's on a link, with a library's grid filtered by it
+    Scenario: R6e. A status the person sets on any file (built 11-11: the feed's library/file-status.ts)
+      When the person picks Needs review, In progress or Approved (or No status) at the top of a file's panel
+      Then the file keeps it whether or not it's on a link, as a reserved tag status:<name> beside its own tags (synced
+        to the cloud with them, never shown among them), and its tile says it under the poster
+      And a library's grid filters by it: All, each status with its count, and No status; filtered, the grid reads the
+        rest of the library first and counts only once it has every page
+
+    Scenario: R6f. A cloud library's file goes out from its panel (built 11-11: the feed's library/ShareFile.tsx)
+      # Shane, 11-11: "assumedly theres local only and cloud libraries. only cloud libraries can be shared."
+      When the person presses Share for review in the Review row of a file in a cloud library
+      Then the link is made there, nothing navigating away: a file in raea's storage by its hash with nothing uploaded,
+        a folder's file from its copy on this Mac (uploaded first when raea doesn't hold it yet)
+      And its address is copied, and the Review row names the link with Copy link and says Link copied
+      And a library on this Mac only never shares: its Review row says only a cloud library's files can be shared, and
+        the host refuses one (host library.shareable) whatever the page asks; so is a Google Drive file, and a file
+        on another machine is shared from there
+
+    Scenario: R6g. Not built yet
+      Then a share link of several items (a folder of cuts, frame.io's presentation link), and a library organising the
+        cloud copies of a workspace's projects and their synced code
