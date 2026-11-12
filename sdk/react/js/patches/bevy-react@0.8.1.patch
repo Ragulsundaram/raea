@@ -1,3 +1,6 @@
+diff --git a/node_modules/bevy-react/.bun-tag-86152a57801ddfd7 b/.bun-tag-86152a57801ddfd7
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/src/canvas.ts b/src/canvas.ts
 index 0bd05fcb2730a53ad4893f7d3cf0adad12a510db..5357f3fe7607697a81c88c807777bf9fa31a3a31 100644
 --- a/src/canvas.ts
@@ -48,10 +51,10 @@ index 329c833ef3cb6c8f938e7ebdf66862e87507c946..e36f26028eb19555608cefe12020570c
    CanvasContext,
 diff --git a/node_modules/bevy-react/src/nodes.ts b/src/nodes.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..3fb86d0779c0b2d9767097c460658443dc73cca7
+index 0000000000000000000000000000000000000000..b3a99f314d527d9a3c9530e809afbd6dcfb25f02
 --- /dev/null
 +++ b/src/nodes.ts
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,65 @@
 +// The tree as React last committed it, kept on the instances themselves (raea's patch, docs/layout-reads.feature
 +// LR4): each element and text instance knows its parent, its children in order, and its latest props or text. A host
 +// can then answer DOM-shaped reads (children, querySelector, textContent) from the instances a ref already holds,
@@ -61,8 +64,9 @@ index 0000000000000000000000000000000000000000..3fb86d0779c0b2d9767097c460658443
 +export class BevyNode {
 +  parentNode: BevyElement | null = null;
 +  constructor(
-+    /** The node's reconciler id (what its ops name). */
-+    readonly id: number,
++    /** The node's reconciler id (what its ops name). Not `id`, which a ref's DOM answers as the web does: the
++     *  element's id attribute (raea's dom-tree). */
++    readonly nodeId: number,
 +  ) {}
 +}
 +
@@ -117,7 +121,7 @@ index 0000000000000000000000000000000000000000..3fb86d0779c0b2d9767097c460658443
 +  if (child.parentNode === parent) child.parentNode = null;
 +}
 diff --git a/src/renderer.ts b/src/renderer.ts
-index 84aefa67ab2c6b886dce6445d305dd328a89c0a3..d97b868fd151c8c3bbd12e0e716c42859fb03a19 100644
+index 84aefa67ab2c6b886dce6445d305dd328a89c0a3..23c8a81e1e4423832f7462103360ac5635e096be 100644
 --- a/src/renderer.ts
 +++ b/src/renderer.ts
 @@ -23,6 +23,13 @@ import {
@@ -151,7 +155,7 @@ index 84aefa67ab2c6b886dce6445d305dd328a89c0a3..d97b868fd151c8c3bbd12e0e716c4285
 -interface TextInstance {
 -  id: number;
 -}
-+// An instance is a BevyElement (nodes.ts): its id, type and wire kind (`type`,
++// An instance is a BevyElement (nodes.ts): its nodeId, type and wire kind (`type`,
 +// except inside a `<text>`: a nested `<text>` is a `textSpan`, an `<image>` an
 +// `inlineImage`; every update op names it, since Rust decodes the props against
 +// that element; absent on a `<canvas>` handle, whose kind is its type), with
@@ -184,75 +188,102 @@ index 84aefa67ab2c6b886dce6445d305dd328a89c0a3..d97b868fd151c8c3bbd12e0e716c4285
    },
  
    appendInitialChild(parent: Instance, child: Instance | TextInstance) {
-     push({ op: "append", parent: parent.id, child: child.id });
+-    push({ op: "append", parent: parent.id, child: child.id });
++    push({ op: "append", parent: parent.nodeId, child: child.nodeId });
 +    link(parent, child);
    },
    finalizeInitialChildren: () => false,
  
    appendChild(parent: Instance, child: Instance | TextInstance) {
-     push({ op: "append", parent: parent.id, child: child.id });
+-    push({ op: "append", parent: parent.id, child: child.id });
++    push({ op: "append", parent: parent.nodeId, child: child.nodeId });
 +    link(parent, child);
    },
    appendChildToContainer(container: Container, child: Instance | TextInstance) {
-     push({ op: "append", parent: container.id, child: child.id });
+-    push({ op: "append", parent: container.id, child: child.id });
++    push({ op: "append", parent: container.id, child: child.nodeId });
 +    link(containerNode(container.id), child);
    },
  
    insertBefore(
-@@ -239,6 +246,7 @@ const hostConfig: Reconciler.HostConfig<
-       child: child.id,
-       before: before.id,
+@@ -235,10 +242,11 @@ const hostConfig: Reconciler.HostConfig<
+   ) {
+     push({
+       op: "insert",
+-      parent: parent.id,
+-      child: child.id,
+-      before: before.id,
++      parent: parent.nodeId,
++      child: child.nodeId,
++      before: before.nodeId,
      });
 +    link(parent, child, before);
    },
    insertInContainerBefore(
      container: Container,
-@@ -251,11 +259,13 @@ const hostConfig: Reconciler.HostConfig<
-       child: child.id,
-       before: before.id,
+@@ -248,21 +256,24 @@ const hostConfig: Reconciler.HostConfig<
+     push({
+       op: "insert",
+       parent: container.id,
+-      child: child.id,
+-      before: before.id,
++      child: child.nodeId,
++      before: before.nodeId,
      });
 +    link(containerNode(container.id), child, before);
    },
  
    removeChild(parent: Instance, child: Instance | TextInstance) {
-     push({ op: "remove", parent: parent.id, child: child.id });
-     dropHandlers(child.id);
+-    push({ op: "remove", parent: parent.id, child: child.id });
+-    dropHandlers(child.id);
++    push({ op: "remove", parent: parent.nodeId, child: child.nodeId });
++    dropHandlers(child.nodeId);
 +    unlink(parent, child);
    },
    removeChildFromContainer(
      container: Container,
-@@ -263,6 +273,7 @@ const hostConfig: Reconciler.HostConfig<
+     child: Instance | TextInstance,
    ) {
-     push({ op: "remove", parent: container.id, child: child.id });
-     dropHandlers(child.id);
+-    push({ op: "remove", parent: container.id, child: child.id });
+-    dropHandlers(child.id);
++    push({ op: "remove", parent: container.id, child: child.nodeId });
++    dropHandlers(child.nodeId);
 +    unlink(containerNode(container.id), child);
    },
  
    // react-reconciler 0.33 removed `prepareUpdate`; `commitUpdate` now receives both
-@@ -278,6 +289,7 @@ const hostConfig: Reconciler.HostConfig<
+@@ -277,7 +288,8 @@ const hostConfig: Reconciler.HostConfig<
+     newProps: Record<string, unknown>,
      _internalHandle: unknown,
    ) {
-     const id = instance.id;
+-    const id = instance.id;
++    const id = instance.nodeId;
 +    instance.props = newProps;
      const op = buildUpdateOp(
        id,
        oldProps,
-@@ -302,6 +314,7 @@ const hostConfig: Reconciler.HostConfig<
+@@ -301,17 +313,20 @@ const hostConfig: Reconciler.HostConfig<
+   },
  
    commitTextUpdate(textInstance: TextInstance, _old: string, next: string) {
-     push({ op: "updateText", id: textInstance.id, text: next });
+-    push({ op: "updateText", id: textInstance.id, text: next });
++    push({ op: "updateText", id: textInstance.nodeId, text: next });
 +    textInstance.data = next;
    },
  
    // Clear an inline-text element's content (React calls this when a `<text>`
-@@ -310,7 +323,9 @@ const hostConfig: Reconciler.HostConfig<
-     push({ op: "updateText", id: instance.id, text: "" });
+   // switches from a string child to element children, before the spans mount).
+   resetTextContent(instance: Instance) {
+-    push({ op: "updateText", id: instance.id, text: "" });
++    push({ op: "updateText", id: instance.nodeId, text: "" });
    },
  
 -  clearContainer: () => {},
+-  detachDeletedInstance: (instance: Instance) => dropHandlers(instance.id),
 +  clearContainer: (container: Container) => {
 +    containerNode(container.id).childNodes = [];
 +  },
-   detachDeletedInstance: (instance: Instance) => dropHandlers(instance.id),
++  detachDeletedInstance: (instance: Instance) => dropHandlers(instance.nodeId),
  
    // No-op scope/blur hooks the reconciler still expects.
+   getInstanceFromNode: () => null,

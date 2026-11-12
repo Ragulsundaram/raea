@@ -5,6 +5,7 @@
 // offset* doesn't (and is whole px, from the offsetParent's padding edge), client* is the padding box, scroll* the
 // scrolled content.
 
+import { domTree } from "./dom-tree";
 import { boxOf, type Box } from "./page-layout";
 
 /** The web's DOMRect, as getBoundingClientRect answers it. */
@@ -36,27 +37,34 @@ export class DOMRect {
   }
 }
 
-type El = { id: number; parentNode: El | null; childNodes?: El[] };
+type El = { nodeId: number; parentNode: El | null; childNodes?: El[] };
 
 /** Chrome's integer offset*, client* and scroll*: rounded, as Chrome snaps its layout units. */
 const px = (v: number) => Math.round(v);
 
-const box = (el: El): Box | undefined => boxOf(el.id);
+const box = (el: El): Box | undefined => boxOf(el.nodeId);
 
 /** An element with no box: the zero rect Chrome answers for one that isn't displayed. */
 const ZERO: Box = { rect: [0, 0, 0, 0], scroll: [0, 0, 0, 0], padding: [0, 0, 0, 0], border: [0, 0, 0, 0], layout: [0, 0, 0, 0], offsetParent: -2, inline: false };
 
 /** The ancestor with React id `id` (offsetParent's element), or null. */
 function ancestor(el: El, id: number): El | null {
-  for (let p = el.parentNode; p; p = p.parentNode) if (p.id === id) return p;
+  for (let p = el.parentNode; p; p = p.parentNode) if (p.nodeId === id) return p;
   return null;
 }
 
 /** An inline element (a span in a line) has no padding box: its client* and scroll* are 0. */
 const inline = (b: Box) => b.inline;
 
-/** LR3's reads, on `Element`'s prototype (bevy-react's BevyElement). */
-export function domReads(Element: { prototype: object } | undefined): void {
+/** A ref's DOM, from the entry, given bevy-react's exports: LR3's geometry and LR4's tree on its BevyElement and BevyTextNode
+ * (raea's patch; a bridge without it has neither, and refs stay plain handles). */
+export function domReads(bevy: { BevyElement?: { prototype: object }; BevyTextNode?: { prototype: object } }): void {
+  geometry(bevy.BevyElement);
+  domTree(bevy.BevyElement, bevy.BevyTextNode);
+}
+
+/** LR3's reads, on `Element`'s prototype. */
+function geometry(Element: { prototype: object } | undefined): void {
   if (!Element || (Element.prototype as any).__domReads) return;
   const define = (name: string, get: (this: El) => unknown) => Object.defineProperty(Element.prototype, name, { get, configurable: true });
   Object.defineProperty(Element.prototype, "__domReads", { value: true });

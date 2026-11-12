@@ -268,10 +268,11 @@ const nothing = () => () => {};
 /** The entity of an element's twin (docs/blitz-bevy.feature B3 H1): every element on the page has one, which Bevy code
  *  queries like any entity (PageElement, ElementBox). `ref` is the element's React ref; undefined until it's
  *  committed and its twin made (the frame after). Use it with useComponent, setComponent or BRP calls. */
-export function useEntity(ref: { readonly current: { readonly id: number } | null }): Entity | undefined {
+export function useEntity(ref: { readonly current: { readonly nodeId?: number; readonly id: number | string } | null }): Entity | undefined {
   const [op, setOp] = useState<number | undefined>(undefined);
   // the ref is set as React commits: read it after each commit (the same id changes nothing)
-  useEffect(() => setOp(ref.current?.id));
+  // (a composition's ref names its node by nodeId: its `id` is the element's id attribute, as on the web)
+  useEffect(() => setOp(ref.current ? (ref.current.nodeId ?? Number(ref.current.id)) : undefined));
   const k = op === undefined ? undefined : JSON.stringify(["raea/twin", { op }]);
   const get = () => (k === undefined ? undefined : ((store.values.get(`?${k}`) as Entity | null | undefined) ?? undefined));
   return useSyncExternalStore(k === undefined ? nothing : readSubscriber(k, "raea/twin", { op }), get, get);

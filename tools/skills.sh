@@ -225,7 +225,7 @@ gen_sdk() {
   bun -e '
     const root = process.argv[1], dir = root + "/sdk/raea/src"
     const t = new Bun.Transpiler({ loader: "tsx" })
-    const skip = /(\.gen\.ts|^test\.tsx|^native-calls\.ts|^prelude\.ts|^pure\.ts|^frame-globals\.ts|^canvas2d\.ts|^page-layout\.ts|^dom-reads\.ts)$/
+    const skip = /(\.gen\.ts|^test\.tsx|^native-calls\.ts|^prelude\.ts|^pure\.ts|^frame-globals\.ts|^canvas2d\.ts|^page-layout\.ts|^dom-[a-z-]+\.ts)$/
     const files = [...new Bun.Glob("*.{ts,tsx}").scanSync(dir)].filter((f) => !skip.test(f)).sort()
     const rows = files.map((f) => ({ entry: f.startsWith("index.") ? "raea" : "raea/" + f.replace(/\.tsx?$/, ""), file: "sdk/raea/src/" + f, names: t.scan(require("fs").readFileSync(dir + "/" + f, "utf8")).exports.filter((n) => n !== "default").sort() }))
     console.log(JSON.stringify(rows.sort((a, b) => (a.entry === "raea" ? -1 : b.entry === "raea" ? 1 : a.entry.localeCompare(b.entry)))))
@@ -265,7 +265,8 @@ verb:traces (raea's own session logs, for whoever debugs raea)
 module:dev_tools (raea's own debugging overlays)
 module:test (raea's test harness, for raea's own tests)
 module:page-layout (installed by the entry: a composition reads its layout through the DOM on its refs, docs/layout-reads.feature)
-module:dom-reads (installed by the entry on every ref; what it adds is the web's own API)"
+module:dom-reads (installed by the entry on every ref; what it adds is the web's own API)
+module:dom-tree (installed by the entry on every ref; what it adds is the web's own API)"
 coverage() {
   local corpus v m t f; corpus=$(mktemp "${TMPDIR:-/tmp}/skills-cov.XXXXXX")
   texts | while read -r f; do cat "$f"; echo; done > "$corpus"

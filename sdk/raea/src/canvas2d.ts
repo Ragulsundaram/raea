@@ -12,7 +12,9 @@ import { CanvasRenderingContext2D_ } from "@raea/ui/canvas";
 
 /** bevy-react's canvas handle, as the entry passes it (this module can't import bevy-react: the SDK's checks load it
  *  where only the bundle's runtime has it) */
-type Handle = { readonly id: number };
+// a handle's node id: nodeId on raea's patched bevy-react (its `id` is the element's id attribute there), id before it
+type Handle = { readonly nodeId?: number; readonly id: number };
+const idOf = (h: Handle) => h.nodeId ?? h.id;
 type HandleClass = { prototype: Handle };
 
 type Size = { width: number; height: number };
@@ -61,12 +63,12 @@ export function canvas2d(El: HandleClass): void {
     contexts.get(id)?._reset();
   };
   Object.defineProperties(El.prototype, {
-    width: { configurable: true, get(this: Handle) { return size(this.id).width; }, set(this: Handle, v: number) { resize(this.id, "width", v); } },
-    height: { configurable: true, get(this: Handle) { return size(this.id).height; }, set(this: Handle, v: number) { resize(this.id, "height", v); } },
+    width: { configurable: true, get(this: Handle) { return size(idOf(this)).width; }, set(this: Handle, v: number) { resize(idOf(this), "width", v); } },
+    height: { configurable: true, get(this: Handle) { return size(idOf(this)).height; }, set(this: Handle, v: number) { resize(idOf(this), "height", v); } },
   });
   (El.prototype as any).getContext = function (this: Handle, kind = "2d") {
     if (kind !== "2d") return null;
-    const id = this.id;
+    const id = idOf(this);
     let ctx = contexts.get(id);
     if (!ctx) {
       const canvas = { get width() { return size(id).width; }, get height() { return size(id).height; }, getAttribute: (k: string) => (k === "width" || k === "height" ? String(size(id)[k]) : null), _send: (list: unknown) => send(id, { __canvas2d: list }) };

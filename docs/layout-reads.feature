@@ -151,6 +151,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           inside it; a span's offsets with client 0; and a scroller's scroll sizes.
         - The bundle crate was at its 2000-line limit: the stylesheet url() rewriter moved to raea-runtime-cssurls.
 
+    @done
     Scenario: LR4. The tree on refs
       Then a ref's element has children, childNodes, firstChild, lastChild, firstElementChild, lastElementChild,
         nextSibling, previousSibling, nextElementSibling, previousElementSibling, parentNode and parentElement,
@@ -160,6 +161,20 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         with no call to Rust
       And the selectors cover tag, #id, .class, [attr], [attr=v], descendant, child, :first-child, :last-child,
         :nth-child() and :not(), and an unsupported selector throws a SyntaxError, as Chrome's does
+      And 11-12, built:
+        - sdk/raea/src/dom-tree.ts installs these from the entry, with dom-reads. Text nodes also get nodeType,
+          nodeName, textContent, the siblings and parentElement. Elements also get localName, childElementCount,
+          innerText, hasChildNodes, getElementsByTagName and getElementsByClassName. The selectors also cover *,
+          :only-child and [attr~= ^= $= *=], and comma lists.
+        - An attribute is read from the committed props: class from className, for from htmlFor, style as text.
+          A <text> holding a single string keeps it in its props, and textContent reads it there.
+        - `el.id` is the element's id attribute, as on the web. bevy-react kept its reconciler id in `id`, which
+          hid that, so the patch renames it `nodeId`. raea's own readers of it (canvas2d, dom-reads, useEntity)
+          read nodeId, and fall back to id on an unpatched bridge.
+        - classList reads only: add, remove and toggle change the class, which is LR5's writing to an element.
+        - bench/layout-reads/probes/tree.tsx walks and queries a list and prints each answer, and the words match
+          Chrome's: children and querySelectorAll counts, siblings, closest's id, matches with a child combinator
+          and :not, nth-child(odd), classList, dataset, getAttribute, contains, textContent, and the SyntaxError.
 
     @needs:LR1
     Scenario: LR5. style and getComputedStyle
