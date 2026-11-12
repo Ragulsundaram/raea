@@ -27,6 +27,8 @@ pub mod providers;
 pub mod widgets;
 pub use providers::{PageFonts, PageHtmlParser, PageNavigation, PageNet, PageShell};
 pub use raea_sys_page_ops as ops;
+mod snapshot;
+pub use snapshot::{OFFSET_BODY, OFFSET_NONE, OFFSETS, STRIDE, snapshot, snapshot_by};
 pub mod view3d;
 
 pub use draw::{Placed, view, view_at};

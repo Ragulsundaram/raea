@@ -177,40 +177,9 @@ impl Plugin for HostPlugin {
     }
 }
 
-/// Numbers per element in the layout snapshot (raea_runtime_js::dom::STRIDE: sdk/ui's dom.ts reads the same).
-pub(crate) const STRIDE: usize = 18;
-
-/// The page's layout as its JS reads it (`__ui_layout`'s argument, and `layout.now`'s answer: computed.rs): per wired
-/// element, in page px, id, x, y, w, h, scroll offsets and sizes, padding, border and z (STRIDE numbers).
-pub fn snapshot(doc: &BaseDocument, nodes: &Nodes) -> String {
-    let vp = doc.viewport().window_size;
-    let mut n = String::new();
-    let mut num = |v: f32| {
-        let x = (v * 100.0).round() / 100.0;
-        if x == x.trunc() {
-            n.push_str(&format!("{},", x as i64));
-        } else {
-            n.push_str(&format!("{x},"));
-        }
-    };
-    for (id, node) in &nodes.by_id {
-        // (text nodes have no layout data of their own to ask)
-        let Some(el) = doc.get_node(*node).filter(|n| n.is_element()) else { continue };
-        let Some(b) = doc.get_client_bounding_rect(*node) else { continue };
-        let l = el.final_layout();
-        let s = el.scroll_offset();
-        num(*id as f32);
-        for v in [b.x as f32, b.y as f32, b.width as f32, b.height as f32, s.x as f32, s.y as f32, el.scroll_width(), el.scroll_height()] {
-            num(v);
-        }
-        for v in [l.padding.left, l.padding.top, l.padding.right, l.padding.bottom, l.border.left, l.border.top, l.border.right, l.border.bottom, 0.0] {
-            num(v);
-        }
-    }
-    debug_assert_eq!(STRIDE, 18);
-    n.pop();
-    format!("{{\"vw\":{},\"vh\":{},\"dpr\":1,\"n\":[{n}]}}", vp.0, vp.1)
-}
+/// The page's layout as its JS reads it (`__ui_layout`'s argument, and `layout.now`'s answer: computed.rs): raea-sys-page's
+/// snapshot, the one a composition's `page.layout` answers too (docs/layout-reads.feature LR1).
+pub use raea_sys_page::snapshot;
 
 /// After the page's layout: each root's snapshot to its JS's `__ui_layout`, as raea-runtime-js's dom.rs sends bevy_ui's (the
 /// DOM layer's geometry: getBoundingClientRect, client and scroll sizes, hit tests, the observers, rAF). Per element,

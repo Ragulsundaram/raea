@@ -87,7 +87,8 @@ pub(crate) fn core_cues(js: &Path, dir: &Path, need_mix: bool) -> R<Option<(Vec<
     let (mut frames, mut notes) = (Vec::new(), Vec::new());
     for f in 0..total {
         app.world().resource::<ReactOutbox>().send(json!({"t": "event", "name": "raea-frame", "value": f}));
-        settle(&mut app, Some(f), 20.0)?;
+        // (a layout read here gets no boxes: the sound pass draws no page, docs/layout-reads.feature LR2)
+        settle_with(&mut app, Some(f), 20.0, &mut raea_runtime_react::layout::nothing_drawn)?;
         cx.now = f;
         cx.sounds.clear();
         cx.mix = None;

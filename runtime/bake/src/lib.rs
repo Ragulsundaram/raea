@@ -214,7 +214,8 @@ pub fn step_frames(app: &mut App, a: i64, b: i64, mut each: impl FnMut(&mut App,
     let mut t_each = std::time::Duration::ZERO;
     app.world().resource::<ReactOutbox>().send(json!({"t": "event", "name": "raea-frames", "value": {"from": a, "to": b}}));
     for g in a..b {
-        raea_runtime_react::scene::settle(app, Some(g), 20.0)?;
+        // a layout read gets no boxes: the frames stepped here draw no page (the 3D rows' pre-pass; docs/layout-reads.feature LR2)
+        raea_runtime_react::scene::settle_with(app, Some(g), 20.0, &mut raea_runtime_react::layout::nothing_drawn)?;
         let te = std::time::Instant::now();
         each(app, g)?;
         t_each += te.elapsed();

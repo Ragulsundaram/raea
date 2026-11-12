@@ -78,7 +78,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
 
   Rule: a read gets the layout that draws the frame, synchronously
 
-    @needs:LR0
+    @needs:LR0 @done
     Scenario: LR1. A synchronous layout call answered by the page
       Given the composition's JS asks `page.layout` while an effect runs
       Then the JS thread blocks until the main thread answers
@@ -92,6 +92,24 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         scoped thread-local, or a parameter, chosen when it's built
       And with no page to answer (a host that lays nothing out), the call says so, and the ref's reads throw an error
         that names the host, instead of returning guesses
+      And 11-12, built:
+        - The page is a parameter: `settle_with(app, want, secs, answer)`, where `answer` lays the host's page out
+          from the World. Plain `settle` answers "this host lays no page out", so every host is still a choice
+          LR2 makes.
+        - Each runtime has its own ask (runtime/react/src/layout.rs: a LayoutAsk resource in its App, the same Arc
+          on its JS thread). One process runs several runtimes: a render's 3D-rows pre-pass, and a bake's workers
+          on threads. A shared ask would let one runtime's page answer another's read.
+        - The answer is raea-sys-page's snapshot, the one an app page's DOM already reads (runtime/dom now uses
+          it too). With offsets it adds `o`, from blitz-dom's offset_rect and offsetParent: offsetLeft, offsetTop,
+          offsetWidth, offsetHeight, the offsetParent's React id, and whether the element is a non-atomic inline.
+        - The render and export answer from their frame's page: the still loop, the 3D loop and the fed render.
+          bevy_frame.rs's layout_answer syncs the page at the frame's time, lays it out, and snapshots it. Passes
+          that draw no page get an answer with no boxes, where every read is 0. Those are the sound pass and the
+          3D-rows pre-pass (raea-bake's step_frames).
+        - sdk/raea/src/page-layout.ts parses the answer once and keeps it until the next op_flush or raea-frame.
+          A composition that never reads makes no snapshot.
+        - With LR3's getters, bench/layout-reads/probes pass against Chrome. In repro, "here" is at x 342 as in
+          Chrome (Inter at 64 px). geometry prints each value it read, and all match Chrome's words.
 
     @needs:LR1
     Scenario: LR2. Every host that runs a composition answers

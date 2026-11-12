@@ -31,8 +31,16 @@ pub const SETTINGS_SECS: f64 = 120.0;
 /// One JS call running longer than this is a hang (a loop that never returns), not progress.
 pub const HANG_SECS: f64 = 600.0;
 
-/// Run React until its commits settle and the marker says `want` (or anything, for None).
+/// Run React until its commits settle and the marker says `want` (or anything, for None). A layout read the composition
+/// makes meanwhile is told this host lays no page out: a host with a page settles with [`settle_with`].
 pub fn settle(app: &mut App, want: Option<i64>, secs: f64) -> R<Option<Map<String, Value>>> {
+    settle_with(app, want, secs, &mut crate::layout::no_page("this host"))
+}
+
+/// [`settle`], with `answer` laying the host's page out for a layout read the composition makes while it runs
+/// (`page.layout`, docs/layout-reads.feature LR1): the read wakes the wait as a flush does, the commits sent before it
+/// are applied, and `answer` lays the page out from the World and returns its snapshot.
+pub fn settle_with(app: &mut App, want: Option<i64>, secs: f64, answer: &mut crate::layout::Answer) -> R<Option<Map<String, Value>>> {
     // the settings' settle waits on the module's own top-level work too: parkour lays and performs its courses there,
     // 17-18 s of CPU on a quiet machine, and at load 20 the callers' 20 s refused it every time (10-26)
     let secs = if want == Some(-1) { secs.max(SETTINGS_SECS) } else { secs };
@@ -53,6 +61,8 @@ pub fn settle(app: &mut App, want: Option<i64>, secs: f64) -> R<Option<Map<Strin
     // a bake's runtime (OneBatch): only what a commit needs, applied and its animations sampled (PreUpdate). The whole
     // main schedule ran each frame for nothing else, ~50 us a frame, more than React's render (lightspeed T3)
     let pre_only = app.world().get_resource::<crate::OneBatch>().is_some();
+    // this runtime's layout reads (layout.rs): a replay's App has none
+    let ask = app.world().get_resource::<crate::layout::LayoutAsk>().map(|a| a.0.clone());
     loop {
         if pre_only {
             app.world_mut().run_schedule(PreUpdate);
@@ -61,6 +71,17 @@ pub fn settle(app: &mut App, want: Option<i64>, secs: f64) -> R<Option<Map<Strin
         }
         if let Some(e) = crate::COMPOSITION_ERROR.lock().unwrap().take() {
             return Err(format!("the composition threw at frame {}: {e}", want.map(|w| w.to_string()).unwrap_or("?".into())));
+        }
+        // a layout read waiting: every commit sent before it applied (one an update with OneBatch), then answered, and
+        // the loop goes on (the read's thread carries on from its effect, so more commits and the marker follow)
+        if let Some(ask) = ask.as_deref().filter(|a| a.asked()) {
+            // (the read's own commit can land after this pass's update: its batch is sent before its effects run)
+            app.world_mut().run_schedule(PreUpdate);
+            while app.world().get_resource::<crate::OneBatch>().is_some_and(|q| !q.0.is_empty()) {
+                app.world_mut().run_schedule(PreUpdate);
+            }
+            crate::layout::answer_if_asked(ask, app.world_mut(), answer);
+            continue;
         }
         let world = app.world_mut();
         // the marker's entity, remembered (a scan of every entity's props for it each pass was most of a settle)
@@ -122,7 +143,7 @@ pub fn settle(app: &mut App, want: Option<i64>, secs: f64) -> R<Option<Map<Strin
         if app.world().get_resource::<crate::OneBatch>().is_some_and(|q| !q.0.is_empty()) {
             continue;
         }
-        seen = crate::wait_flush(seen, std::time::Duration::from_secs_f64(left.min(0.5)));
+        seen = crate::wait_flush_or(seen, std::time::Duration::from_secs_f64(left.min(0.5)), ask.as_deref());
     }
     // a call past HANG_SECS is a hang, named: which runtime's call, and how long it has run
     if let Some(d) = crate::js_call_for().filter(|d| d.as_secs_f64() >= HANG_SECS) {

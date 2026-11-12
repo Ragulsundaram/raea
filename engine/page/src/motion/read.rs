@@ -139,6 +139,14 @@ impl BlitzPage {
         Some([b.x as f32, b.y as f32, b.width as f32, b.height as f32])
     }
 
+    /// The page's layout as a composition's script reads it (`page.layout`, docs/layout-reads.feature LR1): raea-sys-page's
+    /// snapshot with offsets, each element under the id `id` gives it (None leaves it out). Lay the page out first.
+    pub fn layout_snapshot(&self, id: impl Fn(u64) -> Option<u64>) -> String {
+        let docs = self.app.world().non_send::<Docs>();
+        let Some(doc) = docs.0.get(&self.page) else { return "{\"vw\":0,\"vh\":0,\"n\":[],\"o\":[]}".into() };
+        raea_sys_page::snapshot_by(doc, &self.nodes, id, true)
+    }
+
     /// The element the ops made that's topmost at the point (page px), as Blitz's hit test finds it (transforms and
     /// pointer-events as drawn): the nearest element up from the hit that has an id.
     pub fn hit(&mut self, x: f32, y: f32) -> Option<u64> {

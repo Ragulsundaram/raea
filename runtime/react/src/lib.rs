@@ -25,6 +25,8 @@ pub use raea_runtime_shared::{self as shared, ReactOutbox};
 pub use raea_runtime_calls::{self as native, CLI};
 use serde_json::Value;
 
+// a composition's synchronous layout reads, answered by its host's page (docs/layout-reads.feature LR1)
+pub mod layout;
 mod thread;
 use thread::*;
 pub use thread::register_natives;
@@ -166,14 +168,19 @@ impl Plugin for ReactPlugin {
         let (tx, rx) = channel();
         let (out_tx, out_rx) = channel::<String>();
         let bundle = self.bundle.clone();
+        // the runtime's layout reads (layout.rs): asked on its JS thread, answered by its settle
+        let ask = layout::LayoutAsk::default();
+        let js_ask = ask.0.clone();
         std::thread::Builder::new()
             .name("raea-runtime-react js".into())
             .spawn(move || {
+                layout::ASK.with(|a| *a.borrow_mut() = Some(js_ask));
                 // JavaScriptCore on Apple (the system's engine, the JIT on with the entitlement tools/link-jit.sh signs in),
                 // QuickJS elsewhere
                 js_thread(bundle, tx, out_rx)
             })
             .expect("the JS thread");
+        app.insert_resource(ask);
         app.insert_resource(ReactOutbox(Mutex::new(out_tx)));
         let root = app.world_mut().spawn((ReactRoot, ReactNode(ROOT_ID), ReactKind("#root".into()))).id();
         let mut ents = ReactEntities::default();
@@ -313,10 +320,15 @@ pub fn flushed() -> u64 {
 
 /// Block until React flushes a commit after the `seen`-th, or `timeout` passes; the count now.
 pub fn wait_flush(seen: u64, timeout: Duration) -> u64 {
+    wait_flush_or(seen, timeout, None)
+}
+
+/// [`wait_flush`], woken also by `ask`'s layout read (settle answers it: layout.rs).
+pub fn wait_flush_or(seen: u64, timeout: Duration, ask: Option<&layout::Ask>) -> u64 {
     let (n, cv) = &FLUSHED;
     let t0 = Instant::now();
     let g = n.lock().unwrap();
-    let (g, r) = cv.wait_timeout_while(g, timeout, |c| *c <= seen).unwrap();
+    let (g, r) = cv.wait_timeout_while(g, timeout, |c| *c <= seen && !ask.is_some_and(layout::Ask::asked)).unwrap();
     FLUSH_WAIT_NS.fetch_add(t0.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
     if r.timed_out() {
         FLUSH_TIMEOUTS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);

@@ -14,7 +14,11 @@ pub fn entry(file: &str, o: &CompOpts) -> String {
         r#"import {{ frameCallbacks, pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
 import {{ canvas2d }} from "./motion/canvas2d";
 import {{ mount, addEventListener, BevyCanvasElement }} from "bevy-react";
+import {{ layoutReads, stale as layoutStale }} from "./motion/page-layout";
 canvas2d(BevyCanvasElement); // a <canvas> ref's getContext("2d") is the web's (motion canvas2d.ts, #55)
+// a composition reads its layout from the page that draws the frame (page.layout, docs/layout-reads.feature LR1),
+// the answer kept until its next commit or frame
+layoutReads();
 import {{ Component, useEffect, useMemo, useState }} from "react";
 import * as M from "./src/{file}";
 import {{ Clock, getCompositions, tickClocks }} from "./motion";
@@ -96,6 +100,7 @@ function Root() {{
   const [size, setSize] = useState<{{ w: number; h: number }} | null>(null);
   useEffect(() => addEventListener("raea-size", (v: any) => setSize(v)), []);
   useEffect(() => addEventListener("raea-frame", (v: any) => {{
+    layoutStale(); // the page is at another time: its CSS animations have moved
     if (typeof v === "number") return setF(v);
     live = true;
     // a live session's own seed and start (live.rs), which its input log keeps for a replay

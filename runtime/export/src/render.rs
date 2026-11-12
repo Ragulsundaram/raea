@@ -276,7 +276,7 @@ pub(crate) fn render_bundle_with(js: &Path, dir: &Path, out: &Path, wanted: Opti
             let px = raea_gpu_device::check::frame_caught(f, || { // a panic drawing it an error naming it (#33)
             engine_before(&app, &mut cx, f);
             app.world().resource::<ReactOutbox>().send(json!({"t": "event", "name": "raea-frame", "value": f}));
-            settle(&mut app, Some(f), 20.0)?;
+            settle_with(&mut app, Some(f), 20.0, &mut |w| layout_answer(w, pg, &mut cx, f, fps))?;
             cx.now = f;
             pg.at_frame(f, fps);
             let mut px = bevy_over_3d(app.world_mut(), pg, &mut cx, fps)?;
@@ -317,7 +317,7 @@ pub(crate) fn render_bundle_with(js: &Path, dir: &Path, out: &Path, wanted: Opti
     for &f in &wanted {
         let t0 = std::time::Instant::now();
         app.world().resource::<ReactOutbox>().send(json!({"t": "event", "name": "raea-frame", "value": f}));
-        settle(&mut app, Some(f), 20.0)?;
+        settle_with(&mut app, Some(f), 20.0, &mut |w| layout_answer(w, &mut page, &mut cx, f, fps))?;
         cx.now = f;
         let t1 = std::time::Instant::now();
         page.at_frame(f, fps);

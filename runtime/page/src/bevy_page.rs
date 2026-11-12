@@ -176,6 +176,12 @@ impl BevyPage {
         self.page.client_box(id + REACT_IDS)
     }
 
+    /// Every React element's boxes as the page lays them out now (`page.layout`, docs/layout-reads.feature LR1), keyed by
+    /// React id: the page's own elements (the body, holders' parts) left out. Lay the page out first.
+    pub fn layout_snapshot(&self) -> String {
+        self.page.layout_snapshot(|id| (id >= REACT_IDS && id & TEXT_BIT == 0).then(|| id - REACT_IDS))
+    }
+
     /// The React element topmost at the point (page px): its React id (none over the page's own body).
     pub fn hit(&mut self, x: f32, y: f32) -> Option<u64> {
         self.page.hit(x, y).map(|id| id & !TEXT_BIT).filter(|id| *id >= REACT_IDS).map(|id| id - REACT_IDS)

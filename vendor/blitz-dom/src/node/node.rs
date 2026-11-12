@@ -1845,7 +1845,7 @@ impl Node {
 
     /// Whether this node can act as an [`offset_parent`](Self::offset_parent): a positioned
     /// element, or one of the elements that always qualify (`body`, `td`, `th`).
-    pub(crate) fn is_offset_parent(&self) -> bool {
+    pub fn is_offset_parent(&self) -> bool { // raea: pub, for the layout snapshot's offsetParent (raea-sys-page)
         let Some(styles) = self.primary_styles() else {
             return false;
         };

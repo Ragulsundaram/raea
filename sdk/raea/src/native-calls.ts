@@ -184,6 +184,8 @@ export interface NativeCalls {
   "net.fetch": { args: { policy: number; url: string; method?: string; headers?: Record<string, string>; body?: string; followRedirects?: boolean; maxRedirects?: number; timeoutMs?: number }; answer: { status: number; statusText: string; headers: Record<string, string>; body: string; url: string; redirectChain: { status: number; statusText: string; headers: Record<string, string> }[] } };
   /** a network policy (allowed URL prefixes and methods; headers injected at the boundary, secrets from the host's environment) */
   "net.policy": { args: { allow: { prefix: string; methods?: string[]; headers?: Record<string, string>; secretHeaders?: Record<string, string> }[]; timeoutMs?: number; maxRedirects?: number; maxBytes?: number }; answer: { id: number } };
+  /** every element's boxes as the page that draws the frame lays it out now (docs/layout-reads.feature LR1): JSON {vw, vh, n: [id, x, y, w, h, scroll x y w h, padding l t r b, border l t r b, z per element], o: [id, offsetLeft, offsetTop, offsetWidth, offsetHeight, offsetParent, inline per element]}, keyed by React id; the composition's thread waits for it */
+  "page.layout": { args: {}; answer: string };
   /** the box (x, y, w, h in frame px) a camera in a page element draws its view in, as last laid out; null when it draws under the whole frame (3D picking in the box, docs/sdk.feature S3a) */
   "page.viewBox": { args: {}; answer: [number, number, number, number] | null };
   /** rigid bodies stepped by Rapier, deterministic, made once per request and kept: each body's rigid motion from rest per frame */

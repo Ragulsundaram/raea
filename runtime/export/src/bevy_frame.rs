@@ -227,6 +227,16 @@ pub(crate) fn bevy_page_frame(world: &mut World, page: &mut raea_runtime_page::B
     Ok((px, pics))
 }
 
+/// A composition's layout read answered by the frame's page (`page.layout`, docs/layout-reads.feature LR1): the page made
+/// to match the React World as it is mid-settle, at frame `f`'s time, laid out, and every element's boxes by React id.
+/// Nothing is drawn; the frame's own sync redoes what this did once the frame settles.
+pub(crate) fn layout_answer(world: &mut World, page: &mut raea_runtime_page::BevyPage, cx: &mut Ctx, f: i64, fps: f64) -> R<String> {
+    page.at_frame(f, fps);
+    page_with_holders(world, page, cx)?;
+    page.lay_out();
+    Ok(page.layout_snapshot())
+}
+
 /// The frame's page made to match the React tree, not drawn yet; the frame's sound, mix, marker and 3D rows collected
 /// on the way.
 pub(crate) fn bevy_page_sync(world: &mut World, page: &mut raea_runtime_page::BevyPage, cx: &mut Ctx) -> R<()> {
