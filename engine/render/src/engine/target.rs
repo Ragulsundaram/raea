@@ -6,18 +6,11 @@ use super::*;
 /// Bevy's render diagnostics (each pass's elapsed time, `render/...`), into the run's trace once a second.
 #[cfg(feature = "native")]
 pub(crate) fn forward_render_diagnostics(store: Res<bevy::diagnostic::DiagnosticsStore>, mut last: Local<Option<std::time::Instant>>) {
-    if last.is_some_and(|t| t.elapsed().as_secs_f64() < 1.0) {
-        return;
-    }
+    if last.is_some_and(|t| t.elapsed().as_secs_f64() < 1.0) { return; }
     *last = Some(std::time::Instant::now());
-    let passes: serde_json::Map<String, serde_json::Value> = store
-        .iter()
-        .filter(|d| d.path().as_str().starts_with("render/"))
-        .filter_map(|d| d.smoothed().map(|v| (d.path().as_str().trim_start_matches("render/").to_string(), serde_json::json!((v * 1000.0).round() / 1000.0))))
-        .collect();
-    if !passes.is_empty() {
-        raea_io_trace::event("bevy_passes", serde_json::json!({"ms": passes}));
-    }
+    let passes: serde_json::Map<String, serde_json::Value> = store.iter().filter(|d| d.path().as_str().starts_with("render/"))
+        .filter_map(|d| d.smoothed().map(|v| (d.path().as_str().trim_start_matches("render/").to_string(), serde_json::json!((v * 1000.0).round() / 1000.0)))).collect();
+    if !passes.is_empty() { raea_io_trace::event("bevy_passes", serde_json::json!({"ms": passes})); }
 }
 
 /// The Engine's target: the frame, and its tag row under it.

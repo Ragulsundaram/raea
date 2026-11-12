@@ -135,6 +135,12 @@ pub struct Engine {
     kept: BTreeMap<(String, String), BTreeMap<String, V>>,
 }
 
+/// The last frame's extract commands applied before the app goes: Bevy applies them in the next frame's render schedule, so
+/// on a still each extract system was dropped with its queue unapplied and warned (54 "CommandQueue" lines, #89 item 7)
+impl Drop for Engine {
+    fn drop(&mut self) { self.app.get_sub_app_mut(bevy::render::RenderApp).map(|sub| sub.world_mut().try_schedule_scope(bevy::render::ExtractSchedule, |w, s| s.apply_deferred(w))); }
+}
+
 /// RAEA_MEM_MARKS: one line on stderr per start-up phase, "mem_mark <ms since the first mark> <phys_footprint MB>
 /// <phase>", to line up with a memory timeline (the footprint is the process's, as the OS counts it).
 pub fn mem_mark(what: &str) {
