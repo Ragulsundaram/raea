@@ -11,8 +11,10 @@ pub fn entry(file: &str, o: &CompOpts) -> String {
     // RAEA_STILL_TREE=0 makes it each frame, as before. In the entry's text, so the bundle cache tells the two apart
     let still = std::env::var("RAEA_STILL_TREE").map_or(true, |v| v != "0");
     format!(
-        r#"import {{ pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
-import {{ mount, addEventListener }} from "bevy-react";
+        r#"import {{ frameCallbacks, pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
+import {{ canvas2d }} from "./motion/canvas2d";
+import {{ mount, addEventListener, BevyCanvasElement }} from "bevy-react";
+canvas2d(BevyCanvasElement); // a <canvas> ref's getContext("2d") is the web's (motion canvas2d.ts, #55)
 import {{ Component, useEffect, useMemo, useState }} from "react";
 import * as M from "./src/{file}";
 import {{ Clock, getCompositions, tickClocks }} from "./motion";
@@ -89,7 +91,7 @@ class Catch extends Component<{{ children?: any }}, {{ err: string | null }}> {{
 const LIVE: any = {{}};
 let live = false;
 function Root() {{
-  const [f, setF0] = useState(-1); const setF = (n: number) => {{ tickClocks(); setF0(n); }}; // the Clocks' frame readers told in the same batch (motion clock.tsx tickClocks)
+  const [f, setF0] = useState(-1); const setF = (n: number) => {{ tickClocks(); frameCallbacks(n, cfg.fps); setF0(n); }}; // the Clocks' frame readers told in the same batch (motion clock.tsx tickClocks), and requestAnimationFrame's callbacks (motion frame-globals.ts)
   // the stage's size, for a composition that lays out from useVideoConfig (raea-size)
   const [size, setSize] = useState<{{ w: number; h: number }} | null>(null);
   useEffect(() => addEventListener("raea-size", (v: any) => setSize(v)), []);
@@ -157,7 +159,7 @@ pub fn entry_lite(file: &str, o: &CompOpts) -> String {
     let end = full.find("// a throw while rendering the composition").expect("entry's Root");
     let bridge = raea_io_home::home().join("sdk/react/js/node_modules/bevy-react/src/bridge.ts");
     format!(
-        r#"import {{ pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
+        r#"import {{ frameCallbacks, pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
 import {{ addEventListener, reset, runEventLoop }} from {bridge:?};
 import {{ renderRoot, takeRendered }} from "react";
 {preamble}const LIVE: any = {{}};
@@ -175,8 +177,8 @@ function toneOut() {{
   return toneEl;
 }}
 function tree() {{
-  // the frame's Math.random and Date (motion/pure.ts)
-  if (f >= 0) pureFrame(f, cfg.fps);
+  // the frame's Math.random and Date, and requestAnimationFrame's callbacks (motion/pure.ts)
+  if (f >= 0) {{ frameCallbacks(f, cfg.fps); pureFrame(f, cfg.fps); }}
   if (f < 0) return <surface id="motion" w={{1}} px={{cfg.width}} pxH={{cfg.height}}><div data-raea-frame={{-1}} data-raea-config={{conf}} /></surface>;
   return (
     <surface id="motion" w={{1}} px={{cfg.width}} pxH={{cfg.height}}>

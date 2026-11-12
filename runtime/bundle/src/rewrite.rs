@@ -5,14 +5,10 @@ pub fn copy_dir(from: &Path, to: &Path, depth: usize) -> R<()> {
     for e in std::fs::read_dir(from).map_err(|e| format!("{}: {e}", from.display()))? {
         let e = e.map_err(|e| e.to_string())?;
         let name = e.file_name().to_string_lossy().to_string();
-        if name.starts_with('.') || name == "node_modules" || name == "target" {
-            continue;
-        }
+        if name.starts_with('.') || name == "node_modules" || name == "target" { continue; }
         let p = e.path();
         if p.is_dir() {
-            if depth < 6 {
-                copy_dir(&p, &to.join(&name), depth + 1)?;
-            }
+            if depth < 6 { copy_dir(&p, &to.join(&name), depth + 1)?; }
         } else if matches!(p.extension().and_then(|x| x.to_str()), Some("ts" | "tsx" | "js" | "jsx" | "json" | "css")) {
             std::fs::copy(&p, to.join(&name)).map_err(|e| format!("{}: {e}", p.display()))?;
         }
@@ -124,10 +120,10 @@ pub fn sources(root: &Path) -> R<Vec<PathBuf>> {
 
 /// A file of motion's own copy with its imports of the packages its code moved into (`sdks`) pointed at their copies
 /// beside it, `up` being the way from its folder to the copy's root (motion/x.ts imports "@raea/app/clock":
-/// "../app/clock"; motion/3d/x.ts, "../../app/clock").
+/// "../app/clock"; motion/3d/x.ts, "../../app/clock"). A module listed alone ("@raea/ui/canvas") is pointed too.
 pub fn point_sdks(src: &str, up: &str, sdks: &[(String, String)]) -> String {
     let re = regex::Regex::new(r#"(\bfrom\s+)(["'])(@raea/[a-z]+)((?:/[^"']*)?)["']"#).unwrap();
-    re.replace_all(src, |c: &regex::Captures| match sdks.iter().find(|(name, _)| *name == &c[3]) {
+    re.replace_all(src, |c: &regex::Captures| match sdks.iter().find(|(name, _)| *name == &c[3] || name.strip_prefix(&c[3]) == Some(&c[4])) {
         Some((_, dir)) => format!("{}\"{up}{}{}\"", &c[1], dir.rsplit('/').nth(1).unwrap_or(dir), &c[4]),
         None => c[0].to_string(),
     })

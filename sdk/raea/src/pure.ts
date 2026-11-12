@@ -95,3 +95,6 @@ if (!g.__raeaPure) {
   // for @raea/app's game fold, which raea is built on and so can't import this
   g.__raeaPureStep = pureStep;
 }
+
+// requestAnimationFrame's callbacks, run by the entry as each frame starts (frame-globals.ts, #56)
+export { frameCallbacks } from "./frame-globals";

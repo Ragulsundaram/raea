@@ -37,6 +37,7 @@ fn point_sdks_climbs_from_a_nested_file() {
     let src = "import { useClockState } from \"@raea/app/clock\";\nimport { x } from \"@raea/nope\";\n";
     assert_eq!(point_sdks(src, "../", &sdks()), src.replace("@raea/app/clock", "../app/clock"));
     assert_eq!(point_sdks(src, "../../", &sdks()), src.replace("@raea/app/clock", "../../app/clock"));
+    assert_eq!(point_sdks("import { C } from \"@raea/ui/canvas\";", "../", &sdks()), "import { C } from \"../ui/canvas\";");
 }
 
 #[test]

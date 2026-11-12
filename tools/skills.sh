@@ -225,7 +225,7 @@ gen_sdk() {
   bun -e '
     const root = process.argv[1], dir = root + "/sdk/raea/src"
     const t = new Bun.Transpiler({ loader: "tsx" })
-    const skip = /(\.gen\.ts|^test\.tsx|^native-calls\.ts|^prelude\.ts|^pure\.ts)$/
+    const skip = /(\.gen\.ts|^test\.tsx|^native-calls\.ts|^prelude\.ts|^pure\.ts|^frame-globals\.ts|^canvas2d\.ts)$/
     const files = [...new Bun.Glob("*.{ts,tsx}").scanSync(dir)].filter((f) => !skip.test(f)).sort()
     const rows = files.map((f) => ({ entry: f.startsWith("index.") ? "raea" : "raea/" + f.replace(/\.tsx?$/, ""), file: "sdk/raea/src/" + f, names: t.scan(require("fs").readFileSync(dir + "/" + f, "utf8")).exports.filter((n) => n !== "default").sort() }))
     console.log(JSON.stringify(rows.sort((a, b) => (a.entry === "raea" ? -1 : b.entry === "raea" ? 1 : a.entry.localeCompare(b.entry)))))

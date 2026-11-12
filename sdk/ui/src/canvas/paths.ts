@@ -151,5 +151,7 @@ wire.on<{ default: string; families: Record<string, { em: number; adv: Record<st
 export interface CanvasHost {
   __wid?: number;
   _wired?: boolean;
+  /** Sends the list itself, for a canvas that isn't on this wire (a composition's, sdk/raea canvas.ts: #55) */
+  _send?(list: { gen: number; w: number; h: number; ops: unknown[] }): void;
   getAttribute(k: string): string | null;
 }

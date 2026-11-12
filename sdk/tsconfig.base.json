@@ -101,6 +101,7 @@
       "@raea/render": ["./render/src/index.ts"],
       "@raea/render/*": ["./render/src/*"],
       "@raea/ui/plugin": ["./ui/src/plugin.ts"],
+      "@raea/ui/canvas": ["./ui/src/canvas.ts"],
       "@raea/physics": ["./physics/src/index.ts"],
       "@raea/physics/*": ["./physics/src/*"],
       "@raea/web": ["./web/src/index.tsx"],

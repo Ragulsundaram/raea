@@ -63,9 +63,11 @@ export class CanvasRenderingContext2D_ {
     this.pending = true;
     queueMicrotask(() => {
       this.pending = false;
+      const list = { gen: this.gen, w: this.size[0], h: this.size[1], ops: this.list };
+      if (this.canvas._send) return this.canvas._send(list);
       const id = this.canvas.__wid;
       if (id === undefined || !this.canvas._wired) return;
-      wire.set(id, "__canvas2d", { gen: this.gen, w: this.size[0], h: this.size[1], ops: this.list });
+      wire.set(id, "__canvas2d", list);
     });
   }
   private static uids = 0;
