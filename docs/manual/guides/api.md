@@ -126,7 +126,8 @@ curl https://api.raea.io/v1/libraries/sources/<source id>/files -H "authorizatio
   -d '{"upsert": [{"path": "cuts/teaser.mp4", "sha256": "<sha256>", "size": 1048576, "mtime": 1794400000000, "kind": "video"}]}'
 ```
 
-raea indexes it in its own cloud, and it turns up in search once that's done. The same call takes `rename:
+raea doesn't index files on its own servers: one of your linked computers indexes it the next time it's online with
+raea open, and then it turns up in search. The same call takes `rename:
 [{from, to}]`, and `remove: [path]` with `files:delete`. Tags go on with `POST /v1/libraries/media/<sha256>/tags`
 `{"tags": [...]}`.
 

@@ -43,7 +43,7 @@ Then an embedding model turns each shot's picture, sound and words into vectors,
 When you search, your words become a vector in that same space. raea compares it with every shot's picture, sound and
 words, matches your words as keywords too, and ranks the results together. So a chip pulled apart, with cheese stretching between the halves, finds that
 shot, even if no file is named that. The vectors are kept in turbopuffer, a vector database, one namespace for each
-workspace, while the indexing runs on your own computers, or on raea's own for files only its storage holds.
+workspace, while the indexing runs on your own computers.
 
 ## Free, Pro and Team
 
