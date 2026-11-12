@@ -413,3 +413,19 @@ fn a_colour_crossing_the_saturation_line_is_not_a_red_flash() {
     let found = flash_samples(180, 60.0, |f, _, _, _| if f * 5 * 2 / 60 % 2 == 0 { [100, 49, 0] } else { [100, 50, 0] });
     assert_eq!(found, None);
 }
+
+/// A centred line in a left: 0; right: 0 box isn't in the left zone: its letters are tested where the render recorded
+/// them (#89); a left-aligned one is, the finding naming the edge, and a manifest without ink is tested by the box.
+#[test]
+fn safe_area_tests_the_letters_not_the_box() {
+    let safe_area = |ink: Value| {
+        let m = json!({"fps": 1.0, "frames": [{"frame": 0, "text": [{"text": "centred", "box": [0, 160, 640, 40], "ink": ink}]}]});
+        let (mut issues, mut passed) = (vec![], vec![]);
+        text_rules(&text_runs(&m), None, 640.0, 360.0, None, None, &mut issues, &mut passed);
+        issues.into_iter().filter(|i| i.rule == "safe-area").map(|i| i.says).collect::<String>()
+    };
+    assert_eq!(safe_area(json!([250, 160, 140, 40])), "");
+    let left = safe_area(json!([0, 160, 140, 40]));
+    assert!(left.contains("at the left") && left.contains("its letters 0,160 140x40"), "{left}");
+    assert!(safe_area(Value::Null).contains("its box 0,160 640x40"));
+}
