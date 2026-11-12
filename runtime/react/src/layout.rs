@@ -95,6 +95,11 @@ pub(crate) fn register() {
 /// has a box, so every read is 0, and the composition goes on as it would before it's laid out.
 pub const NOTHING_DRAWN: &str = "{\"vw\":0,\"vh\":0,\"dpr\":1,\"n\":[],\"o\":[]}";
 
+/// [`NOTHING_DRAWN`] as a pass's answer.
+pub fn nothing_drawn() -> impl FnMut(&mut World) -> Result<String, String> {
+    |_| Ok(NOTHING_DRAWN.into())
+}
+
 /// A host's answer when it has no page to lay out.
 pub fn no_page(host: &'static str) -> impl FnMut(&mut World) -> Result<String, String> {
     move |_| Err(format!("{host} lays no page out, so a composition can't read its layout here (getBoundingClientRect, offsetWidth and the rest)"))
