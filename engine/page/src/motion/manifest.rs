@@ -9,48 +9,13 @@ impl BlitzPage {
     /// opacity, colour, size, weight and alignment as computed. In document order, as raea-runtime-js's page gave them.
     pub fn manifest(&mut self) -> (Vec<serde_json::Value>, Vec<serde_json::Value>) {
         use serde_json::json;
-        use style::computed_values::visibility::T as Visibility;
         use style::values::specified::text::TextAlignKeyword;
         let docs = self.app.world().non_send::<Docs>();
         let Some(doc) = docs.0.get(&self.page) else { return (vec![], vec![]) };
         let r = |v: f64| (v * 10.0).round() / 10.0;
         let rect = |n: blitz_dom::NodeId| doc.get_client_bounding_rect(n).filter(|b| b.width > 0.0 && b.height > 0.0);
-        // its own opacity times its parents', 0 when it or one of them isn't shown
-        let alpha = |n: blitz_dom::NodeId| -> f64 {
-            let (mut a, mut at) = (1.0f64, Some(n));
-            while let Some(x) = at {
-                let Some(node) = doc.get_node(x) else { break };
-                if node.is_element() {
-                    let Some(s) = node.primary_styles() else { return 0.0 };
-                    if !node.has_boxes() || (x == n && matches!(s.clone_visibility(), Visibility::Hidden | Visibility::Collapse)) {
-                        return 0.0;
-                    }
-                    a *= s.get_effects().opacity as f64;
-                }
-                at = node.parent;
-            }
-            a
-        };
-        // the source stamps (engine/bundle stamp.rs) of the nearest element up from `n` that has them: where the JSX
-        // is written ("promo.tsx:12:7"), and the uses of the edit's components it was drawn in, nearest first
-        let stamps = |n: blitz_dom::NodeId, entry: &mut serde_json::Value| {
-            let mut at = Some(n);
-            while let Some(x) = at {
-                let Some(node) = doc.get_node(x) else { break };
-                if let Some(loc) = node.attr(LocalName::from("data-raea-loc")) {
-                    entry["loc"] = json!(loc);
-                    if let Some(uses) = node.attr(LocalName::from("data-raea-use")).filter(|u| !u.is_empty()) {
-                        entry["use"] = json!(uses.split('|').collect::<Vec<_>>());
-                    }
-                    // its place in a list (its .map()'s key), when it has one
-                    if let Some(idx) = node.attr(LocalName::from("data-raea-idx")) {
-                        entry["index"] = json!(idx);
-                    }
-                    return;
-                }
-                at = node.parent;
-            }
-        };
+        let alpha = |n: blitz_dom::NodeId| alpha(doc, n);
+        let stamps = |n: blitz_dom::NodeId, entry: &mut serde_json::Value| stamps(doc, n, entry);
         let (mut videos, mut text) = (Vec::new(), Vec::new());
         let mut owned: Vec<(blitz_dom::NodeId, Vec<String>)> = Vec::new();
         // the whole document: a composition's sequences and screens are pages of their own under the root's
@@ -163,6 +128,80 @@ impl BlitzPage {
             text.push(t);
         }
         (videos, text)
+    }
+}
+
+impl BlitzPage {
+    /// The first element shown on the page that paints something not black: a background colour, or its own words'
+    /// colour, said with where it's written ("a rgb(34, 34, 34) background (handover.tsx:31:3)"). A frame that came out
+    /// all black while this is on it is one the GPU lost (#96). A video's holder is skipped: it's see-through.
+    pub fn visible_paint(&mut self) -> Option<String> {
+        let docs = self.app.world().non_send::<Docs>();
+        let doc = docs.0.get(&self.page)?;
+        let (w, h) = (self.w as f64, self.h as f64);
+        let rgb = |c: style::color::AbsoluteColor| {
+            let c = c.to_color_space(style::color::ColorSpace::Srgb);
+            let [r, g, b] = [c.components.0, c.components.1, c.components.2].map(|v| (v.clamp(0.0, 1.0) * 255.0).round());
+            (r.max(g).max(b) > 8.0 && c.alpha > 0.05).then(|| format!("rgb({r}, {g}, {b})"))
+        };
+        let mut stack = vec![doc.root_node().id];
+        while let Some(n) = stack.pop() {
+            let Some(node) = doc.get_node(n) else { continue };
+            stack.extend(node.children.iter().rev().copied());
+            let on = doc.get_client_bounding_rect(n).is_some_and(|b| b.width > 0.0 && b.height > 0.0 && b.x < w && b.y < h && b.x + b.width > 0.0 && b.y + b.height > 0.0);
+            if !node.is_element() || node.attr(LocalName::from("data-raea-src")).is_some() || !on || alpha(doc, n) <= 0.01 {
+                continue;
+            }
+            let Some(s) = node.primary_styles() else { continue };
+            let words = node.children.iter().any(|c| doc.get_node(*c).is_some_and(|c| c.is_text_node() && !c.text_content().trim().is_empty()));
+            let paint = rgb(s.clone_background_color().resolve_to_absolute(&s.clone_color())).map(|c| format!("a {c} background")).or_else(|| words.then(|| rgb(s.clone_color())).flatten().map(|c| format!("{c} text")));
+            if let Some(p) = paint {
+                let mut at = serde_json::json!({});
+                stamps(doc, n, &mut at);
+                return Some(match at["loc"].as_str() { Some(l) => format!("{p} ({l})"), None => p });
+            }
+        }
+        None
+    }
+}
+
+/// An element's own opacity times its parents', 0 when it or one of them isn't shown.
+fn alpha(doc: &blitz_dom::BaseDocument, n: blitz_dom::NodeId) -> f64 {
+    use style::computed_values::visibility::T as Visibility;
+    let (mut a, mut at) = (1.0f64, Some(n));
+    while let Some(x) = at {
+        let Some(node) = doc.get_node(x) else { break };
+        if node.is_element() {
+            let Some(s) = node.primary_styles() else { return 0.0 };
+            if !node.has_boxes() || (x == n && matches!(s.clone_visibility(), Visibility::Hidden | Visibility::Collapse)) {
+                return 0.0;
+            }
+            a *= s.get_effects().opacity as f64;
+        }
+        at = node.parent;
+    }
+    a
+}
+
+/// The source stamps (engine/bundle stamp.rs) of the nearest element up from `n` that has them, into `entry`: where the
+/// JSX is written ("promo.tsx:12:7"), and the uses of the edit's components it was drawn in, nearest first.
+fn stamps(doc: &blitz_dom::BaseDocument, n: blitz_dom::NodeId, entry: &mut serde_json::Value) {
+    use serde_json::json;
+    let mut at = Some(n);
+    while let Some(x) = at {
+        let Some(node) = doc.get_node(x) else { break };
+        if let Some(loc) = node.attr(LocalName::from("data-raea-loc")) {
+            entry["loc"] = json!(loc);
+            if let Some(uses) = node.attr(LocalName::from("data-raea-use")).filter(|u| !u.is_empty()) {
+                entry["use"] = json!(uses.split('|').collect::<Vec<_>>());
+            }
+            // its place in a list (its .map()'s key), when it has one
+            if let Some(idx) = node.attr(LocalName::from("data-raea-idx")) {
+                entry["index"] = json!(idx);
+            }
+            return;
+        }
+        at = node.parent;
     }
 }
 

@@ -2,6 +2,9 @@
 
 use super::*;
 
+/// A frame black on two draws whose page shows `paint`: one the GPU lost, a warning over its run of frames (#96)
+pub(crate) fn lost(f: i64, paint: Option<String>) { if let Some(p) = paint { raea_core_facts::finding::said_frame(raea_core_facts::Finding::new("black-frame", raea_core_facts::Level::Warn, format!("drew all black on two draws, though the page shows {p}"), "raea render").fix("the GPU dropped this frame's drawing: fewer or smaller filter layers at this size, or render it again"), f); } }
+
 /// One frame on the bevy_ui page (src/page.rs, P26): the frame's sound, mix and marker read from React's tree as
 /// snapshot_retained reads them, the page made to match the tree, drawn and read back. 3D isn't on this page yet.
 pub(crate) fn snapshot_bevy(world: &mut World, page: &mut raea_runtime_page::BevyPage, cx: &mut Ctx) -> R<Frame> {
@@ -14,6 +17,7 @@ pub(crate) fn snapshot_bevy(world: &mut World, page: &mut raea_runtime_page::Bev
     })?;
     if twice {
         raea_gpu_device::check::black_twice(f, page.canary())?;
+        lost(f, page.visible_paint());
     }
     let stored = store_page(&px, page.w, page.h, cx.work)?;
     // each <Screen>'s picture: stored as a page is (a fully clear one too, so the screen shows it clear)

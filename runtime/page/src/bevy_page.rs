@@ -160,6 +160,12 @@ impl BevyPage {
         self.page.frame()
     }
 
+    /// The first thing the page shows that isn't black, and where it's written (raea-page's visible_paint): a frame all
+    /// black while it's there was lost (#96).
+    pub fn visible_paint(&mut self) -> Option<String> {
+        self.page.visible_paint()
+    }
+
     /// Whether the page's GPU still runs work (raea-page's gpucheck).
     pub fn canary(&self) -> R<()> {
         self.page.canary()

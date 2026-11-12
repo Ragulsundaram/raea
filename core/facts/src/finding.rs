@@ -154,10 +154,26 @@ impl Finding {
 }
 
 static SAID: std::sync::Mutex<Vec<Finding>> = std::sync::Mutex::new(Vec::new());
+/// Held by a test that says and takes, so two such tests don't take each other's findings
+#[cfg(test)]
+pub(crate) static SAYING: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// Findings a command has said as it went (a render's clipping, from its own thread), kept for its count at the end.
 pub fn said(fs: &[Finding]) {
     SAID.lock().unwrap_or_else(|e| e.into_inner()).extend(fs.iter().cloned());
+}
+
+/// A finding about frame `f` alone, said: printed and kept, unless the same finding is running on the frames just before
+/// it, which it then joins (a render's black frames with paint on them say one line a run, and count once: #96).
+pub fn said_frame(found: Finding, f: i64) {
+    let mut all = SAID.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(run) = all.iter_mut().rev().find(|x| x.check == found.check && x.says == found.says && x.frames.is_some_and(|[_, b]| b == f)) {
+        run.frames = run.frames.map(|[a, _]| [a, f + 1]);
+        return;
+    }
+    let found = found.frames(f, f + 1);
+    eprintln!("raea: {}", found.line());
+    all.push(found);
 }
 
 /// Every finding said so far, taken: what the command ends by counting.
@@ -198,6 +214,19 @@ pub fn count(fs: &[Finding]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_finding_on_frames_in_a_row_is_one_finding_over_them() {
+        let _held = SAYING.lock().unwrap_or_else(|e| e.into_inner());
+        let _ = taken();
+        let lost = || Finding::new("black-frame", Level::Warn, "drew all black", "raea render");
+        for f in [22, 23, 24, 30] {
+            said_frame(lost(), f);
+        }
+        said_frame(Finding::new("black-frame", Level::Warn, "other", "raea render"), 25);
+        let got: Vec<_> = taken().into_iter().map(|x| (x.says, x.frames)).collect();
+        assert_eq!(got, vec![("drew all black".to_string(), Some([22, 25])), ("drew all black".into(), Some([30, 31])), ("other".into(), Some([25, 26]))]);
+    }
 
     #[test]
     fn the_old_ranks_and_words_map_onto_three_levels() {

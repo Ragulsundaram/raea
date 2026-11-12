@@ -186,6 +186,7 @@ mod tests {
         // outside a project, nothing is kept
         assert!(keep("raea render", &std::env::temp_dir().join("loose.tsx"), None, &[], vec![], "x").is_none());
         // a video copied from the export cache says what was found when it was drawn (finding::keep_to, replay)
+        let _held = crate::finding::SAYING.lock().unwrap_or_else(|e| e.into_inner());
         crate::finding::said(std::slice::from_ref(&tilt));
         assert!(crate::finding::keep_to(&root.join("cached.findings")));
         let _ = crate::finding::taken();

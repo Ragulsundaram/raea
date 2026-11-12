@@ -10,7 +10,7 @@ use std::time::Duration;
 /// work for a while after a hang, and says why); then a 4-byte copy through `queue`, read back. Err says what the GPU
 /// didn't do.
 pub fn canary(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<(), String> {
-    if fault() >= 2 {
+    if fault() == 2 {
         return Err("RAEA_BLACK_FAULT=2 fails it".into());
     }
     #[cfg(target_vendor = "apple")]
@@ -60,16 +60,18 @@ pub fn black(px: &[u8]) -> bool {
 }
 
 /// RAEA_BLACK_FAULT, the black-frame redraw's check (sdk/raea/bench/black-frame): 1, each frame's first draw read
-/// back black, as a GPU fault that leaves no error does; 2, every draw black and the canary failing too.
+/// back black, as a GPU fault that leaves no error does; 2, every draw black and the canary failing too; 3, every draw
+/// black and the canary passing, as a draw Vello drops whole does (#96).
 pub fn fault() -> u8 {
     match std::env::var("RAEA_BLACK_FAULT").as_deref() {
         Ok("1") => 1,
         Ok("2") => 2,
+        Ok("3") => 3,
         _ => 0,
     }
 }
 
-/// `px` as the fault RAEA_BLACK_FAULT asks for leaves it: black (its alpha kept) on a first draw at 1, on any at 2.
+/// `px` as the fault RAEA_BLACK_FAULT asks for leaves it: black (its alpha kept) on a first draw at 1, on any at 2 or 3.
 pub fn injected(mut px: Vec<u8>, redraw: bool) -> Vec<u8> {
     if fault() > u8::from(redraw) {
         for p in px.chunks_exact_mut(4) {

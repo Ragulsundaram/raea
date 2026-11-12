@@ -290,7 +290,7 @@ pub(crate) fn render_bundle_with(js: &Path, dir: &Path, out: &Path, wanted: Opti
                 }
             }
             let (px, twice) = raea_gpu_device::check::black_checked(f, px, raea_sys_page::redraw_full, || bevy_over_3d(app.world_mut(), pg, &mut cx, fps))?;
-            if twice { raea_gpu_device::check::black_twice(f, pg.canary().and_then(|()| cx.scene3d.as_ref().map_or(Ok(()), |e| e.canary())))?; }
+            if twice { raea_gpu_device::check::black_twice(f, pg.canary().and_then(|()| cx.scene3d.as_ref().map_or(Ok(()), |e| e.canary())))?; lost(f, pg.visible_paint()); }
             Ok(px)
             })
             .map_err(|e| if i == 0 { format!("{e}; no frame was written") } else { format!("{e}; the {i} frames before it are in {}", out.display()) })?;
