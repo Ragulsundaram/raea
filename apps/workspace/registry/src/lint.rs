@@ -95,14 +95,14 @@ pub(super) fn lint(reg: &Registry, files: &[File], used_by: &BTreeMap<String, BT
                 // the workspace's shared/ by its name is how a project reaches it (docs/layout.feature LY2)
                 Some(_) if spec.starts_with(super::SHARED) => {}
                 Some(to) if !to.starts_with(&reg.dir) => {
-                    let in_shared = shared.as_ref().and_then(|s| to.strip_prefix(s).ok()).map(|r| format!("{}", r.with_extension("").display()));
+                    let in_shared = shared.as_ref().and_then(|s| to.strip_prefix(s).ok());
                     out.push(warn(
                         &f.rel,
                         *line,
                         "outside",
                         format!("imports {} from outside the project", tilde(&to)),
                         &match in_shared {
-                            Some(r) => format!("import it by the workspace's name for it: \"@shared/{r}\""),
+                            Some(r) => format!("import it by the workspace's name for it: \"@shared/{}\"", r.with_extension("").display()),
                             None => "move it to the workspace's shared/ and import it as @shared/<kind>/<name>, or copy it into the project (raea component add, for raea's sets)".into(),
                         },
                     ))
