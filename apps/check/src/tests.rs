@@ -332,3 +332,22 @@ fn safe_area_tests_the_letters_not_the_box() {
     assert!(left.contains("at the left") && left.contains("its letters 0,160 140x40"), "{left}");
     assert!(safe_area(Value::Null).contains("its box 0,160 640x40"));
 }
+
+#[test]
+fn a_card_sharing_one_word_with_another_line_isnt_held_to_it() {
+    let run = |text: &str, from: f64| Run { text: text.into(), from, to: from + 2.0, box_: [0.0; 4], boxes: vec![], color: String::new(), size: 48.0 };
+    let said = |ws: &[(&str, f64)]| ws.iter().map(|(t, s)| Word { text: (*t).into(), start: *s, end: *s }).collect::<Vec<Word>>();
+    let words = said(&[("at", 37.9), ("wirestock", 38.2), ("i", 38.9), ("worked", 39.0), ("on", 39.2), ("a", 39.3), ("sora", 39.5), ("campaign", 40.2)]);
+    let (mut issues, mut passed) = (vec![], vec![]);
+    // one word of three shared with the line, said 1.35 s before: not a caption of it (the film's false P1)
+    cues(&[run("Wirestock × OpenAI Sora", 39.55)], &words, &mut issues, &mut passed);
+    // one word of four, "campaign": the same
+    cues(&[run("Classroom of Tomorrow campaign", 39.55)], &words, &mut issues, &mut passed);
+    assert!(issues.is_empty(), "{:?}", issues.iter().map(|i| &i.says).collect::<Vec<_>>());
+    // a one-word card is held only to the word said right by it: "wirestock" 1.35 s earlier is another moment
+    cues(&[run("Wirestock", 39.55)], &words, &mut issues, &mut passed);
+    assert!(issues.is_empty(), "{:?}", issues.iter().map(|i| &i.says).collect::<Vec<_>>());
+    // a real caption late by 0.4 s is still found
+    cues(&[run("a Sora campaign", 39.7)], &words, &mut issues, &mut passed);
+    assert_eq!(issues.len(), 1, "{:?}", issues.iter().map(|i| &i.says).collect::<Vec<_>>());
+}
