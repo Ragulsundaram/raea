@@ -5,9 +5,14 @@
 //
 // The handle bevy-react gives a ref keeps no props, so a canvas's width and height (its bitmap's size, 300 x 150 unset,
 // as a browser has it) are read from the ops the bridge sends, each batch passing the host's op_flush as JSON; setting
-// them on the ref sends them as props, and clears the bitmap, as it does in a browser. getImageData reads zeros: a
-// composition has no host to read pixels back from.
+// them on the ref sends them as props, and clears the bitmap, as it does in a browser.
+//
+// The context asks its host for what JS can't know (layout-reads LR6): measureText is shaped in the page's fonts and
+// getImageData reads back what was drawn, through @raea/ui's wire's synchronous call, which the composition answers
+// with raea-runtime-canvas's natives. A canvas no page shows (OffscreenCanvas, and LR7's
+// document.createElement("canvas")) has the same context, drawing into a list of its own.
 
+import { native } from "@raea/app/native";
 import { CanvasRenderingContext2D_ } from "@raea/ui/canvas";
 
 /** bevy-react's canvas handle, as the entry passes it (this module can't import bevy-react: the SDK's checks load it
@@ -46,10 +51,67 @@ function send(id: number, props: Record<string, unknown>): void {
   HOST.op_flush(JSON.stringify([{ op: "update", id, kind: "canvas", props }]), false);
 }
 
+/** The host calls the context makes, answered by the composition's natives (raea-runtime-canvas); any other answers
+ *  nothing, as where there's no host. */
+const CALLS = new Set(["canvas.measure", "canvas.advances", "canvas.read"]);
+function hostCalls(): void {
+  const g = globalThis as { __ui_sync?: (name: string, json: string) => string };
+  if (typeof g.__ui_sync === "function") return;
+  g.__ui_sync = (name, json) => {
+    if (!CALLS.has(name)) return "{}";
+    try {
+      return JSON.stringify({ ok: native(name as "canvas.read", JSON.parse(json)) });
+    } catch (e) {
+      return JSON.stringify({ err: e instanceof Error ? e.message : String(e) });
+    }
+  };
+}
+
+/** A canvas no page shows: its 2D context draws into a list of its own, which getImageData reads back and drawImage
+ *  draws from (`_ctx`), as an OffscreenCanvas or a canvas element never appended does in a browser. */
+export class OffscreenCanvas {
+  readonly tagName = "CANVAS";
+  readonly nodeName = "CANVAS";
+  private size: Size;
+  private ctx?: CanvasRenderingContext2D_;
+  constructor(width = 300, height = 150) {
+    this.size = { width: dim(width, 300), height: dim(height, 150) };
+  }
+  get width() {
+    return this.size.width;
+  }
+  set width(v: number) {
+    this.size.width = dim(v, 0);
+    this.ctx?._reset();
+  }
+  get height() {
+    return this.size.height;
+  }
+  set height(v: number) {
+    this.size.height = dim(v, 0);
+    this.ctx?._reset();
+  }
+  get _ctx() {
+    return this.ctx;
+  }
+  getContext(kind = "2d") {
+    if (kind !== "2d") return null;
+    const size = this.size;
+    const host = { get width() { return size.width; }, get height() { return size.height; }, getAttribute: (k: string) => (k === "width" || k === "height" ? String(size[k]) : null), _send: () => {} };
+    return (this.ctx ??= new CanvasRenderingContext2D_(host));
+  }
+  toDataURL() {
+    return this.ctx?._dataUrl() ?? "data:,";
+  }
+}
+
 /** Installs the context on bevy-react's canvas handle (`El`, its BevyCanvasElement), once, from the entry. */
 export function canvas2d(El: HandleClass): void {
   if (!HOST || typeof HOST.op_flush !== "function" || HOST.__canvas2d) return;
   HOST.__canvas2d = true;
+  hostCalls();
+  const g = globalThis as { OffscreenCanvas?: unknown };
+  g.OffscreenCanvas ??= OffscreenCanvas;
   const flush = HOST.op_flush;
   HOST.op_flush = (json: string, devtools: boolean) => {
     sniff(json);

@@ -1,10 +1,26 @@
-// measureText: each character's advance from the host's faces (canvas.advances), else the bundled metrics.
+// measureText: the text shaped by the host as the canvas draws it (canvas.measure, a composition's: layout-reads LR6),
+// else each character's advance from the host's faces (canvas.advances), else the bundled metrics.
 import * as wire from "../wire";
 import { S, metrics, parseFont } from "./all";
 
-/** measureText's answer for `text` in a CSS `font`. */
-export function measure(font: string, text: string) {
+/** The host's TextMetrics, where it shapes text (canvas.measure); asked no more once it says it can't. */
+let shapes = true;
+function hostMetrics(font: unknown, text: string, align: string, baseline: string) {
+  if (!shapes) return undefined;
+  try {
+    return wire.callSync<Record<string, number>>("canvas.measure", { font, text, align, baseline });
+  } catch {
+    shapes = false;
+    return undefined;
+  }
+}
+
+/** measureText's answer for `text` in a CSS `font`, from the point the context's textAlign (left, center or right)
+ *  and textBaseline put it at. */
+export function measure(font: string, text: string, align = "left", baseline = "alphabetic") {
   const f = parseFont(font)!;
+  const shaped = hostMetrics(f, text, align, baseline);
+  if (shaped) return shaped;
   const fam = f.family.replace(/["']/g, "").split(",")[0].trim().toLowerCase();
   const m = metrics.get(fam) ?? metrics.get(S.defaultFamily.toLowerCase());
   const host = hostAdvances(f, text);

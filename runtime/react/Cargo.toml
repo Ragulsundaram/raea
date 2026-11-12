@@ -76,6 +76,8 @@ raea-sys-bake = { path = "../../systems/bake" }
 raea-runtime-track = { path = "../../runtime/track" }
 # <BlenderShot> and <GodotShot>'s native calls (blender.shot, godot.shot)
 raea-runtime-shots = { path = "../shots" }
+# a composition's 2D context's host calls (canvas.measure, canvas.advances, canvas.read; layout-reads LR6)
+raea-runtime-canvas = { path = "../canvas" }
 
 [package.metadata.cargo-shear]
 # raea-io-media is here for its features (h264), which the platform decoders raea-render reads take

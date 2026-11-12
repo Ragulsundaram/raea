@@ -28,6 +28,12 @@ export interface NativeCalls {
   "blender.post": { args: { sid: string; ops: unknown[] }; answer: { r: Record<string, unknown>; n: number; err?: { i: number; type: string; msg: string; trace: string } } };
   /** a layer drawn by Blender (<BlenderShot>): a raea/blender script's scene or a .blend's animation rendered frame for frame, made once and kept (0000.png on in dir) */
   "blender.shot": { args: { script?: string; file?: string; engine?: string; samples?: number; transparent?: boolean; args?: string[]; fps: number; width: number; height: number; frames: number }; answer: { dir: string; frames: number } };
+  /** each character's advance (a fraction of the font size) in the face a canvas draws it with, and whether the font's own family has it */
+  "canvas.advances": { args: { font: { family: string; weight: string; style: string }; chars: string }; answer: { adv: (number | null)[]; own: boolean[] } };
+  /** measureText: the text shaped as the canvas draws it, in the page's fonts; its advance, ink and font box from the alignment point (docs/layout-reads.feature LR6) */
+  "canvas.measure": { args: { font: { family: string; size: number; weight: string; style: string }; text: string; align?: string; baseline?: string }; answer: { width: number; actualBoundingBoxLeft: number; actualBoundingBoxRight: number; actualBoundingBoxAscent: number; actualBoundingBoxDescent: number; fontBoundingBoxAscent: number; fontBoundingBoxDescent: number } };
+  /** getImageData: a canvas's display list drawn on a bitmap of its own, and a rectangle of it read off as base64 RGBA */
+  "canvas.read": { args: { width: number; height: number; __canvas2d: unknown; x: number; y: number; w: number; h: number }; answer: { data: string } };
   /** raea's command line (render, play, guide, bundle, types; the media verbs: raea media, raea ffmpeg), run in process in cwd */
   "cli.raea": { args: { args: string[]; cwd: string }; answer: { exit: number; stdout: string; stderr: string } };
   /** a headless run ends with this exit code */

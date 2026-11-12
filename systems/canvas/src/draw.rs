@@ -67,6 +67,25 @@ impl Ctx<'_> {
                 let Some(img) = a.get(1).and_then(Value::as_str).and_then(|src| video_frame(src, a.get(11).and_then(Value::as_f64).unwrap_or(0.0))) else { return };
                 self.image(pm, a, &img)
             }
+            // ["put", {w, h, data}, dx, dy, x, y, w, h]: putImageData, the image's RGBA (base64) written as it is, with
+            // no transform, alpha, compositing or clip, its dirty rectangle (x, y, w, h in the image) only (LR6)
+            Some("put") => {
+                use base64::Engine as _;
+                let (iw, ih) = (a[1]["w"].as_i64().unwrap_or(0), a[1]["h"].as_i64().unwrap_or(0));
+                let data = a[1]["data"].as_str().and_then(|d| base64::engine::general_purpose::STANDARD.decode(d).ok());
+                let Some(px) = data.filter(|p| p.len() as i64 == iw * ih * 4) else { return };
+                let n = |i: usize| a.get(i).and_then(Value::as_f64).unwrap_or(0.0) as i64;
+                let (dx, dy) = (n(2), n(3));
+                let (x0, y0, x1, y1) = (n(4).max(0), n(5).max(0), (n(4) + n(6)).min(iw), (n(5) + n(7)).min(ih));
+                let (w, h) = (i64::from(w), i64::from(h));
+                let out = pm.pixels_mut();
+                for y in (y0..y1).filter(|y| (0..h).contains(&(dy + y))) {
+                    for x in (x0..x1).filter(|x| (0..w).contains(&(dx + x))) {
+                        let s = ((y * iw + x) * 4) as usize;
+                        out[((dy + y) * w + dx + x) as usize] = sk::ColorU8::from_rgba(px[s], px[s + 1], px[s + 2], px[s + 3]).premultiply();
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -112,41 +131,6 @@ impl Ctx<'_> {
         // ["text", kind, text, x, y, font, align, baseline, maxWidth, paint, stroke, state]
         let (Some(kind), Some(text)) = (a.get(1).and_then(Value::as_str), a.get(2).and_then(Value::as_str)) else { return };
         let st = &a[11];
-        let font = &a[5];
-        let anchor = match a[6].as_str() {
-            Some("center") => "middle",
-            Some("right") => "end",
-            _ => "start",
-        };
-        let base = match a[7].as_str() {
-            Some("top") => "text-before-edge",
-            Some("hanging") => "hanging",
-            Some("middle") => "middle",
-            Some("bottom") => "text-after-edge",
-            Some("ideographic") => "ideographic",
-            _ => "alphabetic",
-        };
-        let escape = |s: &str| {
-            let mut e = String::new();
-            for c in s.chars() {
-                match c {
-                    '&' => e.push_str("&amp;"),
-                    '<' => e.push_str("&lt;"),
-                    _ => e.push(c),
-                }
-            }
-            e
-        };
-        let fam = font["family"].as_str().unwrap_or("sans-serif").replace('"', "'");
-        // a family split across files by unicode-range: each run names the file that has its glyphs (subsets.rs)
-        let split = crate::split_families(&self.opt.fontdb).and_then(|s| crate::subsets::runs(&self.opt.fontdb, &s, &fam, text));
-        let esc = match split {
-            Some(runs) => runs.iter().map(|(f, s)| match f {
-                Some(f) => format!("<tspan font-family=\"'{}', {fam}\">{}</tspan>", f.replace('\'', ""), escape(s)),
-                None => format!("<tspan>{}</tspan>", escape(s)),
-            }).collect(),
-            None => escape(text),
-        };
         let paint_attr = if kind == "fill" {
             "fill=\"#fff\"".to_string()
         } else {
@@ -154,14 +138,7 @@ impl Ctx<'_> {
             format!("fill=\"none\" stroke=\"#fff\" stroke-width=\"{}\" stroke-linejoin=\"{}\"", f(&s["width"]), s["join"].as_str().unwrap_or("miter"))
         };
         let (w, h) = (pm.width(), pm.height());
-        let doc = format!(
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\"><text x=\"{}\" y=\"{}\" font-size=\"{}\" font-family=\"{fam}\" font-weight=\"{}\" font-style=\"{}\" text-anchor=\"{anchor}\" dominant-baseline=\"{base}\" {paint_attr}>{esc}</text></svg>",
-            f(&a[3]),
-            f(&a[4]),
-            f(&font["size"]),
-            font["weight"].as_str().unwrap_or("400"),
-            font["style"].as_str().unwrap_or("normal"),
-        );
+        let doc = crate::measure::text_doc(self.opt, &a[5], text, (f(&a[3]), f(&a[4])), (&a[6], &a[7]), &paint_attr, (w, h));
         let Ok(tree) = usvg::Tree::from_str(&doc, self.opt) else { return };
         let ts = ts_of(&st["ts"]);
         // the glyphs' coverage in the call's space, then the paint through it

@@ -27,7 +27,7 @@ use tiny_skia as sk;
 
 mod draw;
 mod measure;
-pub use measure::advances;
+pub use measure::{advances, metrics};
 mod filter;
 mod paint;
 mod subsets;

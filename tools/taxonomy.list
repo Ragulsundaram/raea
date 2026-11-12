@@ -6,6 +6,7 @@
 web Audio            HTML's <audio>: sound in step with the frame
 web Img              HTML's <img>: the renderer holds the frame until it has loaded
 web Video            HTML's <video>: a clip in step with the frame
+web OffscreenCanvas  the web's OffscreenCanvas: a canvas no page shows, its 2D context measured and read back (layout-reads LR6)
 web Tone             Tone.js as a namespace (import * as Tone), as its users write it
 web Loop             Tone.js's Loop: a callback every interval in transport time
 web Part             Tone.js's Part: values at times

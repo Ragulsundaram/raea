@@ -1,0 +1,16 @@
+[package]
+name = "raea-runtime-canvas"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "A composition's 2D context's host calls as native calls: measureText shaped from the page's fonts, getImageData's read-back (docs/layout-reads.feature LR6)"
+
+[dependencies]
+# the native-call registry
+raea-native = { path = "../../engine/native", default-features = false }
+# the canvas's replay, its text shaping and its read-back
+raea-sys-canvas = { path = "../../systems/canvas" }
+# the page's font database (every face the composition loaded), which a canvas draws its text in
+blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["svg"] }
+serde_json = "1"

@@ -14848,6 +14848,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-runtime-canvas"
+version = "0.1.0"
+dependencies = [
+ "blitz-dom",
+ "raea-native",
+ "raea-sys-canvas",
+ "serde_json",
+]
+
+[[package]]
 name = "raea-runtime-cssurls"
 version = "0.1.0"
 dependencies = [
@@ -15122,6 +15132,7 @@ dependencies = [
  "raea-render",
  "raea-runtime-bundle",
  "raea-runtime-calls",
+ "raea-runtime-canvas",
  "raea-runtime-input",
  "raea-runtime-jsengine",
  "raea-runtime-plugins",

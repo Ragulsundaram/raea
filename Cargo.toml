@@ -150,6 +150,7 @@ members = [
     "engine/shape-web",
     "runtime/calls",
     "runtime/shots",
+    "runtime/canvas",
     "runtime/export",
     "runtime/live",
     "runtime/page",

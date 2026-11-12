@@ -412,7 +412,7 @@ export class CanvasRenderingContext2D_ {
   }
   private text(kind: "fill" | "stroke", text: string, x: number, y: number, maxWidth?: number) {
     const f = parseFont(this.s.font)!;
-    const align = this.s.align === "start" ? "left" : this.s.align === "end" ? "right" : this.s.align;
+    const align = this.side;
     const paint = kind === "fill" ? paintOf(this.s.fill, this.s.ts) : paintOf(this.s.stroke, this.s.ts);
     this.push(["text", kind, String(text), x, y, f, align, this.s.baseline, maxWidth ?? null, paint, kind === "stroke" ? this.strokeParams() : null, this.state()]);
   }
@@ -422,8 +422,12 @@ export class CanvasRenderingContext2D_ {
   strokeText(t: string, x: number, y: number, maxWidth?: number) {
     this.text("stroke", t, x, y, maxWidth);
   }
+  /** textAlign as a side: start and end are left and right (the context's direction is ltr) */
+  private get side() {
+    return this.s.align === "start" ? "left" : this.s.align === "end" ? "right" : this.s.align;
+  }
   measureText(text: string) {
-    return measure(this.s.font, String(text));
+    return measure(this.s.font, String(text), this.side, this.s.baseline);
   }
   drawImage(img: { src?: string; currentSrc?: string; _canvas2d?: CanvasRenderingContext2D_; width?: number; height?: number; naturalWidth?: number; naturalHeight?: number }, ...a: number[]) {
     let s: (number | null)[];
@@ -458,6 +462,15 @@ export class CanvasRenderingContext2D_ {
     const out = new ImageData_(sw, sh);
     if (r) unb64(r.data, out.data);
     return out;
+  }
+  /** The image's pixels written onto the bitmap as they are (no transform, alpha, compositing or clip), only its dirty
+   *  rectangle when one is given: a "put" in the list, which the host writes in order with the draws (layout-reads LR6). */
+  putImageData(img: ImageData_, dx: number, dy: number, x = 0, y = 0, w = img.width, h = img.height) {
+    [dx, dy, x, y, w, h] = [dx, dy, x, y, w, h].map((n) => Math.trunc(Number(n)));
+    if ([dx, dy, x, y, w, h].some((n) => !Number.isFinite(n))) return;
+    if (w < 0) [x, w] = [x + w, -w];
+    if (h < 0) [y, h] = [y + h, -h];
+    this.push(["put", { w: img.width, h: img.height, data: base64(new Uint8Array(img.data.buffer, img.data.byteOffset, img.data.byteLength)) }, dx, dy, x, y, w, h]);
   }
   createImageData(a: number | ImageData_, h?: number) {
     if (a instanceof ImageData_) return new ImageData_(a.width, a.height);
