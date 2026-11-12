@@ -12,7 +12,7 @@ cut to several networks at once. Publishing comes with the Pro and Team plans.
 ## Connect your accounts
 
 Before you publish, connect the accounts you post to. Open Plugins, and under Social, choose a network, such as
-YouTube, Instagram or TikTok, then sign in. raea posts only when you press Publish, and it never reads your feed or your
+YouTube, LinkedIn or Bluesky, then sign in. raea posts only when you press Publish, and it never reads your feed or your
 messages.
 
 ## Open Publish

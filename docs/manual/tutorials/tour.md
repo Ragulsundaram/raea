@@ -28,7 +28,7 @@ best place to start your day.
 
 ## Publish
 
-Publish is where finished work goes out, to the accounts you've connected, such as YouTube, Instagram or TikTok. It
+Publish is where finished work goes out, to the accounts you've connected, such as YouTube, LinkedIn or Bluesky. It
 shows what's ready to post, what's scheduled, and how each post is doing.
 
 ## Plugins
