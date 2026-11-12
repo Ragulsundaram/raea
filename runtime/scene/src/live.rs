@@ -315,12 +315,14 @@ impl LiveScene {
                         }
                     }
                 }
-                // the emissive strength only where the first frame glows (a render's column), opacity once it's been
-                // see-through, scale back to 1: what a render's keyed column says on a frame this one leaves it out
-                if !r.first.contains_key("emissive") {
-                    want.remove("emissive_k");
-                } else {
-                    want.entry("emissive_k".into()).or_insert(V::N(1.0));
+                // the emissive colour the frame it differs from what was sent (none is black), with its strength (0 once black:
+                // #106, a video kept the first frame's); else the strength only where the sent colour glows (a render's column)
+                let black = || V::S("#000000".into());
+                let (em, was) = (row.get("emissive").cloned().unwrap_or_else(black), r.sent.get("emissive").cloned().unwrap_or_else(black));
+                match em {
+                    _ if em != was => drop((want.insert("emissive".into(), em), want.entry("emissive_k".into()).or_insert(V::N(0.0)))),
+                    _ if em == black() => drop(want.remove("emissive_k")),
+                    _ => drop(want.entry("emissive_k".into()).or_insert(V::N(1.0))),
                 }
             }
             if matches!(kind.as_str(), "mesh" | "glyph") && r.sent.contains_key("opacity") {
