@@ -43,15 +43,38 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
 
   Rule: it is measured against Chrome from the start
 
+    @done
     Scenario: LR0. A harness runs snapcn's measuring components in raea and in Chrome
-      Given bench/layout-reads holds snapcn's 27 measuring components (MIT, with its licence) and #54's repro
-      Then each one renders in raea and in headless Chrome
-      And for each it records whether it threw, the numbers it measured (logged under a "measure" tag), and its
-        elements' boxes on frames 0, mid and last
-      And it prints one line per component (pass, or what differs and by how much), and exits 1 on a failure
-      And the first run is the baseline, recorded here: what throws and what drifts
-      And the bar: nothing throws, a measured number is within 0.5 px of Chrome's, and a box within 1 px; a gap that
-        remains is stated per component, with its cause
+      Given bench/layout-reads/check.sh runs a corpus: a folder of modules each exporting Comp, conf and props
+      And its own corpus, bench/layout-reads/probes, is raea's: a composition per DOM read, #54's repro first
+      And snapcn's components (MIT, pinned at 18b973d7) are a corpus the private tree's adapter makes, pointing their
+        imports of the package they're written for at raea's own API, a name the public tree doesn't hold
+      Then each composition renders at its first, middle and last frames, in raea (`raea render --at`, with its
+        manifest) and in headless Chrome (React DOM in raea's Clock, Chrome for Testing pinned by
+        sdk/ui/parity/chrome.sh, mounted once its fonts are in)
+      And compare.jq pairs the text runs by their words: raea's from the render manifest, Chrome's from boxes.ts,
+        which makes runs the way the manifest does
+      And a frame passes when every run pairs and each run's box and ink are within 1 px of Chrome's; a component
+        passes when it renders without throwing and all three frames pass. 1 - SSIM of the two frames is printed too,
+        for information
+      And snapcn's list holds 33 components: the 27 that measure, and 6 that only hold a frame (LR9)
+      And the repro probe fails today as #54 says: "here" sits at x 0, where Chrome puts it at 342
+      And 11-12, the baseline (raea from the 11-12 tree, before any LR work), 3 of 33 pass:
+        | outcome                    | components                                                                  |
+        | throws: no `document`      | bloom-lockup, hello-zoom, sky-lockup, spec-sweep, title-sweep               |
+        | throws: refs have no DOM   | karaoke-captions, word-captions (getBoundingClientRect), text-reveal (NaN   |
+        |                            | from offsetWidth), text-rewrite (querySelectorAll), type-morph (children),  |
+        |                            | search-typing (style)                                                       |
+        | throws: canvas             | orb-swarm (putImageData)                                                    |
+        | panicked                   | text-build, text-swell: the black-frame warning read a text node's box      |
+        |                            | (559d8274e, #96), fixed on its own lane. Both now render, and drift         |
+        | drifts                     | announce-title (to 72 px), block-wordmark, capture-reveal, check-cycle,     |
+        |                            | drop-line, font-shuffle, portal-intro (13.5), prompt-send (87), punch-lines |
+        |                            | (30), status-cycle, text-select, word-flip (37), word-gather (16)           |
+        | hold only, drift           | card-rail (161), hero-launch (5), wordmark-cut (47)                         |
+        | hold only, pass            | channel-thread, logo-collapse, pulsing-border                               |
+      And "drifts" with no number means raea's words have no box of their own and fall to an ancestor's (check-cycle's
+        all go to the frame's), or are missing from raea's frame
 
   Rule: a read gets the layout that draws the frame, synchronously
 
@@ -121,6 +144,8 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         shaped from the font files the page draws with, through a synchronous native call
       And a composition's <canvas> ref measures the same way, so canvas text no longer depends on the `fonts` event's
         estimates
+      And the 2D context has putImageData and getImageData that read back what it drew (orb-swarm throws without
+        putImageData)
       And with the same font, the width is within 0.5 px of Chrome's
 
     @needs:LR1
@@ -128,7 +153,8 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       Then document.fonts has ready, load(font) and check(font). ready and load resolve once the faces the composition
         asked for (loadFont, @font-face, packaged fonts) are in the page
       And document has body, documentElement, getElementById, querySelector and querySelectorAll over the
-        composition's tree, plus createElement and createTextNode
+        composition's tree, plus createElement, createTextNode and createRange (a Range's getBoundingClientRect and
+        getClientRects over text: search-typing places its caret by one)
       And an element made with createElement and appended into the composition is laid out and measurable, then
         drawn or removed as in Chrome. Components measure that way: they append a hidden copy, read it, and remove it
       And window has innerWidth, innerHeight and devicePixelRatio for the composition's size, and getComputedStyle
