@@ -1,0 +1,11 @@
+[package]
+name = "raea-runtime-pagestore"
+version = "0.1.0"
+edition = "2024"
+description = "A render's frame pages written once each as assets (assets/HASH.png), on workers, joined before raea-render reads them"
+license = "FSL-1.1-ALv2"
+
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }
+# a page's identity in a render (store_page): xxHash3, many GB/s
+twox-hash = { version = "2", default-features = false, features = ["xxhash3_64"] }

@@ -93,9 +93,7 @@ pub(crate) fn register() {
 
 /// The answer of a pass that runs the composition but draws nothing (the sound pass, the 3D rows' pre-pass): no element
 /// has a box, so every read is 0, and the composition goes on as it would before it's laid out.
-pub fn nothing_drawn(_: &mut World) -> Result<String, String> {
-    Ok("{\"vw\":0,\"vh\":0,\"dpr\":1,\"n\":[],\"o\":[]}".into())
-}
+pub const NOTHING_DRAWN: &str = "{\"vw\":0,\"vh\":0,\"dpr\":1,\"n\":[],\"o\":[]}";
 
 /// A host's answer when it has no page to lay out.
 pub fn no_page(host: &'static str) -> impl FnMut(&mut World) -> Result<String, String> {

@@ -41,6 +41,6 @@ raea-sys-mix = { path = "../../systems/mix" }
 bevy = { version = "=0.20.0", default-features = false, features = ["std", "default_app"] }
 image = { version = "0.25", default-features = false, features = ["png", "hdr"] }
 serde_json = "1"
-# a page's identity in a render (pages.rs store_page): xxHash3, many GB/s
-twox-hash = { version = "2", default-features = false, features = ["xxhash3_64"] }
+# the frames' pages written as assets, on workers
+raea-runtime-pagestore = { path = "../../runtime/pagestore" }
 wgpu = "=30.0.1"

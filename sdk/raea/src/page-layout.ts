@@ -79,7 +79,8 @@ export function viewportSize(): [number, number] {
   return viewport;
 }
 
-/** From the entry, once: any commit makes the layout stale (each batch passes the host's op_flush). */
+/** Once, on import from the entry: any commit makes the layout stale (each batch passes the host's op_flush; a new
+ * frame commits its marker, so a frame's CSS animations moving makes it stale too). */
 export function layoutReads(): void {
   if (!HOST || typeof HOST.op_flush !== "function" || HOST.__layoutReads) return;
   HOST.__layoutReads = true;
@@ -89,3 +90,5 @@ export function layoutReads(): void {
     return flush(json, devtools);
   };
 }
+
+layoutReads();

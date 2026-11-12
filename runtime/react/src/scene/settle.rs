@@ -143,7 +143,7 @@ pub fn settle_with(app: &mut App, want: Option<i64>, secs: f64, answer: &mut cra
         if app.world().get_resource::<crate::OneBatch>().is_some_and(|q| !q.0.is_empty()) {
             continue;
         }
-        seen = crate::wait_flush_or(seen, std::time::Duration::from_secs_f64(left.min(0.5)), ask.as_deref());
+        seen = crate::wait_flush(seen, std::time::Duration::from_secs_f64(left.min(0.5)), ask.as_deref());
     }
     // a call past HANG_SECS is a hang, named: which runtime's call, and how long it has run
     if let Some(d) = crate::js_call_for().filter(|d| d.as_secs_f64() >= HANG_SECS) {

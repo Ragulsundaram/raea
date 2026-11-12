@@ -14932,6 +14932,7 @@ dependencies = [
  "raea-runtime-bake",
  "raea-runtime-encode",
  "raea-runtime-page",
+ "raea-runtime-pagestore",
  "raea-runtime-react",
  "raea-runtime-scene",
  "raea-runtime-scene3d",
@@ -14944,7 +14945,6 @@ dependencies = [
  "raea-sys-mix",
  "raea-sys-page",
  "serde_json",
- "twox-hash",
  "wgpu",
 ]
 
@@ -15072,6 +15072,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-runtime-pagestore"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "twox-hash",
+]
+
+[[package]]
 name = "raea-runtime-plugins"
 version = "0.1.0"
 dependencies = [
@@ -15111,6 +15119,7 @@ dependencies = [
  "raea-runtime-scene",
  "raea-runtime-shared",
  "raea-runtime-shots",
+ "raea-runtime-track",
  "raea-runtime-twins",
  "raea-runtime-view",
  "raea-sys-animate",
@@ -15199,6 +15208,18 @@ dependencies = [
  "raea-runtime-react",
  "raea-seedling",
  "raea-sys-mix",
+ "serde_json",
+]
+
+[[package]]
+name = "raea-runtime-track"
+version = "0.1.0"
+dependencies = [
+ "raea-io-assets",
+ "raea-native",
+ "raea-runtime-bundle",
+ "raea-runtime-calls",
+ "raea-sys-bake",
  "serde_json",
 ]
 

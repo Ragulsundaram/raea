@@ -136,6 +136,8 @@ members = [
     "engine/seedling",
     "engine/web",
     "runtime/react",
+    "runtime/track",
+    "runtime/pagestore",
     "bench/bridge",
     "bench/bevy-parity",
     "bench/bridge/swatch",

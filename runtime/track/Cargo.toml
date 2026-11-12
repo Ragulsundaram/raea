@@ -1,0 +1,14 @@
+[package]
+name = "raea-runtime-track"
+version = "0.1.0"
+edition = "2024"
+description = "Matchmove: a clip's camera solved for <Matchmove>, as `raea track` and the matchmove.solve native call"
+license = "FSL-1.1-ALv2"
+
+[dependencies]
+raea-io-assets = { path = "../../io/assets" }
+raea-native = { path = "../../engine/native", default-features = false }
+raea-runtime-bundle = { path = "../../runtime/bundle" }
+raea-runtime-calls = { path = "../../runtime/calls" }
+raea-sys-bake = { path = "../../systems/bake" }
+serde_json = "1"

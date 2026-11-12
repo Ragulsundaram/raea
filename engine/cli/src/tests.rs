@@ -126,7 +126,7 @@ fn every_flag_a_verb_reads_is_in_the_help() {
         ("apps/game export.rs", include_str!("../../../apps/game/src/export.rs")),
         ("apps/game player.rs", include_str!("../../../apps/game/src/player.rs")),
         ("apps/tools song.rs", include_str!("../../../apps/tools/src/song.rs")),
-        ("motion/track.rs", include_str!("../../../runtime/react/src/scene/track.rs")),
+        ("motion/track.rs", include_str!("../../../runtime/track/src/lib.rs")),
         ("apps/tools splat.rs", include_str!("../../../apps/tools/src/splat.rs")),
         ("apps/tools sound.rs", include_str!("../../../apps/tools/src/sound.rs")),
         ("runtime/export scene.rs", include_str!("../../../runtime/export/src/scene.rs")),

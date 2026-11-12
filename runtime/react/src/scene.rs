@@ -34,8 +34,8 @@ pub use plugin::*;
 pub(crate) use contact::register as register_scene;
 // physics for compositions: rigid bodies (Rapier), parts cut from a glTF, goo (tools/goo): systems/bake, as native calls in scene/physics.rs
 pub mod physics;
-// matchmove: `track` and the matchmove.solve native call (scene/track.rs)
-pub mod track;
+// matchmove: `track` and the matchmove.solve native call (raea-runtime-track)
+pub use raea_runtime_track as track;
 
 thread_local! {
     /// each part's data-props as last parsed: its text and the props, and the scene it was last read in

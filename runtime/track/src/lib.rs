@@ -120,10 +120,10 @@ pub fn track(args: &[String]) -> R<String> {
 
 /// Seconds spent in solves and bakes made during this process (and the one running now): a render's wait for a frame's
 /// commit (scene.rs settle) doesn't count them, so a first-use solve inside a render isn't taken for a hung composition.
-pub(crate) use raea_sys_bake::{making, making_secs};
+pub use raea_sys_bake::{making, making_secs};
 
 /// `matchmove.solve`: the solve a <Matchmove> draws from, made on first use (the composition's folder's store).
-pub(crate) fn register() {
+pub fn register() {
     raea_native::register(
         "matchmove.solve",
         "{ src: string; from?: number; seconds?: number; subject?: [number, number, number, number] | null; height?: number; fov?: number; smooth?: number }",
@@ -131,8 +131,8 @@ pub(crate) fn register() {
         "a clip's camera solved (COLMAP; made once per clip content and params, in the composition's asset store)",
         |v| {
             let src = v.get("src").and_then(Value::as_str).ok_or("matchmove.solve: src, the clip (staticFile(\"x.mp4\"))")?;
-            let dir = crate::native::composition_dir().unwrap_or_else(|| PathBuf::from("."));
-            let clip = super::media_path(&dir, src);
+            let dir = raea_runtime_calls::composition_dir().unwrap_or_else(|| PathBuf::from("."));
+            let clip = raea_runtime_bundle::media_path(&dir, src);
             let mut p = v.as_object().cloned().unwrap_or_default();
             p.remove("src");
             let store = raea_io_assets::Store::beside(&dir.join("edit.tsx"));

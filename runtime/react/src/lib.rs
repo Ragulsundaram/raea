@@ -318,13 +318,9 @@ pub fn flushed() -> u64 {
     *FLUSHED.0.lock().unwrap()
 }
 
-/// Block until React flushes a commit after the `seen`-th, or `timeout` passes; the count now.
-pub fn wait_flush(seen: u64, timeout: Duration) -> u64 {
-    wait_flush_or(seen, timeout, None)
-}
-
-/// [`wait_flush`], woken also by `ask`'s layout read (settle answers it: layout.rs).
-pub fn wait_flush_or(seen: u64, timeout: Duration, ask: Option<&layout::Ask>) -> u64 {
+/// Block until React flushes a commit after the `seen`-th, `ask` has a layout read waiting (settle answers it:
+/// layout.rs), or `timeout` passes; the count now.
+pub fn wait_flush(seen: u64, timeout: Duration, ask: Option<&layout::Ask>) -> u64 {
     let (n, cv) = &FLUSHED;
     let t0 = Instant::now();
     let g = n.lock().unwrap();
