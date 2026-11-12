@@ -28,7 +28,7 @@ pub(crate) fn snapshot_bevy(world: &mut World, page: &mut raea_runtime_page::Bev
 
 /// One frame on the bevy_ui page over its 3D drawn live (cx.scene3d, the engine render_fed opens: handles resolved from
 /// the edit's folder, world calls answered): each <Screen>'s picture handed to the engine, the 3D drawn as the fed render
-/// draws it and its target read back, and the page laid over it. Straight RGBA, opaque.
+/// draws it and its target read back, and the page laid over it. Straight RGBA, opaque (with --alpha, transparent where nothing is drawn: #114).
 /// The 3D's target (premultiplied: Bevy blends into a transparent clear) as a straight picture. Light in the clear
 /// (colour above its alpha) can't be straight: its alpha is raised to its brightest channel, which is exact over black
 /// and darkens a lit page under it only by that light's own share.
@@ -52,8 +52,10 @@ pub(crate) fn bevy_over_3d(world: &mut World, page: &mut raea_runtime_page::Bevy
         live_scene(world, ls, &mut cx.scene3d, (page.w, page.h), fps, cx.dir)?;
     }
     let (px, pics) = bevy_page_frame(world, page, cx)?;
+    // with --alpha (#114) what the page and its 3D leave empty stays transparent, as a page alone does; else over black
+    let alpha = crate::ALPHA.load(std::sync::atomic::Ordering::Relaxed);
     let opaque = |mut px: Vec<u8>| {
-        for p in px.chunks_exact_mut(4) {
+        for p in px.chunks_exact_mut(4).filter(|_| !alpha) {
             p[3] = 255;
         }
         px
@@ -106,6 +108,8 @@ pub(crate) fn bevy_over_3d(world: &mut World, page: &mut raea_runtime_page::Bevy
     // alpha-to-coverage fragment wrote (3d/transparency_3d). The
     // page goes over as the fed render's compositor lays a page's fills and layers (Skia's SrcOver on the u8 grid:
     // dst * (256 - srcA) >> 8, plus the source), so a near-black 3D under a faded layer floors as it did there
+    // with --alpha the 3D is over nothing: its alpha (its clear's, transparent) is laid under the page's the same way,
+    // and the premultiplied result made straight for the PNG
     let mut out = three;
     for (d, s) in out.chunks_exact_mut(4).zip(px.chunks_exact(4)) {
         let k = 256 - s[3] as u32;
@@ -113,8 +117,9 @@ pub(crate) fn bevy_over_3d(world: &mut World, page: &mut raea_runtime_page::Bevy
             let t = d[c] as u32;
             d[c] = (s[c] as u32 + ((t * k) >> 8)).min(255) as u8;
         }
-        d[3] = 255;
+        d[3] = if alpha { (s[3] as u32 + ((d[3] as u32 * k) >> 8)).min(255) as u8 } else { 255 };
     }
+    if alpha { scene_straight(&mut out); }
     Ok(out)
 }
 

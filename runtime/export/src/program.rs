@@ -19,9 +19,6 @@ pub(crate) fn program(frames: &[(i64, Frame)], w: u32, h: u32, fps: f64) -> raea
     // resource (srgb 43, 44, 47 unless a <BevyResource type="bevy_camera::clear_color::ClearColor"> sets it), as a Bevy
     // scene does (docs/control conventions C17)
     let clear = if ALPHA.load(std::sync::atomic::Ordering::Relaxed) { Some("#00000000".into()) } else { frames.first().and_then(|(_, f)| f.clear.clone()).and_then(|c| hex_of(&c)).or_else(|| (!has3d).then(|| "#000000".into())) };
-    if has3d && ALPHA.load(std::sync::atomic::Ordering::Relaxed) {
-        eprintln!("raea: --alpha keeps 2D pages and <Video> clips transparent; the frames with 3D are drawn over the 3D and come out opaque");
-    }
     let mut cam = row("cam", clear.map(|c| ("bg", V::S(c))).into_iter().collect());
     // a holder's background that changes over the frames: the clear keyed frame by frame (bg_r, bg_g, bg_b, bg_a, sRGB),
     // as the page over it changes. Before, the first frame's clear held for the whole render.
