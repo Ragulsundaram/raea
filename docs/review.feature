@@ -295,6 +295,9 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
         Waiting, or Ended (expired or stopped), with views, comments, the project and when it ends
       And the cards filter by state (All leaves out Ended) and by words, and sort what needs the person first
       And picking a card opens a side panel with Open item, Copy, Open, Settings and Stop sharing
+      And a file out for review says so wherever it shows: a library's tiles and every search hit whose file is the
+        version a live link shows now carry its state at the poster's corner, and the file's panel names the link and
+        opens it here, picked (built 11-11: the feed's share/links.ts and ReviewChip.tsx)
 
     Scenario: R6d. Shared with you is where invites and other people's projects are
       Then invites wait there for Accept or Decline (R5b) and joined projects show with Open in raea (R5d), GitHub and
@@ -302,5 +305,5 @@ Feature: Reviewing a video in raea's player: comments written on the picture, ev
 
     Scenario: R6e. Not built yet
       Then a share link of several items (a folder of cuts, frame.io's presentation link), a library organising the
-        cloud copies of a workspace's projects and their synced code, and a status per file (needs review, approved) in
-        a library's own grid
+        cloud copies of a workspace's projects and their synced code, and a status the person sets on any file (needs
+        review, approved) whether or not it's on a link, with a library's grid filtered by it
