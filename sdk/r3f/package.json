@@ -14,7 +14,7 @@
   "//": "In a project, three and @react-three/fiber are its own (raea add three@0.185.0 @react-three/fiber@9.8.2): the bundler resolves them from the project, so a scene and raea share one copy. Here, for the package's tests and tsc, React is the SDK's own (sdk/raea), linked; sdk/playable's bundler resolves three to its own copy, so a playable carries one.",
   "peerDependencies": {
     "@react-three/fiber": ">=9.0.0",
-    "three": ">=0.170.0"
+    "three": ">=0.180.0"
   },
   "devDependencies": {
     "@react-three/drei": "10.7.9",
