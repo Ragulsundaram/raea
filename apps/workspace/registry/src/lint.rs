@@ -95,7 +95,7 @@ pub(super) fn lint(reg: &Registry, files: &[File], used_by: &BTreeMap<String, BT
                 // the workspace's shared/ by its name is how a project reaches it (docs/layout.feature LY2)
                 Some(_) if spec.starts_with(super::SHARED) => {}
                 Some(to) if !to.starts_with(&reg.dir) => {
-                    let in_shared = shared.as_ref().and_then(|s| to.strip_prefix(s).ok()).map(|r| r.with_extension("").display().to_string());
+                    let in_shared = shared.as_ref().and_then(|s| to.strip_prefix(s).ok()).map(|r| format!("{}", r.with_extension("").display()));
                     out.push(warn(
                         &f.rel,
                         *line,

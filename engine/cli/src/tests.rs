@@ -5,12 +5,9 @@ use crate::cli::*;
 #[test]
 fn shell_runs() {
     // engine/cli's handler loads and answers on raea's JavaScriptCore (part list is the shell's own, no host step);
-    // `raea help` lists SHELL's verbs (help_lists_every_verb)
-    let parts = shell(&["part".to_string(), "list".to_string()]).unwrap();
-    assert!(parts.contains("captions"), "{parts}");
-    // raea component is its name now (docs/layout.feature LY4); raea part still answers
-    let components = shell(&["component".to_string(), "list".to_string()]).unwrap();
-    assert!(components.contains("captions") && components.contains("into components/reel/"), "{components}");
+    // `raea help` lists SHELL's verbs (help_lists_every_verb); raea component is part's new name (LY4), part still answers
+    let (parts, components) = (shell(&["part".to_string(), "list".to_string()]).unwrap(), shell(&["component".to_string(), "list".to_string()]).unwrap());
+    assert!(parts.contains("captions") && components.contains("into components/reel/"), "{parts}\n{components}");
 }
 
 #[test]
