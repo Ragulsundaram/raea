@@ -65,6 +65,7 @@ What's wrong before anyone watches it.
 | --- | --- |
 | [`raea check`](check.md) | Check a composition's text in a second, a project against every rule it holds, or an export against the floor: text, contrast, safe areas, freezes, flashing, cues and loudness. |
 | [`raea judge`](judge.md) | Judge a 3D scene's review sheets blind, by a model on a frozen rubric or a fresh agent session, with the pass decided in code. |
+| [`raea fingerprint`](fingerprint.md) | A person's sense of good work, learned on this Mac: axes with small heads over on-device encoders that score a render moment by moment and say what they can't judge yet. |
 | [`raea findings`](findings.md) | What each render and check found, read back from the project's record: fixed, new and carried since the one before. |
 | [`raea scene`](scene.md) | Find floating, sunk and clipping 3D parts, say what each part rests on, and meter a shot's light. |
 | [`raea world`](world.md) | A frame as one world: its layers, text, 3D parts, camera, shots, clips, cues and lines as entities, queried across media. |
