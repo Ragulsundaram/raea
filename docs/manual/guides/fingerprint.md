@@ -61,6 +61,12 @@ each kind from 3 projects, ranks real defects above clean work on projects it ne
 `raea fingerprint report` says where each one stands. An axis that is still under its bar with 300 labels is
 **stuck**: more labels won't help it, so `report` names it as one to try on another encoder.
 
+A note can also say exactly what it's about. On the picture, drop a pin and mark, box or lasso the thing you mean. On
+the sound, choose **Spectrogram** on the timeline's sound track and, with the Comment tool, drag a box around the part
+you mean, such as a hiss up high or a hum down low. A sound on its own shows its spectrogram under the waveform, where
+any drag draws a box. The note keeps the
+box's time as its span and its pitch band. `learn-notes` labels that span and keeps the band in the label.
+
 ## Scripts, briefs and stills
 
 A fingerprint reads more than video. A script, a brief or another text file gets EmbeddingGemma 2 rows, one per
@@ -147,4 +153,5 @@ finds the media.
 
 Axes judge two-second moments, so a fingerprint can't say whether a piece works as a whole, or judge story and pace
 across shots. It can say where in the frame only for blur, glitches and flat, barren surfaces; glow it can only
-flag. A stylised look or a held shot can read as a defect. And taste axes with only words never hold a post back.
+flag. Sound axes judge the whole sound in each moment, so a box's pitch band is kept but not yet learned from. A
+stylised look or a held shot can read as a defect. And taste axes with only words never hold a post back.

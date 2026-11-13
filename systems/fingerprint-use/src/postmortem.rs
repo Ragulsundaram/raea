@@ -147,7 +147,7 @@ mod tests {
         let s = Scored { file: "v1.mp4".into(), media: "h1".into(), dur: 30.0, fingerprint: "me".into(), moments: vec![], windows: vec![win(0.0, 1.5, true), win(10.0, 0.1, true), win(20.0, -1.9, false), win(11.0, 0.15, true)] };
         let mut l = Ledger::default();
         // the person approved the first moment: a flag there disagrees with them
-        let r = Row { media: "h1".into(), a: 0.0, b: 2.0, axis: "*".into(), bad: false, weight: 1.0, who: "me".into(), source: "approval".into(), project: "p".into(), kind: None, region: None, words: None, at: 0, pin: None };
+        let r = Row { media: "h1".into(), a: 0.0, b: 2.0, axis: "*".into(), bad: false, weight: 1.0, who: "me".into(), source: "approval".into(), project: "p".into(), kind: None, region: None, words: None, at: 0, pin: None, band: None };
         l.push(r, &vec![0.0; width()]);
         let p = picks(&[s], &trained, &fp, &l, 10);
         assert_eq!(p.iter().map(|x| (x.a, x.why.as_str())).collect::<Vec<_>>(), [(0.0, "disagrees with you"), (10.0, "least sure"), (20.0, "least sure")], "11 s is the same moment as 10 s");

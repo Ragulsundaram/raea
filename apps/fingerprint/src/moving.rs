@@ -65,7 +65,7 @@ mod tests {
     use super::*;
 
     fn row(axis: &str, source: &str) -> Row {
-        Row { media: "m".into(), a: 0.0, b: 2.0, axis: axis.into(), bad: true, weight: 1.0, who: "me".into(), source: source.into(), project: "p".into(), kind: None, region: None, words: None, at: 0, pin: None }
+        Row { media: "m".into(), a: 0.0, b: 2.0, axis: axis.into(), bad: true, weight: 1.0, who: "me".into(), source: source.into(), project: "p".into(), kind: None, region: None, words: None, at: 0, pin: None, band: None }
     }
 
     #[test]

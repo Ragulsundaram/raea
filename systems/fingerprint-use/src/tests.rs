@@ -7,7 +7,7 @@ use raea_sys_fingerprint::words::Words;
 
 /// A blur label in a project, its window `at` seconds in
 fn row(bad: bool, project: &str, at: f64) -> Row {
-    Row { media: "m".into(), a: at, b: at + 2.0, axis: "blur".into(), bad, weight: 1.0, who: "t".into(), source: "teach".into(), project: project.into(), kind: None, region: None, words: None, at: 0, pin: None }
+    Row { media: "m".into(), a: at, b: at + 2.0, axis: "blur".into(), bad, weight: 1.0, who: "t".into(), source: "teach".into(), project: project.into(), kind: None, region: None, words: None, at: 0, pin: None, band: None }
 }
 
 /// Features with the label's sign in the picture's first values and a little made-up spread in the rest

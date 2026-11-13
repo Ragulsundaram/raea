@@ -186,10 +186,10 @@ fn own(mut w: Vec<(f64, f64, [f32; 4])>, t: f64, a: f64, b: f64, win: f64, seed:
 }
 
 /// The region a note's marks name: the box around its marks, boxes and lassos (a click as a small square around it).
-/// Arrows and strikes are instructions for the agent, never a region
+/// Arrows and strikes are instructions for the agent, never a region; nor is a box on the sound (FP11c: [`sound_band`])
 pub fn marked(pin: &serde_json::Value) -> Option<[f32; 4]> {
     let mut r: Option<[f32; 4]> = None;
-    for m in pin["marks"].as_array().into_iter().flatten() {
+    for m in pin["marks"].as_array().into_iter().flatten().filter(|m| m["on"] != "sound") {
         let reach = match m["kind"].as_str() {
             Some("mark") => CLICK,
             Some("box" | "lasso") => 0.0,
@@ -202,6 +202,15 @@ pub fn marked(pin: &serde_json::Value) -> Option<[f32; 4]> {
         }
     }
     r.filter(|a| a[2] > a[0] && a[3] > a[1])
+}
+
+/// The pitch band of a box drawn on the sound's spectrogram (FP11c), low and high in 0-1 of the mel scale: its points are
+/// [time, pitch], and its time is the pin's own t..to
+pub fn sound_band(pin: &serde_json::Value) -> Option<[f32; 2]> {
+    let m = pin["marks"].as_array()?.iter().find(|m| m["on"] == "sound" && m["kind"] == "box")?;
+    let p: Vec<f32> = m["points"].as_array()?.iter().filter_map(|p| p[1].as_f64()).map(|v| v.clamp(0.0, 1.0) as f32).collect();
+    let (lo, hi) = (p.iter().copied().fold(f32::INFINITY, f32::min), p.iter().copied().fold(f32::NEG_INFINITY, f32::max));
+    (p.len() == 2 && hi > lo).then_some([lo, hi])
 }
 
 #[cfg(test)]
@@ -258,6 +267,10 @@ mod tests {
         assert!(near(r[0], 0.2) && near(r[1], 0.05) && near(r[2], 0.95) && near(r[3], 0.7), "{r:?}");
         assert_eq!(marked(&json!({"marks": [{"kind": "strike", "points": [[0.1, 0.1], [0.9, 0.9]]}]})), None, "a strike is for the agent");
         assert_eq!(marked(&json!({"kind": "place", "x": 0.5, "y": 0.5})), None, "a pin is never a mark");
+        let sound = json!({"kind": "time", "t": 2.0, "to": 4.0, "marks": [{"kind": "box", "on": "sound", "points": [[0.2, 0.8], [0.4, 0.3]]}]});
+        assert_eq!(marked(&sound), None, "a box on the sound is no place in the frame");
+        assert_eq!(sound_band(&sound), Some([0.3, 0.8]), "it is a pitch band, low then high");
+        assert_eq!(sound_band(&json!({"marks": [{"kind": "box", "points": [[0.1, 0.1], [0.5, 0.5]]}]})), None, "a box on the picture has none");
     }
 }
 

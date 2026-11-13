@@ -69,6 +69,9 @@ pub struct Row {
     /// to be re-embedded or re-labelled, and no head trains on it
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pin: Option<String>,
+    /// a box on the sound's spectrogram: its pitch band, low and high in 0-1 of the mel scale up to 11.025 kHz (FP11c)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub band: Option<[f32; 2]>,
 }
 
 fn one() -> f32 {

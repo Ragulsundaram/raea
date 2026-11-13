@@ -252,6 +252,7 @@ fn teach(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<
         words: flag(args, "--words").map(str::to_string),
         at: 0,
         pin: None,
+        band: None,
     };
     let mut l = dir.ledger()?;
     l.push(row, &features(&c, a, b));

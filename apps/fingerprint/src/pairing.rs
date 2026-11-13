@@ -14,7 +14,7 @@ use raea_sys_fingerprint::pairs::difference;
 use std::path::Path;
 
 fn row(media: &str, a: f64, b: f64, axis: &str, weight: f32, who: &str, project: String, words: Option<String>) -> Row {
-    Row { media: media.into(), a, b, axis: axis.into(), bad: true, weight, who: who.into(), source: "pair".into(), project, kind: None, region: None, words, at: 0, pin: None }
+    Row { media: media.into(), a, b, axis: axis.into(), bad: true, weight, who: who.into(), source: "pair".into(), project, kind: None, region: None, words, at: 0, pin: None, band: None }
 }
 
 

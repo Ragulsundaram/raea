@@ -26,6 +26,7 @@ fn row(axis: &str, bad: bool, project: &str) -> Row {
         words: None,
         at: 0,
         pin: None,
+        band: None,
     }
 }
 

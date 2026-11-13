@@ -48,6 +48,9 @@ pub struct Reading {
     /// the layers under the pin's x,y in the layer pass, on a render with one (FP5a)
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub layers: Vec<String>,
+    /// a box on the sound's spectrogram: its pitch band, 0-1 of the mel scale (FP11c); its time is t..to
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub band: Option<[f32; 2]>,
 }
 
 
@@ -88,7 +91,7 @@ pub fn pinned(project: &Path) -> Vec<Reading> {
             let to = n["pin"]["to"].as_f64().filter(|&to| to > t);
             let at = n["pin"]["x"].as_f64().zip(n["pin"]["y"].as_f64()).map(|(x, y)| [x - 0.01, y - 0.01, x + 0.01, y + 0.01].map(|v| v.clamp(0.0, 1.0)));
             let layers = at.map(|b| raea_sys_fingerprint_things::located::layers(&video, t, b)).unwrap_or_default();
-            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: raea_sys_fingerprint_use::grow::marked(&n["pin"]), layers, ..Default::default() });
+            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: raea_sys_fingerprint_use::grow::marked(&n["pin"]), layers, band: raea_sys_fingerprint_use::grow::sound_band(&n["pin"]), ..Default::default() });
         }
     }
     out
@@ -296,8 +299,9 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
             (None, true) => continue,
         };
         let c = enc.columns(&x.media)?;
-        // a span is the label's time; a moment, 1.5 s before the pin to 0.5 s after (FP11b)
-        let (a, b) = x.to.map_or(((x.t - 1.5).max(0.0), (x.t + 0.5).min(c.dur)), |to| (x.t.max(0.0), to.min(c.dur)));
+        // a span is the label's time (a scene's, a box's on the sound: FP11c), half a second at least; a moment, 1.5 s
+        // before the pin to 0.5 s after (FP11b)
+        let (a, b) = x.to.map_or(((x.t - 1.5).max(0.0), (x.t + 0.5).min(c.dur)), |to| span(x.t, to, c.dur));
         if b - a < 0.5 {
             continue;
         }
@@ -307,12 +311,25 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
         let shot = seed.and_then(|s| raea_sys_fingerprint_use::grow::through(&x.media, x.t, c.dur, s, 2.0).ok().flatten()).filter(|w| !w.is_empty());
         for (a, b, region) in shot.map_or_else(|| vec![(a, b, seed)], |w| w.into_iter().map(|(a, b, r)| (a, b, Some(r))).collect()) {
             let (media, axis, who, project, kind, words) = (c.media.clone(), axis.clone(), x.who.clone(), x.project.clone(), Some(x.note.clone()), Some(x.text.clone()));
-            let row = raea_sys_fingerprint::evidence::Row { media, a, b, axis, bad, weight: 1.0, who, source: "note".into(), project, kind, region, words, at: 0, pin: None };
+            // a defect's box on the sound keeps its pitch band (FP11c)
+            let band = x.band.filter(|_| bad);
+            let row = raea_sys_fingerprint::evidence::Row { media, a, b, axis, bad, weight: 1.0, who, source: "note".into(), project, kind, region, words, at: 0, pin: None, band };
             l.push(row, &raea_sys_fingerprint::evidence::features(&c, a, b));
         }
         made += 1;
     }
     Ok(format!("{made} notes are evidence now (defects and praise; directions stay with the brief)\n"))
+}
+
+/// A span pin's label: t..to inside the piece, widened about its middle to half a second when it's shorter (a box on a
+/// click of sound)
+fn span(t: f64, to: f64, dur: f64) -> (f64, f64) {
+    let (a, b) = (t.max(0.0), to.min(dur));
+    if b - a >= 0.5 {
+        return (a, b);
+    }
+    let mid = ((a + b) / 2.0).clamp(0.25, (dur - 0.25).max(0.25));
+    ((mid - 0.25).max(0.0), (mid + 0.25).min(dur))
 }
 
 #[cfg(test)]
@@ -331,6 +348,27 @@ mod tests {
         assert_eq!(n[2].kind, "", "a kind it doesn't know is no reading");
         n[0].layers = vec!["Floor".into()];
         assert!(prompt(&fp, &n).contains("n1: ") && prompt(&fp, &n).contains("(pinned on Floor)"), "the reader is told the layer");
+    }
+
+    #[test]
+    fn a_box_on_the_sound_is_a_reading_s_span_and_band_not_a_region() {
+        let dir = std::env::temp_dir().join(format!("fp11c-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join(".raea/feed")).unwrap();
+        std::fs::write(dir.join("a.mp4"), b"").unwrap();
+        let note = json!({"id": "n1", "text": "that hiss", "author": {"kind": "person", "name": "me"}, "pin": {"kind": "time", "t": 2.0, "to": 4.0, "marks": [{"kind": "box", "on": "sound", "points": [[0.2, 0.9], [0.4, 0.6]]}]}});
+        std::fs::write(dir.join(".raea/feed/p.json"), json!({"media": [{"kind": "video", "path": "a.mp4"}], "notes": [note]}).to_string()).unwrap();
+        let r = pinned(&dir);
+        std::fs::remove_dir_all(&dir).ok();
+        assert_eq!(r.len(), 1);
+        assert_eq!((r[0].t, r[0].to, r[0].band, r[0].region), (2.0, Some(4.0), Some([0.6, 0.9]), None));
+    }
+
+    #[test]
+    fn a_span_is_the_label_and_a_short_one_is_widened() {
+        assert_eq!(span(2.0, 4.0, 10.0), (2.0, 4.0));
+        let (a, b) = span(2.0, 2.1, 10.0);
+        assert!((a - 1.8).abs() < 1e-9 && (b - 2.3).abs() < 1e-9, "a box on a click of sound is half a second about it: {a}..{b}");
+        assert_eq!(span(9.9, 10.0, 10.0), (9.5, 10.0), "kept inside the piece");
     }
 
     #[test]

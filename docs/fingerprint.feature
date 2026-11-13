@@ -596,14 +596,22 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         followed it left across the frame, a looser box (overlap 0.41). A blind seed in the middle of an app render
         kept only the note's frame, so only its own window
 
-    @needs:FP11b
+    @needs:FP11b @done
     Scenario: FP11c. Marks on the sound
       Given the review player shows a sound's spectrogram under its picture (or in its place, for sound alone)
       Then a box drawn on it is a note's mark there, kept in 0-1 of the span shown (time) and of the frequencies (mel)
       And on a defect note on a sound axis, `learn-notes` makes its time the label's span and keeps its band in the row
-      And decided 11-12: not in 0.1.2. The player draws no spectrogram, and raea-feed is fixed at what 0.1.2 ships.
-        Until then a sound note's span (FP11a) is its time label, and the sound heads are per window, so a band
-        would be kept but not yet learned from
+      And decided 11-12: not in 0.1.2; built 11-13 for 0.1.3 (raea-feed #9). The host draws a mel
+        spectrogram (host/spectrum.ts: 22.05 kHz, 64 bands to 11.025 kHz, a column every 25 ms, the loudest 80 dB),
+        the timeline's sound track offers it as Spectrogram (opened tall), and Listen shows it under the waveform.
+        A box dragged on it (with the Comment tool on the timeline, any drag in Listen) opens the moment card naming
+        its span and band in Hz; the note's pin is a time pin over the box's span with one mark {kind: "box", on:
+        "sound", points: [[time, mel], [time, mel]]} in 0-1 of the piece and of the mel scale, drawn again on the
+        spectrogram in its author's hue, and the agent reads it as "Marked on the sound (box, T0 to T1, LO to HI)"
+        (e2e/sound-marks.spec.ts, src/detail/marks.test.ts, host/spectrum.test.ts). `marked` ignores a sound box (it
+        is no place in the frame); `sound_band` reads its band into the reading, and `learn-notes` labels t..to
+        (widened to half a second about its middle when shorter) and keeps a defect's band in the evidence row's
+        `band`. The sound heads are still per window, so the band is kept but not yet learned from
 
   Rule: FP12. Heatmaps: a picture axis says where, not only whether
     @needs:FP11b,FP2c @done

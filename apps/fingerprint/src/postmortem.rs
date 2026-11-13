@@ -30,7 +30,7 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -
                 continue;
             }
             let who = fp.who.clone().unwrap_or_else(|| "me".into());
-            let row = Row { media: c.media.clone(), a, b, axis: x.axis.clone(), bad: *yes, weight: 1.0, who, source: "postmortem".into(), project: name.clone(), kind: None, region: None, words: Some(x.words.clone()), at: 0, pin: None };
+            let row = Row { media: c.media.clone(), a, b, axis: x.axis.clone(), bad: *yes, weight: 1.0, who, source: "postmortem".into(), project: name.clone(), kind: None, region: None, words: Some(x.words.clone()), at: 0, pin: None, band: None };
             l.push(row, &features(&c, a, b));
         }
         dir.write_ledger(&l)?;

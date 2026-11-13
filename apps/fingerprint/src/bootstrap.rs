@@ -156,6 +156,7 @@ pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mu
                     words: None,
                     at: 0,
                     pin: None,
+                    band: None,
                 };
                 l.push(r, &features(c, 0.0, WIN));
             };
