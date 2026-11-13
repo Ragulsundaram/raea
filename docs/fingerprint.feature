@@ -203,6 +203,16 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         holds its out by engine and category (its grouped CV AUC 0.92)
       And it ships as an axis only at 0.85 or better held out by generator; it's a taste check ("real material only"),
         never a claim that a sound is or isn't AI-made
+      And 11-12, measured, not shipped: raea-sys-fingerprint-use realness.rs, a logistic head on a sound's CLAP and
+        YAMNet means (realness_on_this_machine, ignored, RAEA_REALNESS=~/.raea/evals/realness). Made: 60 SAO foley clips
+        (15 categories, 4 seeds), 45 TokenSynth notes (9 timbres, C3-G4) and 40 Fish lines (two voices, $0.05).
+        Recorded, each clip's source and licence kept beside it: 40 LibriSpeech test-clean speakers (CC BY 4.0), 42
+        NSynth test acoustic notes in 7 families (CC BY 4.0) and 70 Clotho v2.1 evaluation clips in 14 of the 15
+        categories, CC0 or CC BY 3.0 only (the NC and Sampling+ clips dropped). TokenSynth's bass and organ and SAO's
+        typing have no recording and sit out (283 sounds measured). Held out by generator: TokenSynth 0.90, Fish
+        0.80, SAO 0.57, so the axis doesn't ship (it needs 0.85 on all three). Held out by category it averages 0.85
+        over 22 categories (about 5 recordings each; dishes and engine 0.40, traffic 0.60). Foley is where it fails:
+        trained on notes and speech it can't tell SAO from recorded foley
 
     @needs:FP2a @done
     Scenario: FP2c. Heads train in milliseconds, on the device
