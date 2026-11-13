@@ -42,6 +42,14 @@ Read the files a task needs with `raea guide motion/NAME`, one or two at a time,
    A frame that needs one more step before it's taken (text measured in an effect, a fetch) holds it with
    `delayRender("what it waits for")` and releases it with `continueRender(handle)` (`raea/hold`); a hold never
    released fails the render after 30 s, naming its label.
+   Components written for a web page measure as they do in Chrome: a ref's `getBoundingClientRect`, `offsetWidth`
+   and `style`, `querySelector`, `document.createElement` (a hidden copy to measure), `document.createRange`, an svg
+   `<text>`'s `getComputedTextLength`, a canvas's `measureText`, `ResizeObserver`, `requestAnimationFrame`,
+   `new Image()` and an `<img>`'s `onLoad` answer from the page that draws the frame (installed for you:
+   `raea/dom-reads`, `raea/dom-tree`, `raea/dom-style`, `raea/dom-document`, `raea/dom-range`, `raea/dom-svgtext`,
+   `raea/canvas2d`, `raea/dom-observers`, `raea/frame-globals` and `raea/dom-load`). Load a web font with
+   `loadFont` (`raea/text`) so it's measured in its own faces. `MutationObserver` and `IntersectionObserver` never
+   call back.
 3. **Clamp every interpolate.** The default extrapolation extends the line forever, so use
    `{extrapolateLeft: "clamp", extrapolateRight: "clamp"}` unless you mean otherwise. Inputs must strictly increase.
 4. **Settle with `Easing.out(Easing.cubic)`.** The plain curves (`Easing.cubic`, `Easing.quad`) ease in, and

@@ -1,7 +1,7 @@
 // CanvasRenderingContext2D.
 import * as wire from "../wire";
 import { base64, encodePng } from "./png";
-import { COMPOSITES, CanvasHost, Gradient, ID, ImageData_, Paint, Path, Path2D_, S, State, fresh, measure, mul, paintOf, parseColor, parseFilter, parseFont, parseSpacing, unb64 } from "./all";
+import { COMPOSITES, CanvasHost, Gradient, ID, ImageData_, Paint, Path, Path2D_, S, State, fresh, measure, mul, paintOf, parseColor, parseFilter, parseFont, parseSpacing, roundRectPath, arcToPath, unb64 } from "./all";
 
 export class CanvasRenderingContext2D_ {
   private s: State = fresh();
@@ -333,22 +333,7 @@ export class CanvasRenderingContext2D_ {
     this.path.close();
   }
   roundRect(x: number, y: number, w: number, h: number, radii: number | number[] = 0) {
-    const r = Array.isArray(radii) ? radii : [radii];
-    const [tl, tr, br, bl] = r.length === 1 ? [r[0], r[0], r[0], r[0]] : r.length === 2 ? [r[0], r[1], r[0], r[1]] : r.length === 3 ? [r[0], r[1], r[2], r[1]] : [r[0], r[1], r[2], r[3]];
-    const scale = Math.min(1, w / (tl + tr || 1), w / (bl + br || 1), h / (tl + bl || 1), h / (tr + br || 1));
-    const [a, b, c, d] = [tl, tr, br, bl].map((v) => (typeof v === "number" ? v : 0) * scale);
-    const P = this.path;
-    P.move(x + a, y);
-    P.line(x + w - b, y);
-    if (b) P.ellipse(x + w - b, y + b, b, b, 0, -Math.PI / 2, 0, false);
-    P.line(x + w, y + h - c);
-    if (c) P.ellipse(x + w - c, y + h - c, c, c, 0, 0, Math.PI / 2, false);
-    P.line(x + d, y + h);
-    if (d) P.ellipse(x + d, y + h - d, d, d, 0, Math.PI / 2, Math.PI, false);
-    P.line(x, y + a);
-    if (a) P.ellipse(x + a, y + a, a, a, 0, Math.PI, Math.PI * 1.5, false);
-    P.close();
-    P.move(x, y);
+    roundRectPath(this.path, x, y, w, h, radii);
   }
   arc(x: number, y: number, r: number, a0: number, a1: number, ccw = false) {
     this.path.ellipse(x, y, r, r, 0, a0, a1, ccw);
@@ -357,24 +342,7 @@ export class CanvasRenderingContext2D_ {
     this.path.ellipse(x, y, rx, ry, rot, a0, a1, ccw);
   }
   arcTo(x1: number, y1: number, x2: number, y2: number, r: number) {
-    const P = this.path;
-    if (!P.last) P.move(x1, y1);
-    const [x0, y0] = P.last!;
-    const v0 = [x0 - x1, y0 - y1], v1 = [x2 - x1, y2 - y1];
-    const l0 = Math.hypot(v0[0], v0[1]), l1 = Math.hypot(v1[0], v1[1]);
-    const cross = v0[0] * v1[1] - v0[1] * v1[0];
-    if (!r || !l0 || !l1 || Math.abs(cross) < 1e-9) return P.line(x1, y1);
-    const ang = Math.acos(Math.max(-1, Math.min(1, (v0[0] * v1[0] + v0[1] * v1[1]) / (l0 * l1))));
-    const t = r / Math.tan(ang / 2);
-    const p0 = [x1 + (v0[0] / l0) * t, y1 + (v0[1] / l0) * t];
-    const p1 = [x1 + (v1[0] / l1) * t, y1 + (v1[1] / l1) * t];
-    // the centre: from p0, perpendicular toward the inside of the corner
-    const n = cross > 0 ? [-v0[1] / l0, v0[0] / l0] : [v0[1] / l0, -v0[0] / l0];
-    const cx = p0[0] + n[0] * r, cy = p0[1] + n[1] * r;
-    const a0 = Math.atan2(p0[1] - cy, p0[0] - cx), a1 = Math.atan2(p1[1] - cy, p1[0] - cx);
-    P.line(p0[0], p0[1]);
-    // the short way round, between the tangent points: clockwise on screen (y down) when the corner turns that way
-    P.ellipse(cx, cy, r, r, 0, a0, a1, cross > 0);
+    arcToPath(this.path, x1, y1, x2, y2, r);
   }
 
   // -------- drawing
