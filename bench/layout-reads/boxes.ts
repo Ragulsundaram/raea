@@ -23,9 +23,13 @@ export function runs(root: Element): Run[] {
   for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
     if (!n.data || !n.parentElement) continue;
     if (n.parentElement.closest("style, script")) continue;
-    let up: Element | null = n.parentElement;
-    while (up && (getComputedStyle(up).display.startsWith("inline") || !sized(up))) up = up.parentElement;
-    if (!up || alpha(n.parentElement) <= 0.01) continue;
+    // an svg's words belong to their <text>, as the manifest has them (the page draws an svg as one picture, usvg's)
+    const svgText = n.parentElement.closest("svg text");
+    let up: Element | null = svgText ?? n.parentElement;
+    if (svgText && !sized(svgText)) continue;
+    while (!svgText && up && (getComputedStyle(up).display.startsWith("inline") || !sized(up))) up = up.parentElement;
+    // hidden words (a measuring copy under opacity 0 or visibility: hidden) aren't on the frame, as the manifest has it
+    if (!up || alpha(n.parentElement) <= 0.01 || getComputedStyle(n.parentElement).visibility !== "visible") continue;
     owned.set(up, [...(owned.get(up) ?? []), n]);
   }
   const out: Run[] = [];
@@ -46,7 +50,8 @@ export function runs(root: Element): Run[] {
       }
     }
     const run: Run = { text, box: [r(b.x), r(b.y), r(b.width), r(b.height)] };
-    if (x1 > x0) run.ink = [r(x0), r(b.y), r(x1 - x0), r(b.height)];
+    if (owner.closest("svg")) run.ink = run.box;
+    else if (x1 > x0) run.ink = [r(x0), r(b.y), r(x1 - x0), r(b.height)];
     out.push(run);
   }
   return out;

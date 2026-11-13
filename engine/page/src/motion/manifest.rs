@@ -25,6 +25,19 @@ impl BlitzPage {
             if node.is_element() && matches!(node.element_data().map(|e| &*e.name.local), Some("style" | "script")) {
                 continue;
             }
+            // an inline <svg> is drawn as one picture (usvg's): its <text>s are runs of their own, where usvg set them
+            if let Some(tree) = node.element_data().and_then(|e| e.svg_data()) {
+                if let (Some(b), a) = (rect(n), alpha(n)) {
+                    let (sx, sy) = (b.width / tree.size().width().max(1e-6) as f64, b.height / tree.size().height().max(1e-6) as f64);
+                    for (words, t, o) in svg_runs(tree.root(), a) {
+                        let bb = [r(b.x + t.x() as f64 * sx), r(b.y + t.y() as f64 * sy), r(t.width() as f64 * sx), r(t.height() as f64 * sy)];
+                        let mut v = json!({"text": words, "box": bb, "ink": bb, "opacity": (o * 100.0).round() / 100.0, "svg": true});
+                        stamps(n, &mut v);
+                        text.push(v);
+                    }
+                }
+                continue;
+            }
             stack.extend(node.children.iter().rev().copied());
             if let Some(src) = node.attr(LocalName::from("data-raea-src")) {
                 let a = alpha(n);
@@ -207,6 +220,29 @@ fn stamps(doc: &blitz_dom::BaseDocument, n: blitz_dom::NodeId, entry: &mut serde
         }
         at = node.parent;
     }
+}
+
+/// An svg's shown <text>s, in document order: each one's words (as [`run_text`] joins its chunks), its box in the
+/// svg's canvas, and its opacity times its groups' (from `a`, the svg element's own). One under 0.01 isn't shown.
+fn svg_runs(g: &usvg::Group, a: f64) -> Vec<(String, usvg::Rect, f64)> {
+    let a = a * g.opacity().get() as f64;
+    let mut out = Vec::new();
+    if a <= 0.01 {
+        return out;
+    }
+    for c in g.children() {
+        match c {
+            usvg::Node::Group(g) => out.extend(svg_runs(g, a)),
+            usvg::Node::Text(t) => {
+                let pieces: Vec<String> = t.chunks().iter().map(|c| c.text().to_string()).collect();
+                if let Some(words) = run_text(&pieces) {
+                    out.push((words, t.abs_bounding_box(), a));
+                }
+            }
+            _ => {}
+        }
+    }
+    out
 }
 
 /// A run's words from its text nodes, in order: joined by a space, as caption words set one a span are; or, when every

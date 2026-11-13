@@ -14855,6 +14855,7 @@ dependencies = [
  "blitz-dom",
  "raea-native",
  "raea-sys-canvas",
+ "raea-sys-fonts",
  "serde_json",
 ]
 

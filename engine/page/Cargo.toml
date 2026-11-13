@@ -30,6 +30,8 @@ raea-core-wire = { path = "../../core/wire" }
 # the GPU canary, bump and memory checks, and refusals
 raea-gpu-device = { path = "../../gpu/device" }
 serde_json = "1"
+# an inline svg's <text>s, as usvg set them (the render manifest's runs, layout-reads LR10)
+usvg = { version = "=0.48.1", default-features = false, features = ["text"] }
 # HTML files parsed by Blitz (motion.rs open_html: an HTML page, WPT's tests), and their URLs
 blitz-html = "=0.3.0-beta.4"
 url = "2"

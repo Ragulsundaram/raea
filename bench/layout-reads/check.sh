@@ -104,12 +104,10 @@ EOF
   printf '<!doctype html><meta charset=utf-8><body style="background:#000"><div id=root></div><script type=module src="/lr/%s.js"></script>' "$n" > "$L/$n.html"
   line="" ok=1
   [ $rr = 0 ] && [ -z "$threw" ] || ok=0
+  # Chrome renders each frame in real time (chrome.ts), so its requestAnimationFrame and ResizeObserver run
+  bun "$BENCH/chrome.ts" "$CH" "http://127.0.0.1:$PORT/lr/$n.html" "$width" "$height" "$D" "${frames[@]}" > "$D/chrome.log" 2>&1
   for i in 0 1 2; do
     f=${frames[$i]}
-    url="http://127.0.0.1:$PORT/lr/$n.html"
-    "$CH" --headless --hide-scrollbars --window-size="$width,$height" --virtual-time-budget=8000 --screenshot="$D/chrome-$f.png" "$url#$f" > /dev/null 2>&1
-    "$CH" --headless --hide-scrollbars --window-size="$width,$height" --virtual-time-budget=8000 --dump-dom "$url#$f,dump" 2> /dev/null \
-      | sed -n 's/.*<script type="application\/json" id="lr-runs">\(.*\)<\/script>.*/\1/p' > "$D/chrome-$f.json"
     r=$D/raea/frame-0000$i.png
     if [ $rr != 0 ] || [ ! -f "$r" ]; then line="$line	@$f no frame"; ok=0; continue; fi
     [ -s "$D/chrome-$f.json" ] || { line="$line	@$f no Chrome runs"; ok=0; continue; }
