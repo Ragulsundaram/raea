@@ -438,7 +438,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         feed with the fingerprint that judges it, asks first where a head goes against the person's own label on that
         moment, then where a head sits nearest its flag, one per axis and piece within 4 s, at most ten, as Yes/No
         questions in one `raea show` item with the moment cut to a clip; `--tally` makes each answer a "postmortem" row,
-        retrains and prints each head's held-out AUC before and after. Archiving a project runs it in the background (raea-feed PR #5, not merged yet)
+        retrains and prints each head's held-out AUC before and after. Archiving a project runs it in the background (raea-feed #5, in the 0.1.2 app)
 
   Rule: FP8. Teams
     @needs:FP2d @done
