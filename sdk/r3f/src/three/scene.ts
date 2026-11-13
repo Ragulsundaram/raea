@@ -111,7 +111,7 @@ export class Scene3d {
     for (const el of nodes) {
       seen.add(el);
       const kind = el.getAttribute("data-3d")!;
-      const json = (el.getAttribute("data-props") ?? "{}") + "|" + (el.getAttribute("data-shape") ?? "");
+      const json = (el.getAttribute("data-props") ?? "{}") + "|" + (el.getAttribute("data-shape") ?? "") + "|" + (el.getAttribute("data-at") ?? "");
       const status = KINDS[kind]?.status;
       if (status === "effect") this.effects.push({ kind, props: JSON.parse(el.getAttribute("data-props") ?? "{}") as Props });
       let k = this.kept.get(el);
@@ -219,7 +219,8 @@ export class Scene3d {
         const fromShape = primitive ? undefined : geometryOfShape(shape);
         k.waiting = !primitive && !!shape && !fromShape;
         if (k.waiting) this.warnOnce("Mesh shape", "is a solid: load raea's shape module (loadShapes) to draw it");
-        const at = p.at as number[] | undefined;
+        // <Instances>' copies: their placements in data-at, apart from its props (sdk/render instances.tsx)
+        const at = (p.at as number[] | undefined) ?? placements(el);
         const had = k.obj as THREE.Mesh | undefined;
         const geometry = fromShape ?? had?.geometry ?? new THREE.BufferGeometry();
         const material = (had?.material as THREE.Material | undefined) ?? new THREE.MeshStandardMaterial();
@@ -469,3 +470,15 @@ export class Scene3d {
 }
 
 export { vec };
+
+/** an <Instances>' placements, 9 numbers a copy (position, rotation, scale), from its data-at; undefined without one */
+function placements(el: Element): number[] | undefined {
+  const raw = el.getAttribute("data-at");
+  if (!raw) return undefined;
+  try {
+    const at = JSON.parse(raw);
+    return Array.isArray(at) ? (at as number[]) : undefined;
+  } catch {
+    return undefined;
+  }
+}

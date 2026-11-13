@@ -83,7 +83,11 @@ impl Material for ShaderMaterial {
         _layout: &bevy::mesh::MeshVertexBufferLayoutRef,
         key: bevy::pbr::MaterialPipelineKey<Self>,
     ) -> Result<(), bevy::render::render_resource::SpecializedMeshPipelineError> {
-        if let Some(f) = descriptor.fragment.as_mut() {
+        // (the shader is the colour pass's only: a prepass keeps Bevy's own fragment, which writes the normals and motion
+        // a prepass target expects. Under Solari the camera has a normal and motion prepass, and the colour shader in it
+        // failed validation, "Error matching ShaderStages(FRAGMENT) ... label = 'prepass_pipeline'": Stay's fern drops)
+        let prepass = descriptor.label.as_deref().is_some_and(|l| l.contains("prepass"));
+        if let (false, Some(f)) = (prepass, descriptor.fragment.as_mut()) {
             f.shader = Handle::Uuid(bevy::asset::uuid::Uuid::from_u128(key.bind_group_data.shader), core::marker::PhantomData);
         }
         if key.bind_group_data.double_sided {
