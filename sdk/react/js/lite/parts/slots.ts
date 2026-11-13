@@ -1,5 +1,6 @@
 // Host nodes, places in the tree, the codes rendered, and Z3's bailout.
 import { Context, Instance, S } from "./all";
+import type { BevyNode } from "../../node_modules/bevy-react/src/nodes";
 
 // ---- host nodes
 
@@ -15,10 +16,13 @@ export interface Host {
   slot: Slot;
   /** the output it was last made or patched from: the same one again (a reused component's) changes nothing under it */
   out?: Out;
+  /** what a ref to it holds, kept in the tree bevy-react keeps (its nodes.ts): the DOM reads a composition makes on a ref
+   *  (sdk/raea dom-*.ts) walk it, as they do under React (docs/layout-reads.feature LR2) */
+  node: BevyNode;
 }
 
 /** What a render yields: host elements and texts, in order, under one host parent. */
-export type Out = { slot: Slot; type: string; props: any; text?: string; kids: Out[]; inText: boolean; owner?: Instance };
+export type Out = { slot: Slot; type: string; props: any; text?: string; kids: Out[]; inText: boolean; owner?: Instance; ref?: any };
 
 /** The children of an output with none: shared, never written (children() maps into a new list) */
 export const EMPTY: Out[] = Object.freeze([]) as unknown as Out[];

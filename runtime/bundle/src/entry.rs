@@ -163,9 +163,19 @@ pub fn entry_lite(file: &str, o: &CompOpts) -> String {
     let start = full.find("import * as M").expect("entry's imports");
     let end = full.find("// a throw while rendering the composition").expect("entry's Root");
     let bridge = raea_io_home::home().join("sdk/react/js/node_modules/bevy-react/src/bridge.ts");
+    let nodes = raea_io_home::home().join("sdk/react/js/node_modules/bevy-react/src/nodes.ts");
+    let canvas = raea_io_home::home().join("sdk/react/js/node_modules/bevy-react/src/canvas.ts");
     format!(
         r#"import {{ frameCallbacks, pureAgain, pureFrame, pureSession, seedOf }} from "./motion/pure";
 import {{ addEventListener, reset, runEventLoop }} from {bridge:?};
+// a ref has the DOM a web component reads, as under React's entry: lite's hosts keep the same nodes (sdk/react/js/lite
+// hosts.ts), and a <canvas> ref's getContext("2d") is the web's (layout-reads LR2; #55)
+import {{ canvas2d }} from "./motion/canvas2d";
+import {{ domReads }} from "./motion/dom-reads";
+import * as BevyNodes from {nodes:?};
+import {{ BevyCanvasElement }} from {canvas:?};
+canvas2d(BevyCanvasElement);
+domReads(BevyNodes as any);
 import {{ renderRoot, takeRendered }} from "react";
 {preamble}const LIVE: any = {{}};
 let live = false;

@@ -22,6 +22,20 @@ impl Page {
         Page { on, size: (w, h), dir: dir.to_path_buf(), page: None, failed: false }
     }
 
+    /// A layout read the composition makes while frame `f` steps (`page.layout`, docs/layout-reads.feature LR2): the
+    /// page synced to the React World as it is mid-settle, laid out, and its boxes, as a render answers. The page is
+    /// made for the read, asked for or not.
+    pub(crate) fn answer(&mut self, react: &mut World, f: i64, fps: f64, request: &str) -> Result<String, String> {
+        if self.page.is_none() {
+            self.page = Some(raea_runtime_page::BevyPage::new(self.size.0, self.size.1, &self.dir).map_err(|e| format!("raea world couldn't make the page to answer a layout read: {e}"))?);
+        }
+        let page = self.page.as_mut().ok_or("no page")?;
+        page.at_frame(f, fps);
+        page.sync(react, &HashMap::new(), None).map_err(|e| e.to_string())?;
+        page.lay_out();
+        Ok(page.layout_snapshot(request))
+    }
+
     /// Frame `f`'s page as laid out: the render manifest's frame entry ({videos, text}); None when the page isn't
     /// laid out (not asked for, or it couldn't be).
     pub(crate) fn laid_out(&mut self, react: &mut World, f: i64, fps: f64) -> Option<Value> {

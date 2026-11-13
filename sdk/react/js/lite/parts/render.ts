@@ -113,7 +113,7 @@ export function render(node: any, parent: Instance, slot: Slot, out: Out[], inTe
     // an element with no children shares one empty list (each frame made one for every leaf)
     const kids: Out[] = inline || c === undefined || c === null ? EMPTY : [];
     if (kids !== EMPTY) render(c, parent, inner(slot), kids, inText || childText);
-    const o: Out = { slot, type: t, props: node.props, kids, inText, text: inline ? String(c) : undefined, owner: parent };
+    const o: Out = { slot, type: t, props: node.props, kids, inText, text: inline ? String(c) : undefined, owner: parent, ref: node.ref };
     out.push(o);
     if (S.components === before) {
       node._o = o;

@@ -232,7 +232,15 @@ impl Live {
                 }
             }
             self.app.world().resource::<ReactOutbox>().send_raw(frame_event(f, keys, pointer, Some(self.session)));
-            raea_runtime_react::scene::settle(&mut self.app, Some(f), 5.0)?;
+            // a layout read the composition makes (docs/layout-reads.feature LR2): the live page synced to the World as
+            // it is mid-settle, laid out, and its boxes; the frame's draw syncs it again with the 3D's holders. Preview,
+            // play, the app's stage and an exported game all step here
+            let (page, brand) = (&mut self.page, self.brand.as_deref());
+            raea_runtime_react::scene::settle_with(&mut self.app, Some(f), 5.0, &mut |w, q| {
+                page.sync(w, &std::collections::HashMap::new(), brand).map_err(|e| e.to_string())?;
+                page.lay_out();
+                Ok(page.layout_snapshot(q))
+            })?;
             // a game's 3D: this frame's scene, as it was just computed, set on the live engine
             if let Some(ls) = self.live3d.as_mut() {
                 let t = std::time::Instant::now();

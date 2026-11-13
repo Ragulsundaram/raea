@@ -112,6 +112,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           Chrome (Inter at 64 px). geometry prints each value it read, and all match Chrome's words.
 
     @needs:LR1
+    @done
     Scenario: LR2. Every host that runs a composition answers
       Then each host below answers LR1's call, or states plainly why it can't:
         | host                    | where                                  |
@@ -123,6 +124,25 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         | the portable bundle     | the iPhone's player                    |
         | an exported game        | raea-app-game's player                 |
       And in live play a read costs at most one frame's wait, which is stated with its measurement
+      And 11-12, built:
+        - Render and export, a bundle drawn by render_bundle (the portable bundle's player) and the fed render answer
+          from their frame's page (LR1). The sound pass and the 3D rows' pre-pass draw no page and answer with no
+          boxes (layout::nothing_drawn).
+        - Live play (preview, raea play, the app's stage and an exported game, all runtime/live step_inner) answers
+          from its live page: settle_with syncs the page to the World mid-settle, lays it out and snapshots it.
+        - Live play runs on raea's lite runtime (sdk/react/js/lite), which set no refs, so a ref was null there and
+          a canvas drawn through one drew nothing. Lite's hosts now keep bevy-react's nodes (BevyElement,
+          BevyCanvasElement, BevyTextNode) linked as React's tree is, and set a ref when its host is made and clear it
+          when it's dropped. entry_lite installs canvas2d and the DOM reads as React's entry does.
+        - raea world answers from the page it lays its frames out with (made for a read even under --no-layout).
+        - A baked timeline (raea play --baked) lays no page out while it bakes: a read is refused with "a baked timeline
+          (raea play --baked; play it without --baked) lays no page out", not baked as 0.
+        - #54's repro played live puts "here" at x 342, as the render and Chrome do (x 0 before). Every probe
+          (geometry, tree, document, measure, observe, hold) played live is the render's frame (SSIM 1.000), and
+          sdk/react/bench/games/replay.sh (pong, platformer: lite against React) stays at SSIM 1.000.
+        - The cost, measured on a 640x720 page of 40 lines, one getBoundingClientRect a frame at 60 fps (raea play
+          --offscreen --no-vsync, 5 s, twice): a frame's step p50 0.39-0.41 ms without the read, 1.8-2.0 ms with it;
+          work p50 3.8-4.2 ms against 4.3-5.0 ms. Under a tenth of a 60 fps frame.
 
   Rule: a ref has the DOM a web component reads
 

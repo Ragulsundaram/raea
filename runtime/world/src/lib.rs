@@ -81,13 +81,18 @@ fn stepped(js: &Path, tsx: &Path, ask: &Ask, words: Option<&Value>) -> R<Vec<Fac
     let wanted: BTreeSet<i64> = asked.iter().copied().collect();
     // and each one's next frame, for what moves (the camera's velocity)
     let all: BTreeSet<i64> = wanted.iter().flat_map(|&f| [f, f + 1]).filter(|f| *f < length).collect();
-    let mut page = page::Page::new(ask.layout, w, h, dir);
+    // one page for the frames' layout and for the layout reads the composition makes while they step (LR2)
+    let page = std::cell::RefCell::new(page::Page::new(ask.layout, w, h, dir));
+    let at = std::cell::Cell::new(0i64);
     let mut snaps: BTreeMap<i64, Snap> = BTreeMap::new();
     for (a, b) in raea_runtime_bake::runs(&all) {
-        raea_runtime_bake::step_frames(&mut app, a, b, |app, f| {
+        at.set(a);
+        let mut answer = |w: &mut bevy::prelude::World, q: &str| page.borrow_mut().answer(w, at.get(), fps, q);
+        raea_runtime_bake::step_frames_with(&mut app, a, b, &mut answer, |app, f| {
+            at.set(f + 1);
             let world = app.world_mut();
             let scene = raea_runtime_scene::items_of(&scene_of(world));
-            let (tree, laid) = if wanted.contains(&f) { (timeline::tree(world), page.laid_out(world, f, fps)) } else { (Vec::new(), None) };
+            let (tree, laid) = if wanted.contains(&f) { (timeline::tree(world), page.borrow_mut().laid_out(world, f, fps)) } else { (Vec::new(), None) };
             snaps.insert(f, Snap { scene, tree, laid });
             Ok(())
         })?;

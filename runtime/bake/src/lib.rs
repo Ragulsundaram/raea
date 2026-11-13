@@ -205,7 +205,13 @@ pub fn runs<'a>(frames: impl IntoIterator<Item = &'a i64>) -> Vec<(i64, i64)> {
 /// Frames `a..b` stepped as one range (lightspeed T3): React renders them back to back (raea-frames), with no round
 /// trip to Rust between frames, and each frame's commit is applied on its own (OneBatch), `each` reading the world
 /// after it. Stepped one event a frame, each frame waited on the JS thread and back: most of an incremental bake.
-pub fn step_frames(app: &mut App, a: i64, b: i64, mut each: impl FnMut(&mut App, i64) -> R<()>) -> R<()> {
+pub fn step_frames(app: &mut App, a: i64, b: i64, each: impl FnMut(&mut App, i64) -> R<()>) -> R<()> {
+    step_frames_with(app, a, b, &mut raea_runtime_react::layout::nothing_drawn(), each)
+}
+
+/// [`step_frames`], a layout read the composition makes answered by `answer` (`page.layout`, docs/layout-reads.feature
+/// LR2): a host that lays a page out answers from it, a pass that draws none with no boxes.
+pub fn step_frames_with(app: &mut App, a: i64, b: i64, answer: &mut raea_runtime_react::layout::Answer, mut each: impl FnMut(&mut App, i64) -> R<()>) -> R<()> {
     if b <= a {
         return Ok(());
     }
@@ -214,8 +220,7 @@ pub fn step_frames(app: &mut App, a: i64, b: i64, mut each: impl FnMut(&mut App,
     let mut t_each = std::time::Duration::ZERO;
     app.world().resource::<ReactOutbox>().send(json!({"t": "event", "name": "raea-frames", "value": {"from": a, "to": b}}));
     for g in a..b {
-        // a layout read gets no boxes: the frames stepped here draw no page (the 3D rows' pre-pass; docs/layout-reads.feature LR2)
-        raea_runtime_react::scene::settle_with(app, Some(g), 20.0, &mut raea_runtime_react::layout::nothing_drawn())?;
+        raea_runtime_react::scene::settle_with(app, Some(g), 20.0, answer)?;
         let te = std::time::Instant::now();
         each(app, g)?;
         t_each += te.elapsed();
@@ -242,8 +247,10 @@ fn take_ops(app: &mut App) -> Vec<String> {
 /// runtime's node ids don't follow on from the range before).
 fn step_range(app: &mut App, a: i64, b: i64, reset: bool) -> R<Range> {
     let mut r = Range { frame_ops: Vec::with_capacity((b - a) as usize), comps: Vec::with_capacity((b - a) as usize), keys: Vec::new(), has_3d: false };
-    // the render's own steps: frame numbers (not live play's {frame, input}), so the commits are a render's
-    step_frames(app, a, b, |app, f| {
+    // the render's own steps: frame numbers (not live play's {frame, input}), so the commits are a render's. A bake lays
+    // no page out, so a layout read is refused, plainly, rather than baked as 0 (docs/layout-reads.feature LR2)
+    let mut answer = raea_runtime_react::layout::no_page("a baked timeline (raea play --baked; play it without --baked)");
+    step_frames_with(app, a, b, &mut answer, |app, f| {
         r.comps.push(comps_of(app.world_mut()));
         let ops = take_ops(app);
         r.has_3d |= ops.iter().any(|j| j.contains("data-3d"));
