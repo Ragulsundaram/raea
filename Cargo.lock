@@ -15473,7 +15473,6 @@ name = "raea-sys-fingerprint"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "half",
  "raea-sys-columns",
  "serde",
  "serde_json",
@@ -15488,7 +15487,6 @@ dependencies = [
  "raea-sys-columns",
  "raea-sys-fingerprint",
  "serde",
- "serde_json",
 ]
 
 [[package]]
