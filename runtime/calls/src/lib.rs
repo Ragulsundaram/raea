@@ -177,6 +177,9 @@ pub fn call(name: &str, v: &Value) -> R<Value> {
             "fonts.google" => {
                 let family = s(v, "family")?;
                 raea_sys_fonts::google::want(&family);
+                // fetched now, not at the first layout that names it: a component measures its text in an effect
+                // (canvas measureText, svg text), which runs before that layout and would get the fallback
+                raea_sys_fonts::google::load_now(&family);
                 Ok(json!({ "family": family }))
             }
             "fonts.atlases" => font_atlases(v),

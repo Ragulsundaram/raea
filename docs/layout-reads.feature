@@ -322,7 +322,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And a composition that measures every frame (karaoke-captions, 300 frames) has its cost per read and per frame
         measured and written here
       And sdk/raea/conformance covers the JS side, and Rust tests cover the call, the wait and the hang guard
-      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 now):
+      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 with kerning and the manifest, 18 now):
         - Kerning across spans. blitz-dom gave every composition span a border edge: with `border-style: none` (the
           initial style) a border's computed width is still `medium`, and inline_edges read the width alone, so each
           plain span got a zero-width spacer box at both ends and parley split its shaping there. "AVAWATAVAWAT" in a
@@ -341,9 +341,15 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           size), as Chrome's canvas takes them: fontdb knew neither, so a list headed by them was measured in
           Helvetica, about 10% wider at 72px. text-build, which places its words from measureText, went from 9 px off
           to 1.3: what's left is SF's `trak` table (CoreText tracks SF about 0.12 px a letter at 72px; usvg doesn't).
-        - Still off (16), not yet traced: announce-title (frame 0's runs), bloom-lockup, capture-reveal (3 runs only
-          raea has), font-shuffle, portal-intro, prompt-send, punch-lines, search-typing, status-cycle, text-build
-          (SF's trak), text-rewrite, text-select, word-gather, card-rail, hero-launch (a video's frame, not text) and
+        - A Google family from raea/text's loadFont is fetched when loadFont is called, and a canvas and svg text have
+          it too. The page fetched it at the first layout that named it, after a component's first effect had measured
+          (its canvas found the fallback), and a family the page fetched first never reached the canvas's faces at all.
+          Figtree's "scene" at 600 64px measured 145.72 against Chrome's 171.25, now 171.26. An app-bundled face of a
+          family the page already gave is left out (Geist fetched at import came before the bundled Geist).
+          bloom-lockup passes (40.8 px off before), word-gather is 1.2 px off (25.5 before).
+        - Still off (15), not yet traced: announce-title (frame 0's runs), capture-reveal (3 runs only raea has),
+          font-shuffle, portal-intro, prompt-send, punch-lines, search-typing, status-cycle, text-build (SF's trak),
+          text-rewrite, text-select, word-gather, card-rail, hero-launch (a video's frame, not text) and
           wordmark-cut.
         - P26 with these: 185 of 215 frames at the bar, the same frames at the same SSIM (to six places) as a binary
           before them. The 12 compositions under it are all 3D (classbg, datamaps, paint, planes, texmaps, the four

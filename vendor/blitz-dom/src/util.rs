@@ -86,11 +86,22 @@ fn add_face(bytes: Vec<u8>, family: Option<&str>, face: Option<(u16, bool)>, bun
             return;
         }
     }
+    // the families the page has given faces of, in lower case
+    static PAGE: LazyLock<Mutex<std::collections::HashSet<String>>> = LazyLock::new(Default::default);
+    let mut page = PAGE.lock().unwrap();
+    // a bundled face of a family the page already has isn't added: raea/text's loadFont fetches Google's Geist when
+    // the composition's module runs, which can be before the app's bundled Geist is loaded
+    if let (true, Some(family)) = (bundled, family) {
+        if page.contains(&family.to_lowercase()) {
+            return;
+        }
+    }
     let mut db = FONT_DB.lock().unwrap();
     let db = Arc::make_mut(&mut db);
     let mut bundled_ids = BUNDLED.lock().unwrap();
     // the page's own faces of a family: the bundled ones of that name go
     if let (false, Some(family)) = (bundled, family) {
+        page.insert(family.to_lowercase());
         for id in bundled_ids.remove(&family.to_lowercase()).unwrap_or_default() {
             db.remove_face(id);
         }
@@ -357,6 +368,21 @@ mod svg_tests {
         assert_eq!(count(&db), 1);
         add_svg_font(var, Some(family), Some((500, false)));
         assert_eq!(count(&svg_fonts()), 1);
+    }
+
+    /// raea: a bundled face of a family the page gave first isn't added beside the page's (loadFont fetches at import)
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn a_bundled_face_after_the_page_s_own_is_left_out() {
+        use super::{add_bundled_svg_font, add_svg_font, svg_fonts};
+        let family = "raea lr10 page first";
+        let var = std::fs::read("/System/Library/Fonts/SFNS.ttf").unwrap();
+        let stat = std::fs::read("/System/Library/Fonts/Supplemental/Arial.ttf").unwrap();
+        add_svg_font(var, Some(family), Some((400, false)));
+        add_bundled_svg_font(stat, Some(family), Some((400, false)));
+        let names: Vec<_> = svg_fonts().faces().filter(|f| f.families.iter().any(|(n, _)| n == family)).map(|f| f.post_script_name.clone()).collect();
+        assert_eq!(names.len(), 1, "{names:?}");
+        assert!(!names[0].contains("Arial"), "{names:?}");
     }
 
     #[test]

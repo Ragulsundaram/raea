@@ -69,8 +69,25 @@ pub fn load_missing(doc: &mut BaseDocument) -> bool {
             doc.load_resource(ResourceLoadResponse { request_id: usize::MAX, node_id: None, resolved_url: None, result: Ok(Resource::Font(ttf.clone(), overrides)) });
             loaded = true;
         }
+        // a canvas's measureText and svg text find a family the page has, as Chrome's do (snapcn's word-gather, whose
+        // Figtree the page loaded first, measured its words in the fallback)
+        to_svg(&family, &faces);
     }
     loaded
+}
+
+/// Gives usvg's font database (a canvas's and svg text's) each of `family`'s faces once, each at the weight and style
+/// its @font-face gives it (one variable file is every weight of a family).
+fn to_svg(family: &str, faces: &Faces) {
+    static GIVEN: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    let mut given = GIVEN.lock().unwrap();
+    if faces.is_empty() || given.iter().any(|f| f == family) {
+        return;
+    }
+    for (ttf, weight, italic) in faces.iter() {
+        blitz_dom::util::add_svg_font(ttf.to_vec(), Some(family), Some((*weight as u16, *italic)));
+    }
+    given.push(family.to_string());
 }
 
 /// The family's faces for a canvas and SVG text now (document.fonts.load, layout-reads LR7): a family the composition
@@ -80,17 +97,13 @@ pub fn load_now(family: &str) -> usize {
     if !wanted(family) {
         return 0;
     }
-    let mut known = FAMILIES.lock().unwrap();
-    let known = known.get_or_insert_default();
-    if let Some(faces) = known.get(family) {
-        return faces.len();
-    }
-    let faces = Arc::new(fetch(family));
-    for (ttf, weight, italic) in faces.iter() {
-        // each at the weight and style its @font-face gives it (one variable file is every weight of a family)
-        blitz_dom::util::add_svg_font(ttf.to_vec(), Some(family), Some((*weight as u16, *italic)));
-    }
-    known.insert(family.to_string(), faces.clone());
+    let faces = {
+        let mut known = FAMILIES.lock().unwrap();
+        let known = known.get_or_insert_default();
+        // one the page fetched first (load_missing) is in the cache but may not be in usvg's database yet
+        known.entry(family.to_string()).or_insert_with(|| Arc::new(fetch(family))).clone()
+    };
+    to_svg(family, &faces);
     faces.len()
 }
 
