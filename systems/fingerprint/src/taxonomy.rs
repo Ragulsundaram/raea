@@ -106,7 +106,7 @@ pub fn base(name: &str) -> Fingerprint {
     let axes = vec![
         ax("light and look", "blur", Picture, &["a blurry, soft, low resolution picture", "an out of focus smeared image"], None, true),
         ax("light and look", "dark", Picture, &["a very dark, underexposed picture", "a murky image where nothing can be seen"], None, true),
-        ax("light and look", "glow", Look, &["a hazy glow over everything", "a washed out picture with heavy bloom"], None, true),
+        ax("light and look", "glow", Picture, &["a hazy glow over everything", "a washed out picture with heavy bloom"], None, true),
         ax("glitch and continuity", "flash", Change, &["a single black frame flashing"], Some("flash-frame"), false),
         ax("pace", "freeze", Change, &["a frozen picture where nothing moves"], Some("frozen"), false),
         ax("sound", "noise", Sound, &["hiss and static noise over everything", "a noisy recording full of white noise"], None, true),

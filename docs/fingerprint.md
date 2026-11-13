@@ -319,7 +319,7 @@ frozen (VADB, arXiv 2510.25238). Rich Human Feedback (CVPR 2024) learns heatmaps
 | 1, foundation | FP1 | columns at ingest: SigLIP 2, change, look, CLAP, YAMNet; EmbeddingGemma 2 rows read from the Library | high | every model is measured; only the look columns and CLAP's Rust front end are new |
 | | FP2 | the folder, the base taxonomy, word heads, learned heads, the trainer and the gate, in Rust | high | FP0b-d and FP0g: heads learn from 4-32 labels in milliseconds, and words already score noise and clipping at 0.97-0.98 |
 | | FP3 | `raea fingerprint score` through the feed host: summary, JSON, sheet, timeline, watch lane | high | plumbing over FP1-2; earshot shows the outputs agents can use |
-| | FP4 | bootstrap from damage variants; red-team cheats; measured checks for dropout, clipping, loudness, flash, freeze | high, except glow (low until the look columns lift it) | FP0b, FP0d, FP0g |
+| | FP4 | bootstrap from damage variants; red-team cheats; measured checks for dropout, clipping, loudness, flash, freeze | high; glow was low on the look columns and holds out 0.90 on SigLIP 2 pictures (FP10a, 11-12) | FP0b, FP0d, FP0g |
 | 2, learning from people | FP5 | notes into evidence: the Director reads each note, checked against Shane on 50 notes (45 right on kind, 40 on axis) | medium | FP0a: notes don't label themselves |
 | | FP6 | approvals, picks, hand edits, version pairs, reference profiles | medium; profiles medium-high | the sources exist; profiles are earshot's measured method and fill the missing positives |
 | | FP7 | the person's weighting and the post-mortem | medium | FP0c works on made-up tastes; a real one needs FP5-6's labels |

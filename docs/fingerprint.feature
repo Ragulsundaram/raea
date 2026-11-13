@@ -631,4 +631,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
       And 11-12, so far: report.json and `raea fingerprint report` name the stuck axes (raea-sys-fingerprint
         `stuck`: 300 labels or more, cheats not counted, and a held-out score under the gate's 0.8), the only axes that
         may try an adapter or another encoder. On this machine's fingerprints one is: glow in "me" (580 labels, all
-        bootstrap damage; held out 0.79)
+        bootstrap damage; held out 0.79 on its look columns). Another encoder already on the device was tried first
+        (a_stuck_axis_on_another_encoder, ignored, on "me"'s own evidence): on SigLIP 2's picture columns glow holds
+        out 0.90, 0.11 better, on the change columns 0.52. So raea's base taxonomy reads glow from pictures (as
+        FP4b's bootstrap curve already measured it); no adapter was needed, and the trainer for one isn't chosen
