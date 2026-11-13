@@ -176,12 +176,22 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           Chrome's: children and querySelectorAll counts, siblings, closest's id, matches with a child combinator
           and :not, nth-child(odd), classList, dataset, getAttribute, contains, textContent, and the SyntaxError.
 
-    @needs:LR1
+    @needs:LR1 @done
     Scenario: LR5. style and getComputedStyle
       Then el.style reads the element's style prop, and writing it (a property, setProperty or cssText) sends an
         update op, as canvas2d.ts sends a canvas's draws. React's next commit to the same key wins, as in Chrome
       And getComputedStyle(el) answers from the page's computed style, carried in the LR1 snapshot only when it's
         asked for
+      And 11-12, built:
+        - sdk/raea/src/dom-style.ts. el.style is a CSSStyleDeclaration over the style React committed, with the
+          composition's writes over it. A write sends an update op (style, styleUnset) at once. React's own update
+          to a property the composition wrote takes it back.
+        - page.layout takes { styles: [ids] }. The snapshot then carries s: {id: {property: value}}, from stylo's
+          computed values (engine/page read.rs computed_style: display, position, fonts, spacing, box sizes,
+          transform and the rest), serialized as Chrome serializes them (18px, rgb(51, 85, 170)).
+          getComputedStyle reads it once per element per commit (page-layout.ts computedOf). A property the page
+          doesn't answer falls back to the element's own style.
+        - probes/document.tsx prints a computed font-size, weight and colour, and they match Chrome's words.
 
   Rule: the composition has a document
 
