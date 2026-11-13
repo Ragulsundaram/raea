@@ -13,19 +13,19 @@ reaches it yet).
 
 | area | kind | tier 1 | tier 2 | tier 3 | not rendered | SVG attribute only | blocked upstream | excluded | unmapped | total |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| bevy | asset | 8 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 9 |
-| bevy | component | 45 | 885 | 0 | 0 | 0 | 0 | 1 | 0 | 931 |
+| bevy | asset | 9 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 |
+| bevy | component | 61 | 869 | 0 | 0 | 0 | 0 | 1 | 0 | 931 |
 | bevy | event | 0 | 13 | 0 | 0 | 0 | 0 | 0 | 0 | 13 |
 | bevy | message | 0 | 40 | 0 | 0 | 0 | 0 | 0 | 0 | 40 |
-| bevy | resource | 2 | 88 | 0 | 0 | 0 | 0 | 1 | 0 | 91 |
+| bevy | resource | 4 | 86 | 0 | 0 | 0 | 0 | 1 | 0 | 91 |
 | bevy | state | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 1 |
-| css | longhand | 241 | 0 | 0 | 51 | 13 | 0 | 1 | 0 | 306 |
-| css | shorthand | 59 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 71 |
+| css | longhand | 248 | 0 | 0 | 44 | 14 | 0 | 1 | 0 | 307 |
+| css | shorthand | 60 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 71 |
 | element | html | 113 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 131 |
 | plugin | declared | 0 | 0 | 53 | 0 | 0 | 21 | 0 | 3 | 77 |
-| **all** | | **468** | **1027** | **53** | **63** | **13** | **21** | **22** | **3** | **1670** |
+| **all** | | **495** | **1009** | **53** | **55** | **14** | **21** | **21** | **3** | **1671** |
 
-Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in tools/agents/check) keeps it from dropping.
+Reached (tiers 1-3): **1557**. The ratchet (`tools/sdk-coverage --check`, in tools/agents/check) keeps it from dropping.
 
 ## Bevy types (the plugin build's TypeRegistry)
 
@@ -254,7 +254,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_camera::components::Camera2d` | component | 2 | bevy.Camera2d (raea/plugins/bevy) |
 | `bevy_camera::components::Camera3d` | component | 1 | Camera3d (sdk/render/src/bevy3d/core.tsx) |
 | `bevy_camera::components::CompositingSpace` | component | 2 | bevy.CompositingSpace (raea/plugins/bevy) |
-| `bevy_camera::components::Hdr` | component | 2 | bevy.Hdr (raea/plugins/bevy) |
+| `bevy_camera::components::Hdr` | component | 1 | Hdr (sdk/render/src/bevy3d/core.tsx) |
 | `bevy_camera::primitives::Aabb` | component | 2 | bevy.Aabb (raea/plugins/bevy) |
 | `bevy_camera::primitives::CascadesFrusta` | component | 2 | bevy.CascadesFrusta (raea/plugins/bevy) |
 | `bevy_camera::primitives::CubemapFrusta` | component | 2 | bevy.CubemapFrusta (raea/plugins/bevy) |
@@ -474,11 +474,11 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_feathers::focus::FocusWithinIndicator` | component | 2 | bevy.FocusWithinIndicator (raea/plugins/bevy) |
 | `bevy_feathers::font_styles::InheritableFont` | component | 2 | bevy.InheritableFont (raea/plugins/bevy) |
 | `bevy_feathers::theme::InheritableThemeTextColor` | component | 2 | bevy.InheritableThemeTextColor (raea/plugins/bevy) |
-| `bevy_feathers::theme::ThemeBackgroundColor` | component | 2 | bevy.ThemeBackgroundColor (raea/plugins/bevy) |
-| `bevy_feathers::theme::ThemeBorderColor` | component | 2 | bevy.ThemeBorderColor (raea/plugins/bevy) |
-| `bevy_feathers::theme::ThemeTextColor` | component | 2 | bevy.ThemeTextColor (raea/plugins/bevy) |
-| `bevy_feathers::theme::ThemedText` | component | 2 | bevy.ThemedText (raea/plugins/bevy) |
-| `bevy_feathers::theme::UiTheme` | resource | 2 | bevy.UiTheme (raea/plugins/bevy) |
+| `bevy_feathers::theme::ThemeBackgroundColor` | component | 1 | ThemeBackgroundColor (sdk/render/src/bevy3d/feathers/display.tsx) |
+| `bevy_feathers::theme::ThemeBorderColor` | component | 1 | ThemeBorderColor (sdk/render/src/bevy3d/feathers/display.tsx) |
+| `bevy_feathers::theme::ThemeTextColor` | component | 1 | ThemeTextColor (sdk/render/src/bevy3d/feathers/display.tsx) |
+| `bevy_feathers::theme::ThemedText` | component | 1 | ThemedText (sdk/render/src/bevy3d/feathers/theme.tsx) |
+| `bevy_feathers::theme::UiTheme` | resource | 1 | UiTheme (sdk/render/src/bevy3d/feathers/theme.tsx) |
 | `bevy_flair_core::helper_components::text::TextDecoration` | component | 2 | flair.TextDecoration (raea/plugins/flair) |
 | `bevy_flair_core::helper_components::text::TextDecorationLine` | component | 2 | flair.TextDecorationLine (raea/plugins/flair) |
 | `bevy_flair_style::components::AttributeList` | component | 2 | flair.AttributeList (raea/plugins/flair) |
@@ -585,18 +585,18 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_light::point_light::PointLight` | component | 1 | PointLight (sdk/render/src/bevy3d/lights.tsx) |
 | `bevy_light::point_light::PointLightShadowMap` | resource | 1 | Shadows (sdk/render/src/3d/effects.tsx) |
 | `bevy_light::point_light::PointLightTexture` | component | 2 | bevy.PointLightTexture (raea/plugins/bevy) |
-| `bevy_light::probe::EnvironmentMapLight` | component | 1 | Environment (sdk/render/src/3d/effects.tsx) |
+| `bevy_light::probe::EnvironmentMapLight` | component | 1 | EnvironmentMapLight (sdk/render/src/3d/effects.tsx) |
 | `bevy_light::probe::GeneratedEnvironmentMapLight` | component | 1 | Environment (sdk/render/src/3d/effects.tsx) |
 | `bevy_light::probe::IrradianceVolume` | component | 2 | bevy.IrradianceVolume (raea/plugins/bevy) |
 | `bevy_light::probe::LightProbe` | component | 2 | bevy.LightProbe (raea/plugins/bevy) |
 | `bevy_light::probe::ParallaxCorrection` | component | 2 | bevy.ParallaxCorrection (raea/plugins/bevy) |
-| `bevy_light::probe::Skybox` | component | 1 | Environment (sdk/render/src/3d/effects.tsx) |
+| `bevy_light::probe::Skybox` | component | 1 | Skybox (sdk/render/src/3d/effects.tsx) |
 | `bevy_light::rect_light::RectLight` | component | 1 | RectLight (sdk/render/src/bevy3d/lights.tsx) |
 | `bevy_light::spot_light::SpotLight` | component | 1 | SpotLight (sdk/render/src/bevy3d/lights.tsx) |
 | `bevy_light::spot_light::SpotLightTexture` | component | 2 | bevy.SpotLightTexture (raea/plugins/bevy) |
-| `bevy_light::volumetric::FogVolume` | component | 1 | FogVolume (sdk/render/src/3d/effects.tsx) |
-| `bevy_light::volumetric::VolumetricFog` | component | 1 | VolumetricFog (sdk/render/src/3d/effects.tsx) |
-| `bevy_light::volumetric::VolumetricLight` | component | 1 | VolumetricFog (sdk/render/src/3d/effects.tsx) |
+| `bevy_light::volumetric::FogVolume` | component | 1 | FogVolume (sdk/render/src/3d/volumetric.tsx) |
+| `bevy_light::volumetric::VolumetricFog` | component | 1 | VolumetricFog (sdk/render/src/3d/volumetric.tsx) |
+| `bevy_light::volumetric::VolumetricLight` | component | 1 | VolumetricFog (sdk/render/src/3d/volumetric.tsx) |
 | `bevy_light_2d::light::AmbientLight2d` | component | 2 | light_2d.AmbientLight2d (raea/plugins/light_2d) |
 | `bevy_light_2d::light::PointLight2d` | component | 2 | light_2d.PointLight2d (raea/plugins/light_2d) |
 | `bevy_light_2d::light::SpotLight2d` | component | 2 | light_2d.SpotLight2d (raea/plugins/light_2d) |
@@ -615,7 +615,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_panorbit_camera::PanOrbitCamera` | component | 2 | panorbit.PanOrbitCamera (raea/plugins/panorbit) |
 | `bevy_pbr::contact_shadows::ContactShadows` | component | 2 | raea/bevy-own |
 | `bevy_pbr::fog::DistanceFog` | component | 1 | Fog (sdk/render/src/3d/effects.tsx) |
-| `bevy_pbr::lightmap::Lightmap` | component | 2 | bevy.Lightmap (raea/plugins/bevy) |
+| `bevy_pbr::lightmap::Lightmap` | component | 1 | Lightmap (sdk/render/src/bevy3d/lightmap.tsx) |
 | `bevy_pbr::material::DefaultOpaqueRendererMethod` | resource | 2 | bevy.DefaultOpaqueRendererMethod (raea/plugins/bevy) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, bevy_pbr::decal::forward::ForwardDecalMaterialExt>>` | component | 1 | Decal (sdk/render/src/3d/effects.tsx) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, bevy_trenchbroom::special_textures::LiquidMaterialExt>>` | component | 2 | bevy.MeshMaterial3dExtendedMaterialStandardMaterialLiquidMaterialExt (raea/plugins/bevy) |
@@ -624,7 +624,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, raea_sys_look::paint::Paint>>` | component | 2 | bevy.MeshMaterial3dExtendedMaterialStandardMaterialPaint (raea/plugins/bevy) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, raea_sys_material::toon::ToonExt>>` | component | 2 | bevy.MeshMaterial3dExtendedMaterialStandardMaterialToonExt (raea/plugins/bevy) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, raea_sys_shader::ShaderExt>>` | component | 1 | SurfaceShader (sdk/render/src/3d/materials.tsx) |
-| `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, raea_sys_wear::Wear>>` | component | 1 | WearExtension (sdk/render/src/bevy3d/materials.tsx) |
+| `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::extended_material::ExtendedMaterial<bevy_pbr::pbr_material::StandardMaterial, raea_sys_wear::Wear>>` | component | 1 | WearExtension (sdk/render/src/bevy3d/extensions.tsx) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_pbr::pbr_material::StandardMaterial>` | component | 1 | Mesh3d (sdk/render/src/bevy3d/core.tsx) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<bevy_trenchbroom::special_textures::QuakeSkyMaterial>` | component | 2 | bevy.MeshMaterial3dQuakeSkyMaterial (raea/plugins/bevy) |
 | `bevy_pbr::mesh_material::MeshMaterial3d<raea_sys_fog::fire::FireMaterial>` | component | 2 | bevy.MeshMaterial3dFireMaterial (raea/plugins/bevy) |
@@ -807,7 +807,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_render::camera::TemporalJitter` | component | 2 | bevy.TemporalJitter (raea/plugins/bevy) |
 | `bevy_render::globals::GlobalsUniform` | resource | 2 | bevy.GlobalsUniform (raea/plugins/bevy) |
 | `bevy_render::occlusion_culling::OcclusionCulling` | component | 2 | bevy.OcclusionCulling (raea/plugins/bevy) |
-| `bevy_render::storage::ShaderBuffer` | asset | excluded | a storage buffer the engine fills for its own passes (the NV12 readback, a splat cloud): an author reaches what it holds through <Splat> and the export, never the buffer |
+| `bevy_render::storage::ShaderBuffer` | asset | 1 | StorageValue (sdk/render/src/3d/materials.tsx) |
 | `bevy_render::view::ColorGrading` | component | 1 | Grade (sdk/render/src/3d/effects.tsx) |
 | `bevy_render::view::DebandDither` | component | 2 | bevy.DebandDither (raea/plugins/bevy) |
 | `bevy_render::view::Msaa` | component | 2 | bevy.Msaa (raea/plugins/bevy) |
@@ -835,8 +835,8 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_sprite::picking_backend::SpritePickingSettings` | resource | 2 | bevy.SpritePickingSettings (raea/plugins/bevy) |
 | `bevy_sprite::sprite::Anchor` | component | 2 | bevy.Anchor (raea/plugins/bevy) |
 | `bevy_sprite::sprite::Sprite` | component | 1 | Sprite (sdk/render/src/3d/sprite.tsx) |
-| `bevy_sprite::text2d::Text2d` | component | 2 | bevy.Text2d (raea/plugins/bevy) |
-| `bevy_sprite::text2d::Text2dShadow` | component | 2 | bevy.Text2dShadow (raea/plugins/bevy) |
+| `bevy_sprite::text2d::Text2d` | component | 1 | Text2d (sdk/render/src/bevy3d/ui.tsx) |
+| `bevy_sprite::text2d::Text2dShadow` | component | 1 | Text2dShadow (sdk/render/src/bevy3d/text2d.tsx) |
 | `bevy_sprite_render::mesh2d::color_material::ColorMaterial` | asset | 1 | Shape2D (sdk/render/src/3d/sprite.tsx) |
 | `bevy_sprite_render::mesh2d::material::MeshMaterial2d<bevy_smud::render::SmudMaterial>` | component | 2 | bevy.MeshMaterial2dSmudMaterial (raea/plugins/bevy) |
 | `bevy_sprite_render::mesh2d::material::MeshMaterial2d<bevy_sprite_render::mesh2d::color_material::ColorMaterial>` | component | 1 | Shape2D (sdk/render/src/3d/sprite.tsx) |
@@ -867,7 +867,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_text::text::TextColor` | component | 2 | bevy.TextColor (raea/plugins/bevy) |
 | `bevy_text::text::TextFont` | component | 2 | bevy.TextFont (raea/plugins/bevy) |
 | `bevy_text::text::TextLayout` | component | 2 | bevy.TextLayout (raea/plugins/bevy) |
-| `bevy_text::text::TextSpan` | component | 2 | bevy.TextSpan (raea/plugins/bevy) |
+| `bevy_text::text::TextSpan` | component | 1 | TextSpan (sdk/render/src/bevy3d/ui.tsx) |
 | `bevy_text::text::UnderlineColor` | component | 2 | bevy.UnderlineColor (raea/plugins/bevy) |
 | `bevy_time::delayed_commands::DelayedCommandQueue` | component | 2 | bevy.DelayedCommandQueue (raea/plugins/bevy) |
 | `bevy_time::time::Time<()>` | resource | 2 | bevy.Time (raea/plugins/bevy) |
@@ -930,7 +930,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_tween::tween::TweenInterpolationValue` | component | 2 | tween.TweenInterpolationValue (raea/plugins/tween) |
 | `bevy_tween::tween::TweenPreviousValue` | component | 2 | tween.TweenPreviousValue (raea/plugins/tween) |
 | `bevy_tween::tween_event::EventEmittingTween` | component | 2 | tween.EventEmittingTween (raea/plugins/tween) |
-| `bevy_ui::UiScale` | resource | 2 | bevy.UiScale (raea/plugins/bevy) |
+| `bevy_ui::UiScale` | resource | 1 | UiScale (sdk/render/src/bevy3d/ui-roots.tsx) |
 | `bevy_ui::accessibility::AccessibleLabel` | component | 2 | bevy.AccessibleLabel (raea/plugins/bevy) |
 | `bevy_ui::auto_directional_navigation::AutoDirectionalNavigation` | component | 2 | bevy.AutoDirectionalNavigation (raea/plugins/bevy) |
 | `bevy_ui::experimental::ghost_hierarchy::GhostNode` | component | 2 | bevy.GhostNode (raea/plugins/bevy) |
@@ -960,7 +960,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_ui::ui_node::IgnoreScroll` | component | 2 | bevy.IgnoreScroll (raea/plugins/bevy) |
 | `bevy_ui::ui_node::IsDefaultUiCamera` | component | 2 | bevy.IsDefaultUiCamera (raea/plugins/bevy) |
 | `bevy_ui::ui_node::LayoutConfig` | component | 2 | bevy.LayoutConfig (raea/plugins/bevy) |
-| `bevy_ui::ui_node::Node` | component | 2 | bevy.Node (raea/plugins/bevy) |
+| `bevy_ui::ui_node::Node` | component | 1 | Node (sdk/render/src/bevy3d/ui.tsx) |
 | `bevy_ui::ui_node::OuterColor` | component | 2 | bevy.OuterColor (raea/plugins/bevy) |
 | `bevy_ui::ui_node::Outline` | component | 2 | bevy.Outline (raea/plugins/bevy) |
 | `bevy_ui::ui_node::OverrideClip` | component | 2 | bevy.OverrideClip (raea/plugins/bevy) |
@@ -968,17 +968,17 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_ui::ui_node::UiTargetCamera` | component | 2 | bevy.UiTargetCamera (raea/plugins/bevy) |
 | `bevy_ui::ui_node::ZIndex` | component | 2 | bevy.ZIndex (raea/plugins/bevy) |
 | `bevy_ui::ui_transform::UiGlobalTransform` | component | 2 | bevy.UiGlobalTransform (raea/plugins/bevy) |
-| `bevy_ui::ui_transform::UiTransform` | component | 2 | bevy.UiTransform (raea/plugins/bevy) |
+| `bevy_ui::ui_transform::UiTransform` | component | 1 | UiTransform (sdk/render/src/bevy3d/ui-transform.ts) |
 | `bevy_ui::widget::button::DeprecatedButton` | component | 2 | bevy.DeprecatedButton (raea/plugins/bevy) |
-| `bevy_ui::widget::image::ImageNode` | component | 2 | bevy.ImageNode (raea/plugins/bevy) |
+| `bevy_ui::widget::image::ImageNode` | component | 1 | ImageNode (sdk/render/src/bevy3d/ui-image.tsx) |
 | `bevy_ui::widget::image::ImageNodeSize` | component | 2 | bevy.ImageNodeSize (raea/plugins/bevy) |
 | `bevy_ui::widget::inline_image::InlineImage` | component | 2 | bevy.InlineImage (raea/plugins/bevy) |
 | `bevy_ui::widget::label::Label` | component | 2 | bevy.Label (raea/plugins/bevy) |
-| `bevy_ui::widget::text::Text` | component | 2 | bevy.Text (raea/plugins/bevy) |
+| `bevy_ui::widget::text::Text` | component | 1 | Text (sdk/render/src/bevy3d/ui.tsx) |
 | `bevy_ui::widget::text::TextNodeFlags` | component | 2 | bevy.TextNodeFlags (raea/plugins/bevy) |
-| `bevy_ui::widget::text::TextShadow` | component | 2 | bevy.TextShadow (raea/plugins/bevy) |
+| `bevy_ui::widget::text::TextShadow` | component | 1 | TextShadow (sdk/render/src/bevy3d/ui.tsx) |
 | `bevy_ui::widget::viewport::ViewportNode` | component | 2 | bevy.ViewportNode (raea/plugins/bevy) |
-| `bevy_ui_render::BoxShadowSamples` | component | 2 | bevy.BoxShadowSamples (raea/plugins/bevy) |
+| `bevy_ui_render::BoxShadowSamples` | component | 1 | BoxShadowSamples (sdk/render/src/bevy3d/ui-transform.ts) |
 | `bevy_ui_render::UiAntiAlias` | component | 2 | bevy.UiAntiAlias (raea/plugins/bevy) |
 | `bevy_ui_render::debug_overlay::GlobalUiDebugOptions` | resource | 2 | bevy.GlobalUiDebugOptions (raea/plugins/bevy) |
 | `bevy_ui_render::debug_overlay::UiDebugOptions` | component | 2 | bevy.UiDebugOptions (raea/plugins/bevy) |
@@ -1004,7 +1004,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `bevy_ui_widgets::menu::MenuPopup` | component | 2 | bevy.MenuPopup (raea/plugins/bevy) |
 | `bevy_ui_widgets::modal::ModalDialog` | component | 2 | bevy.ModalDialog (raea/plugins/bevy) |
 | `bevy_ui_widgets::modal::ModalDialogBarrier` | component | 2 | bevy.ModalDialogBarrier (raea/plugins/bevy) |
-| `bevy_ui_widgets::popover::Popover` | component | 2 | bevy.Popover (raea/plugins/bevy) |
+| `bevy_ui_widgets::popover::Popover` | component | 1 | Popover (sdk/render/src/bevy3d/ui-pick.ts) |
 | `bevy_ui_widgets::radio::RadioButton` | component | 2 | bevy.RadioButton (raea/plugins/bevy) |
 | `bevy_ui_widgets::radio::RadioGroup` | component | 2 | bevy.RadioGroup (raea/plugins/bevy) |
 | `bevy_ui_widgets::scrollarea::ScrollArea` | component | 2 | bevy.ScrollArea (raea/plugins/bevy) |
@@ -1319,11 +1319,11 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `opacity` | longhand | 1 | style={{ opacity }} (React CSSProperties) |
 | `order` | longhand | 1 | style={{ order }} (React CSSProperties) |
 | `outline-color` | longhand | 1 | style={{ outlineColor }} (React CSSProperties) |
-| `outline-offset` | longhand | not rendered | style={{ outlineOffset }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
+| `outline-offset` | longhand | 1 | style={{ outlineOffset }} (React CSSProperties) |
 | `outline-style` | longhand | 1 | style={{ outlineStyle }} (React CSSProperties) |
 | `outline-width` | longhand | 1 | style={{ outlineWidth }} (React CSSProperties) |
 | `overflow-block` | longhand | 1 | style={{ overflowBlock }} (React CSSProperties); stylo maps it onto its physical longhands, which Blitz draws |
-| `overflow-clip-margin` | longhand | not rendered | style={{ overflowClipMargin }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
+| `overflow-clip-margin` | longhand | 1 | style={{ overflowClipMargin }} (React CSSProperties) |
 | `overflow-inline` | longhand | 1 | style={{ overflowInline }} (React CSSProperties); stylo maps it onto its physical longhands, which Blitz draws |
 | `overflow-wrap` | longhand | 1 | style={{ overflowWrap }} (React CSSProperties) |
 | `overflow-x` | longhand | 1 | style={{ overflowX }} (React CSSProperties) |
@@ -1372,6 +1372,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `animation-composition` | longhand | 1 | style={{ animationComposition }} (React CSSProperties); stylo animates it, and Blitz draws the animated values |
 | `view-transition-class` | longhand | not rendered | style={{ viewTransitionClass }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
 | `view-transition-name` | longhand | not rendered | style={{ viewTransitionName }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
+| `vector-effect` | longhand | SVG attribute only | style={{ vectorEffect }} types it; drawn on an inline <svg> when written as its attribute or in its style="" (blitz-dom serializes those for usvg), not when a stylesheet or class sets it (the computed value never reaches usvg) |
 | `cx` | longhand | SVG attribute only | style={{ cx }} types it; drawn on an inline <svg> when written as its attribute or in its style="" (blitz-dom serializes those for usvg), not when a stylesheet or class sets it (the computed value never reaches usvg) |
 | `cy` | longhand | SVG attribute only | style={{ cy }} types it; drawn on an inline <svg> when written as its attribute or in its style="" (blitz-dom serializes those for usvg), not when a stylesheet or class sets it (the computed value never reaches usvg) |
 | `mask-image` | longhand | 1 | style={{ maskImage }} (React CSSProperties) |
@@ -1398,11 +1399,11 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `writing-mode` | longhand | 1 | style={{ writingMode }} (React CSSProperties) |
 | `z-index` | longhand | 1 | style={{ zIndex }} (React CSSProperties) |
 | `zoom` | longhand | 1 | style={{ zoom }} (React CSSProperties) |
-| `border-image-outset` | longhand | not rendered | style={{ borderImageOutset }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
-| `border-image-repeat` | longhand | not rendered | style={{ borderImageRepeat }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
-| `border-image-slice` | longhand | not rendered | style={{ borderImageSlice }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
-| `border-image-source` | longhand | not rendered | style={{ borderImageSource }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
-| `border-image-width` | longhand | not rendered | style={{ borderImageWidth }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
+| `border-image-outset` | longhand | 1 | style={{ borderImageOutset }} (React CSSProperties) |
+| `border-image-repeat` | longhand | 1 | style={{ borderImageRepeat }} (React CSSProperties) |
+| `border-image-slice` | longhand | 1 | style={{ borderImageSlice }} (React CSSProperties) |
+| `border-image-source` | longhand | 1 | style={{ borderImageSource }} (React CSSProperties) |
+| `border-image-width` | longhand | 1 | style={{ borderImageWidth }} (React CSSProperties) |
 | `text-overflow` | longhand | 1 | style={{ textOverflow }} (React CSSProperties) |
 | `text-decoration-line` | longhand | 1 | style={{ textDecorationLine }} (React CSSProperties) |
 | `text-decoration-color` | longhand | 1 | style={{ textDecorationColor }} (React CSSProperties) |
@@ -1534,7 +1535,7 @@ Reached (tiers 1-3): **1548**. The ratchet (`tools/sdk-coverage --check`, in too
 | `border-inline-end` | shorthand | 1 | style={{ borderInlineEnd }} (React CSSProperties) |
 | `border-block` | shorthand | 1 | style={{ borderBlock }} (React CSSProperties) |
 | `border-inline` | shorthand | 1 | style={{ borderInline }} (React CSSProperties) |
-| `border-image` | shorthand | not rendered | style={{ borderImage }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
+| `border-image` | shorthand | 1 | style={{ borderImage }} (React CSSProperties) |
 | `border` | shorthand | 1 | style={{ border }} (React CSSProperties) |
 | `overflow` | shorthand | 1 | style={{ overflow }} (React CSSProperties) |
 | `overscroll-behavior` | shorthand | not rendered | style={{ overscrollBehavior }} types it; stylo parses it, Blitz never reads it by name, so nothing lays it out or paints it |
