@@ -62,6 +62,21 @@ curl -fsSL https://raea.io/install | sh
 
 Then see what changed in [What's new](../whats-new/index.md).
 
+### The desktop app
+
+The desktop app looks for a newer raea when it starts and every six hours, and a card in the bottom right corner says
+when one is out. On the Mac, raea.app downloads and checks the update itself: press **Restart now**, or it switches the
+next time you quit. On Windows and Linux, **Download** gets the new build, and you install it over this one. Your
+projects and settings stay as they are.
+
+To look for an update yourself, open **Settings → General** and press **Check for updates**. From 0.1.3, an update
+that is waiting also shows as **Update** at the foot of the sidebar.
+
+On the Mac, drag raea.app into Applications before you open it. Opened straight from Downloads, macOS runs it from a
+read-only copy, and raea 0.1.1 and 0.1.2 can't replace themselves there: Restart now does nothing. If that happened to
+you, download raea from [raea.io/download/mac](https://raea.io/download/mac), drag it into Applications and open it
+from there. From 0.1.3, raea updates wherever it was opened from, and says so if it ever can't.
+
 ## Pick a version
 
 Set `RAEA_VERSION` to install a particular release instead of the newest:
