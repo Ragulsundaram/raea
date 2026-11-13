@@ -30,13 +30,9 @@ pub fn svg_text(opt: &usvg::Options, args: &Value) -> Value {
             starts.extend(g.text.chars().map(|_| x));
         }
     }
-    // usvg's box ends at the last glyph's advance; Chrome's length tracks every character, the last one too
-    // (a computed letter-spacing is px, or "normal", which is none)
-    let tracking: f32 = match args["style"]["letter-spacing"].as_str() {
-        Some(v) if v.ends_with("px") => v.trim_end_matches("px").trim().parse().unwrap_or(0.0),
-        _ => 0.0,
-    };
-    let length = if text.is_empty() { 0.0 } else { t.bounding_box().width() + tracking };
+    // its box's width: every character's advance and spacing, the last one's too, as Chrome's length has it (raea's
+    // usvg spaces the last letter: vendor/usvg)
+    let length = if text.is_empty() { 0.0 } else { t.bounding_box().width() };
     json!({ "length": length, "starts": starts })
 }
 

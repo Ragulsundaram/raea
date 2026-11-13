@@ -22,7 +22,8 @@ export function runs(root: Element): Run[] {
   const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
     if (!n.data || !n.parentElement) continue;
-    if (n.parentElement.closest("style, script")) continue;
+    // (an svg's <title> and <desc> are never drawn: they name the picture for a screen reader)
+    if (n.parentElement.closest("style, script, svg title, svg desc")) continue;
     // an svg's words belong to their <text>, as the manifest has them (the page draws an svg as one picture, usvg's)
     const svgText = n.parentElement.closest("svg text");
     let up: Element | null = svgText ?? n.parentElement;

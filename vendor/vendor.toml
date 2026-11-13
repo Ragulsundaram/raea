@@ -171,3 +171,10 @@ upstream = "git:github.com/djeedai/bevy_hanabi@77630ff1eed8b104f34e91d23e9440428
 kind = "patch"
 reason = "frame-pure particles (raea #52): a new particle seeded by its spawn index, not the dead slot it recycles (vfx_init.wesl), and blended effects sorted by view depth from the main camera, far first as Bevy sorts its transparent phase, through the ribbons' sort pass (mod.rs, sort.rs, vfx_sort_fill.wesl); examples and GPU tests dropped"
 exit = "a hanabi with a deterministic mode (both changes offered upstream); then back to the git dependency and drop the copy"
+
+[usvg]
+path = "vendor/usvg"
+upstream = "crates.io:0.48.1"
+kind = "patch"
+reason = "letter-spacing after a text chunk's last letter too, as Chrome spaces it (an anchored svg text was drawn half a spacing off and measured a spacing wide)"
+exit = "a usvg release that spaces the last cluster, or none: usvg drops it on purpose"

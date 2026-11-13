@@ -288,6 +288,8 @@ split-debuginfo = "packed"
 [patch.crates-io]
 # the MP4 muxer, vendored
 muxide = { path = "vendor/muxide" }
+# usvg 0.48.1 spacing a chunk's last letter as Chrome does (changes marked "raea:", docs/layout-reads.feature LR10)
+usvg = { path = "vendor/usvg" }
 # bevy_seedling 0.8.0 without its cpal 0.18 paths, ported to Bevy 0.20 (changes marked "raea:")
 bevy_seedling = { path = "vendor/bevy_seedling" }
 # bevy_text 0.20.0 on parley 0.12, so one parley builds (changes marked "raea:", docs/bevy-upgrade.md)
