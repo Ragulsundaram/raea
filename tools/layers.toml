@@ -55,6 +55,10 @@ raea-sys-ml = "systems"
 raea-sys-speech = "systems"
 raea-sys-layout = "systems"
 raea-sys-vision = "systems"
+# Fingerprint (docs/fingerprint.feature): the columns its heads read, and the heads
+raea-sys-columns = "systems"
+raea-sys-fingerprint = "systems"
+raea-sys-fingerprint-use = "systems"
 raea-sys-song = "systems"
 raea-sys-perceive = "systems"
 raea-sys-footage = "systems"
@@ -150,6 +154,8 @@ raea-app-check = "apps"
 raea-app-check-flash = "apps"
 raea-app-direction = "apps"
 raea-app-notes = "apps"
+# `raea fingerprint`: its verbs and the resident service that keeps the encoders loaded
+raea-app-fingerprint = "apps"
 raea-app-sound = "apps"
 raea-app-ci = "apps"
 raea-app-tools = "apps"
@@ -222,6 +228,8 @@ raea-sys-tone = true
 raea-sys-ml = true
 raea-sys-layout = true
 raea-sys-vision = true
+# a file's encoder columns (Fingerprint's heads read them)
+raea-sys-columns = true
 raea-sys-song = true
 raea-sys-k = true
 raea-sys-wear = true

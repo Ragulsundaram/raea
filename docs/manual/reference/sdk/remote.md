@@ -1,7 +1,7 @@
 ---
 title: "raea/remote"
 summary: "A headless Bevy App you open, step and query from TypeScript, through Bevy's remote protocol."
-order: 104
+order: 105
 sources: ["sdk/raea/src/remote.ts"]
 ---
 

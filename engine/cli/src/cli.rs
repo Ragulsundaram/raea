@@ -199,14 +199,10 @@ pub fn run(args: &[String]) -> R<String> {
         std::process::exit(i32::from(bad));
     }
     // `hook [AGENT]`: every agent harness's tool hooks (A5d): raea show over Preview, the quick check after a save (SK10)
-    if args[0] == "hook" {
-        return raea_app_check::hook::hook(&args[1..]);
-    }
+    if args[0] == "hook" { return raea_app_check::hook::hook(&args[1..]); }
     // `check PROJECT|EDIT.tsx`: every rule's check over the compositions' worlds (DR4); a video is the floor alone
     if args[0] == "check" && !raea_app_direction::check::of_video(&args[1..]) { std::process::exit(raea_app_direction::check::cli(&args[1..], &CHECK)); }
-    if args[0] == "check" {
-        std::process::exit(raea_app_check::cli_with(&args[1..], spec::tastes_ts(args)?));
-    }
+    if args[0] == "check" { std::process::exit(raea_app_check::cli_with(&args[1..], spec::tastes_ts(args)?)); }
     if args[0] == "world" { std::process::exit(raea_app_direction::cli(&args[1..])); } // a frame as one world of facts (docs/direction.feature DR1)
     if args[0] == "findings" { return raea_app_direction::findings::cli(args); } // the project's record read back (DR3)
     if args[0] == "notes" { std::process::exit(raea_app_notes::cli(&args[1..], spec::spec_json, notes_run)); } // a person's notes as files, restated as asks, each with a check (DR5, DR6)

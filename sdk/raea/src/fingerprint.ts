@@ -7,9 +7,11 @@
 export type Modality = "picture" | "change" | "look" | "sound" | "events";
 
 export interface Axis {
+  /** Its name, short and lowercase (blur, clip, barren): what reports, marks and `--axis` call it. */
   name: string;
   /** What people say for it, best first: the word head scores it from these on day one. */
   words: string[];
+  /** What its head reads. */
   modality: Modality;
   /** "moment" (the default), "shot" or "whole". */
   scope?: string;
@@ -19,6 +21,7 @@ export interface Axis {
   check?: string;
   /** False where words can't find it (silence matches no description). */
   word_head?: boolean;
+  /** The sense it's shown under in the app: pictures, sound or motion. */
   group?: string;
 }
 
@@ -31,13 +34,17 @@ export interface Applies {
 }
 
 export interface Fingerprint {
+  /** Its folder's name under ~/.raea/fingerprints, or a project's or workspace's .raea/fingerprints. */
   name: string;
+  /** Whose taste it is, for evidence rows and the app. */
   who?: string;
   /** One line: what it tracks and when it judges ("Short ads for one brand: pace, type on screen, the brand's colours"). */
   about?: string;
   /** The fingerprint it builds on, by name: it started from that one's axes. */
   extends?: string;
+  /** Which pieces it judges when its project or workspace holds more than one. */
   applies?: Applies;
+  /** What it notices, each axis with its words and the sense its head reads. */
   axes: Axis[];
   /** Each encoder's id and its file's sha256: heads trained on other encoders' columns are refused. */
   encoders?: Record<string, string>;
