@@ -19,6 +19,12 @@ pub(crate) fn chosen(args: &[String], file: Option<&Path>) -> (Folder, Option<Ch
     (Folder::named(&n), None)
 }
 
+/// A piece in the project a verb names (its first word, else the current folder), so `read`, `readings` and
+/// `learn-notes` keep a project's notes in the fingerprint that judges it (FP14d)
+pub(crate) fn piece_in(args: &[String], cwd: &Path) -> PathBuf {
+    here(cwd, args, 0).join("piece.mp4")
+}
+
 fn here(cwd: &Path, args: &[String], at: usize) -> PathBuf {
     let w = words(args).unwrap_or_default();
     w.get(at).map_or_else(|| cwd.to_path_buf(), |p| cwd.join(p))

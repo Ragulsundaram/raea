@@ -139,7 +139,7 @@ pub(crate) fn read_here(args: &[String], cwd: &Path) -> i32 {
         let w = words(args)?;
         let project = w.first().map_or(cwd.to_path_buf(), |p| cwd.join(p));
         let by = flag(args, "--by").unwrap_or("kimi");
-        let dir = crate::pick::chosen(args, Some(&project.join("x.mp4"))).0;
+        let dir = crate::pick::chosen(args, Some(&crate::pick::piece_in(args, cwd))).0;
         let fp = dir.read(None).map_err(|e| e.to_string())?;
         let mut notes = pinned(&project);
         let mut kept = readings_of(&dir);
@@ -185,9 +185,9 @@ pub fn earned(r: &[Reading]) -> bool {
 /// The choices a reading is checked with, and what each says about kind and axis
 pub const CHOICES: [(&str, bool, bool); 4] = [("Right", true, true), ("Right kind, wrong axis", true, false), ("Wrong kind", false, false), ("Right axis, wrong kind", false, true)];
 
-/// `raea fingerprint readings [--ask N] [--tally]`
-pub(crate) fn readings_here(args: &[String]) -> i32 {
-    let dir = crate::pick::chosen(args, None).0;
+/// `raea fingerprint readings [PROJECT] [--ask N] [--tally]`: the readings kept in the fingerprint that judges PROJECT
+pub(crate) fn readings_here(args: &[String], cwd: &Path) -> i32 {
+    let dir = crate::pick::chosen(args, Some(&crate::pick::piece_in(args, cwd))).0;
     let mut r = readings_of(&dir);
     if let Some(n) = flag(args, "--ask").and_then(|n| n.parse::<usize>().ok()) {
         let todo: Vec<usize> = r.iter().enumerate().filter(|(_, x)| x.kind_ok.is_none()).map(|(i, _)| i).take(n).collect();
@@ -249,7 +249,9 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
         let (k, a, n) = agreement(&r);
         anyhow::bail!("notes don't train yet: {n} readings checked, kind right {:?}, axis right {:?} (FP5b needs 50 checked, 90% and 80%: raea fingerprint readings --ask 50)", k, a);
     }
-    l.retain(|x| x.source != "note");
+    // only these readings' rows are remade: notes another fingerprint's person moved up here (FP14d) stay
+    let ids: std::collections::BTreeSet<&str> = r.iter().map(|x| x.note.as_str()).collect();
+    l.retain(|x| x.source != "note" || !x.kind.as_deref().is_some_and(|k| ids.contains(k)));
     let mut made = 0;
     for x in r.iter().filter(|x| x.kind_ok != Some(false) && x.axis_ok != Some(false)) {
         let bad = match x.kind.as_str() {

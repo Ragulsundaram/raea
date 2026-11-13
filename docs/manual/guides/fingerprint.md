@@ -69,6 +69,13 @@ raea fingerprint use client-ads --in project projects/brand
 Which one judges a piece is decided by where it lives: the project's fingerprints first, then the workspace's, then
 your own. At each level, the one whose `applies` matches the piece's kind wins, else that level's default.
 
+Your notes and marks on a piece teach the fingerprint that judged it, so a client's notes stay with the client's
+fingerprint. When one of its lessons is really yours, move it up:
+
+```sh
+raea fingerprint move --fp client-ads --axis glow            # its glow labels become yours (me)
+```
+
 ## Profiles of work you admire
 
 ```sh

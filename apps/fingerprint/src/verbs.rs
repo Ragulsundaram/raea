@@ -27,7 +27,8 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, s
         "approve" => approved(enc, rest, cwd, eval),
         "reembed" => reembedded(enc, rest, cwd, eval),
         "pair" | "versions" => paired(enc, args[0].as_str(), rest, cwd, eval),
-        "learn-notes" => learned(enc, rest, eval),
+        "learn-notes" => learned(enc, rest, cwd, eval),
+        "move" => moved(enc, rest, eval),
         "profile" => {
             let dir = crate::pick::chosen(rest, None).0;
             crate::profiles::make(enc, &dir, rest, cwd).map(|o| (o, 0))
@@ -191,13 +192,24 @@ fn paired(enc: &mut Encoders, verb: &str, args: &[String], cwd: &Path, eval: Eva
     Ok((out, 0))
 }
 
-/// `learn-notes` (notes.rs, FP5a): checked readings as evidence, then the heads retrained
-fn learned(enc: &mut Encoders, args: &[String], eval: Eval) -> Result<(String, i32)> {
-    let (dir, fp, w) = open(enc, args, eval, None)?;
+/// `learn-notes [PROJECT]` (notes.rs, FP5a): checked readings as evidence in the fingerprint that judges the project
+/// (FP14d), then its heads retrained
+fn learned(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
+    let (dir, fp, w) = open(enc, args, eval, Some(&crate::pick::piece_in(args, cwd)))?;
     let mut l = dir.ledger()?;
     let out = crate::notes::learn(enc, &dir, &mut l)?;
     dir.write_ledger(&l)?;
     retrain(&dir, &fp, &w, &l, None)?;
+    Ok((out, 0))
+}
+
+/// `move` (moving.rs, FP14d): a child's own labels up into a fingerprint it extends, then both retrained
+fn moved(enc: &mut Encoders, args: &[String], eval: Eval) -> Result<(String, i32)> {
+    let (dir, fp, w) = open(enc, args, eval, None)?;
+    let (to, out) = crate::moving::up(&dir, &dir.read(Some(eval))?, args, eval)?;
+    retrain(&dir, &fp, &w, &dir.ledger()?, None)?;
+    let (pd, pfp, pw) = open(enc, &["--fp".into(), to], eval, None)?;
+    retrain(&pd, &pfp, &pw, &pd.ledger()?, None)?;
     Ok((out, 0))
 }
 

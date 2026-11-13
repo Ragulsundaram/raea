@@ -484,6 +484,10 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
     Scenario: FP14d. A note teaches the one that judged
       Then a note or mark on a piece is evidence in the fingerprint that judged that piece, so labels land where the
         taste they express applies, and a parent sees them only if the person moves them up (`raea fingerprint move`)
+      And so far (11-12): teach, approve and pair label the fingerprint `which` picks for the file; read, readings and
+        learn-notes keep a project's notes in the one that judges the project, and learning again remakes only those
+        notes' rows. `move [--fp CHILD] [--to PARENT] --axis/--source/--project` takes the child's own matching rows up
+        into a fingerprint it extends and retrains both; rows on an axis the parent lacks or the child overrides stay
 
     @needs:FP14c
     Scenario: FP14e. Managing them in the app
