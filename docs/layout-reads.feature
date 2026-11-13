@@ -308,3 +308,11 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       Then the manual and the skills' sdk reference say what a composition's DOM has, and what it lacks
       And #54 is answered with the harness's before and after, and closed
       And #13 is answered with what now matches Chrome
+      And 11-12, in progress:
+        - docs/manual/guides/web-components.md: measuring then letting the frame be taken (delayRender, loadFont),
+          what a ref, document and window answer, and what's missing (MutationObserver and IntersectionObserver never
+          call back, an img's onError never fires, a wrapped Range is one rect, a pass with no page reads 0).
+        - The skills: the motion router's rule 2 names the web APIs and the modules that install them (raea-skills
+          #50). It merges when 0.1.3 is published, because raea-skills main is what the Claude plugin serves to
+          people on 0.1.1.
+        - Open: #54 and #13, once LR10's corpus numbers are final.
