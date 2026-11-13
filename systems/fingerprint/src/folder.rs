@@ -141,12 +141,13 @@ impl Folder {
         Ok(())
     }
 
+    /// The evidence: one ledger, or a project's or workspace's every person's (share.rs, FP8a)
     pub fn ledger(&self) -> Result<Ledger> {
-        Ledger::read(&self.dir)
+        if crate::share::shared(&self.dir) { crate::share::read(&self.dir) } else { Ledger::read(&self.dir) }
     }
 
     pub fn write_ledger(&self, l: &Ledger) -> Result<()> {
-        l.write(&self.dir)
+        if crate::share::shared(&self.dir) { crate::share::write(&self.dir, l) } else { l.write(&self.dir) }
     }
 
     /// The trained heads and the encoders they were trained on; None before the first training

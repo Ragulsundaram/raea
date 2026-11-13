@@ -5,6 +5,7 @@ use anyhow::{Context, Result, anyhow, bail};
 use raea_sys_columns::{Encoders, FPS, media};
 use raea_sys_fingerprint::evidence::{Ledger, Row, features};
 use raea_sys_fingerprint::folder::{Folder, root};
+use raea_sys_fingerprint::inherit;
 use raea_sys_fingerprint::score::{Scored, clock, score, summary, timeline};
 use raea_sys_fingerprint::sheet::{Tick, sheet};
 use raea_sys_fingerprint::taxonomy::{Fingerprint, base};
@@ -16,9 +17,6 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 /// The fingerprint a verb is about: --fp, else the one `new` made first, else "me"
-fn name(args: &[String]) -> String {
-    flag(args, "--fp").map(str::to_string).or_else(|| std::fs::read_to_string(root().join("default")).ok().map(|s| s.trim().to_string())).unwrap_or_else(|| "me".into())
-}
 
 fn at(cwd: &Path, p: &str) -> PathBuf {
     let p = Path::new(p);
@@ -32,6 +30,7 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, s
         "new" => new(enc, rest),
         "bootstrap" => boot(enc, rest, cwd, eval, say),
         "teach" => teach(enc, rest, cwd, eval),
+        "approve" => approved(enc, rest, cwd, eval),
         "score" => scored(enc, rest, cwd, eval),
         v => Err(anyhow!("no verb {v}")),
     };
@@ -85,16 +84,20 @@ fn new(enc: &mut Encoders, args: &[String]) -> Result<(String, i32)> {
 }
 
 /// The fingerprint, its encoders checked against this machine's, and its words, made again when they changed
-fn open(enc: &mut Encoders, args: &[String], eval: Eval) -> Result<(Folder, Fingerprint, Words)> {
-    let dir = Folder::named(&name(args));
-    let mut fp = dir.read(Some(eval))?;
+/// The fingerprint a verb uses (pick.rs: --fp, else the one that judges the file), its axes with its parents', and its
+/// words
+fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option<&Path>) -> Result<(Folder, Fingerprint, Words)> {
+    let dir = crate::pick::chosen(args, file).0;
+    let mut raw = dir.read(Some(eval))?;
     let here = pins(enc);
-    if fp.encoders.is_empty() {
-        fp.encoders = here;
-        dir.rewrite(&fp)?;
-    } else if fp.encoders != here {
-        bail!("{} was trained on other encoders ({:?}) than this machine has ({:?}); its heads refuse these columns", dir.ts().display(), fp.encoders, here);
+    if raw.encoders.is_empty() {
+        raw.encoders = here;
+        dir.rewrite(&raw)?;
+    } else if raw.encoders != here {
+        bail!("{} was trained on other encoders ({:?}) than this machine has ({:?}); its heads refuse these columns", dir.ts().display(), raw.encoders, here);
     }
+    // a fingerprint that extends another judges with its parents' axes too (FP14b)
+    let fp = inherit::axes(&raw, &inherit::parents(&raw, Some(eval)));
     let w = match dir.words().filter(|w| !w.stale(&fp)) {
         Some(w) => w,
         None => {
@@ -103,11 +106,18 @@ fn open(enc: &mut Encoders, args: &[String], eval: Eval) -> Result<(Folder, Fing
             w
         }
     };
+    // a shared fingerprint arrives with evidence and no heads: this machine trains its own (FP8a)
+    if !dir.dir.join("heads.safetensors").is_file() {
+        let l = dir.ledger()?;
+        if !l.rows.is_empty() {
+            retrain(&dir, &fp, &w, &l, None)?;
+        }
+    }
     Ok((dir, fp, w))
 }
 
 fn boot(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, say: &mut dyn FnMut(String)) -> Result<(String, i32)> {
-    let (dir, fp, w) = open(enc, args, eval)?;
+    let (dir, fp, w) = open(enc, args, eval, None)?;
     let mut files: Vec<PathBuf> = words(args).map_err(|e| anyhow!(e))?.iter().map(|f| at(cwd, f)).collect();
     if let Some(list) = flag(args, "--from") {
         let list = at(cwd, list);
@@ -142,9 +152,19 @@ fn project_of(file: &Path) -> String {
     file.parent().and_then(|p| p.file_name()).map(|s| s.to_string_lossy().into_owned()).unwrap_or_default()
 }
 
+/// `approve`: approved work as clean rows on every axis (approve.rs, FP6a), then the heads retrained
+fn approved(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
+    let first = words(args).map_err(|e| anyhow!(e))?.first().map(|f| at(cwd, f));
+    let (dir, fp, w) = open(enc, args, eval, first.as_deref())?;
+    let (mut out, _) = crate::approve::approve(enc, &dir, &fp, args, cwd, project_of)?;
+    let tr = retrain(&dir, &fp, &w, &dir.ledger()?, None)?;
+    out += &format!("{} axes gating\n", tr.heads.iter().filter(|h| h.state == "gating").count());
+    Ok((out, 0))
+}
+
 fn teach(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
-    let (dir, fp, w) = open(enc, args, eval)?;
     let file = at(cwd, words(args).map_err(|e| anyhow!(e))?.first().ok_or_else(|| anyhow!("which file?"))?);
+    let (dir, fp, w) = open(enc, args, eval, Some(&file))?;
     let axis = flag(args, "--axis").ok_or_else(|| anyhow!("--axis A (or \"*\" for every axis)"))?;
     if axis != "*" && fp.axis(axis).is_none() {
         bail!("no axis {axis:?} in {}: its axes are {}", dir.ts().display(), fp.axes.iter().map(|a| a.name.as_str()).collect::<Vec<_>>().join(", "));
@@ -214,17 +234,19 @@ fn arbitrate(s: &mut Scored, fp: &Fingerprint, found: &[(String, f64, f64, Strin
 }
 
 fn scored(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
-    let (dir, fp, w) = open(enc, args, eval)?;
     let file = at(cwd, words(args).map_err(|e| anyhow!(e))?.first().ok_or_else(|| anyhow!("which file?"))?);
+    let (dir, fp, w) = open(enc, args, eval, Some(&file))?;
+    let why = crate::pick::chosen(args, Some(&file)).1.map_or_else(|| "named with --fp, or the account's default".to_string(), |c| c.why);
     let c = enc.columns(&file)?;
     let trained = dir.trained()?.map(|(t, _)| t);
     let mut s = score(&fp, Some(&w), trained.as_ref(), &c, &file.display().to_string());
     let found = checks(&file);
     arbitrate(&mut s, &fp, &found);
     let mut out = if has(args, "--json") {
-        serde_json::to_string_pretty(&json!({"scored": s, "checks": found.iter().map(|(r, a, b, says)| json!({"check": r, "a": a, "b": b, "says": says})).collect::<Vec<_>>()}))?
+        serde_json::to_string_pretty(&json!({"fingerprint": {"name": fp.name, "about": fp.about, "why": why}, "scored": s, "checks": found.iter().map(|(r, a, b, says)| json!({"check": r, "a": a, "b": b, "says": says})).collect::<Vec<_>>()}))?
     } else {
-        let mut t = summary(&s);
+        let mut t = format!("judged by {}: {why}\n", fp.name);
+        t += &summary(&s);
         t += &format!("checks: {}\n", if found.is_empty() { "no findings".to_string() } else { format!("{} findings", found.len()) });
         for (r, a, _, says) in &found {
             t += &format!("  {} {r}: {says}\n", clock(*a));
@@ -247,7 +269,7 @@ fn scored(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result
 
 /// `raea fingerprint report`: report.json, read; no encoders needed
 pub(crate) fn report_here(args: &[String]) -> i32 {
-    let dir = Folder::named(&name(args));
+    let dir = crate::pick::chosen(args, None).0;
     match dir.report() {
         Some(r) if has(args, "--json") => {
             println!("{}", serde_json::to_string_pretty(&r).unwrap_or_default());

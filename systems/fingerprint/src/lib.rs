@@ -7,15 +7,23 @@
 //! - evidence.rs: the rows (FP2c)
 //! - head.rs, train.rs: the heads, held-out scores, bands, cheats and the gate (FP2c, FP2d)
 //! - words.rs: word heads from day one (FP2e)
+//! - inherit.rs: a fingerprint that extends another, its evidence and axes (FP14b)
+//! - diff.rs: where two fingerprints rank the same evidence differently (FP8b)
+//! - share.rs: a project's or workspace's fingerprint, its evidence a folder a person (FP8a)
+//! - which.rs: which fingerprint judges a piece: its project's, its workspace's, then the person's (FP14c)
 //! - score.rs, sheet.rs: scoring a piece, its summary, timeline and sheet (FP3a, FP3c)
 
+pub mod diff;
 pub mod evidence;
 pub mod folder;
 pub mod head;
+pub mod inherit;
 pub mod score;
+pub mod share;
 pub mod sheet;
 pub mod taxonomy;
 pub mod train;
+pub mod which;
 pub mod words;
 
 use anyhow::Result;
@@ -36,13 +44,28 @@ pub const LIMITS: [&str; 5] = [
     "taste axes with only words: always advice, never a gate",
 ];
 
-/// Every head retrained from the ledger, written with the report; the bootstrap's measures are kept from the last
-/// report unless a new bootstrap gives its own
+/// Every head retrained from the ledger (with its parents' evidence when it extends one, FP14b), written with the
+/// report; the bootstrap's measures are kept from the last report unless a new bootstrap gives its own
 pub fn retrain(dir: &Folder, fp: &Fingerprint, w: &Words, l: &Ledger, bootstrap: Option<serde_json::Value>) -> Result<Trained> {
-    let t = train::train(fp, l, w);
+    let parents = inherit::parents(fp, None);
+    let over = inherit::overrides(fp, &parents);
+    let fp = &inherit::axes(fp, &parents);
+    let (all, own) = inherit::pooled(l, &parents, &over);
+    let t = train::train(fp, &all, w);
     dir.write_trained(&t, &fp.encoders)?;
     let kept = bootstrap.or_else(|| dir.report().and_then(|r| r.get("bootstrap").cloned()));
-    dir.write_report(&report(fp, &t, l, kept))?;
+    let mut r = report(fp, &t, &all, kept);
+    if !parents.is_empty() {
+        r["inherits"] = json!({
+            "from": parents.iter().map(|(_, p)| p.name.as_str()).collect::<Vec<_>>(),
+            "own_rows": own,
+            "inherited_rows": all.rows.len() - own,
+            "own_weight": inherit::OWN,
+            "overrides": over,
+            "measured": inherit::measure(fp, &all, own),
+        });
+    }
+    dir.write_report(&r)?;
     Ok(t)
 }
 

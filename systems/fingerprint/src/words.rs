@@ -28,7 +28,7 @@ pub fn space(m: Modality) -> Option<Modality> {
     }
 }
 
-fn unit(v: &[f32]) -> Vec<f32> {
+pub fn unit(v: &[f32]) -> Vec<f32> {
     let n = v.iter().map(|x| x * x).sum::<f32>().sqrt().max(1e-6);
     v.iter().map(|x| x / n).collect()
 }
@@ -66,12 +66,18 @@ impl Words {
 
     /// The axis's word score for a window: its similarity to the words as a z against the vocabulary
     pub fn z(&self, axis: &str, row: &[f32]) -> Option<f32> {
-        let (_, sp, v) = self.axes.iter().find(|a| a.0 == axis)?;
-        let w = Self::window(row, *sp);
+        let sp = self.axes.iter().find(|a| a.0 == axis)?.1;
+        let w = Self::window(row, sp);
         if w.iter().all(|x| *x == 0.0) {
             return None;
         }
-        let dot = |a: &[f32]| a.iter().zip(&w).map(|(x, y)| x * y).sum::<f32>();
+        self.z_of(axis, &w)
+    }
+
+    /// The same z for a window's unit vector already in the axis's space (a CLAP or SigLIP 2 vector)
+    pub fn z_of(&self, axis: &str, w: &[f32]) -> Option<f32> {
+        let (_, sp, v) = self.axes.iter().find(|a| a.0 == axis)?;
+        let dot = |a: &[f32]| a.iter().zip(w).map(|(x, y)| x * y).sum::<f32>();
         let bg: Vec<f32> = (if *sp == Modality::Sound { &self.sound_vocab } else { &self.picture_vocab }).iter().map(|b| dot(b)).collect();
         let m = bg.iter().sum::<f32>() / bg.len() as f32;
         let sd = (bg.iter().map(|x| (x - m).powi(2)).sum::<f32>() / bg.len() as f32).sqrt().max(1e-6);

@@ -159,11 +159,15 @@ pub fn axis(fp: &Fingerprint, l: &Ledger, words: &Words, name: &str) -> AxisHead
     h.plausible = band(&hp, &hn, 0.7);
     h.flag = Some(quantile(&hn, 0.9)).filter(|v| v.is_finite());
     let mut why = Vec::new();
+    // another eye's readings (clef's, Kimi's: source "eye:NAME") train the head but never count as the person's (FP6d)
+    let theirs: Vec<usize> = rows.iter().copied().filter(|&i| !l.rows[i].source.starts_with("eye:")).collect();
+    let (pos, neg) = counts(l, &theirs);
+    let own_projects = theirs.iter().map(|&i| l.rows[i].project.as_str()).collect::<BTreeSet<_>>().len();
     if pos < GATE_LABELS || neg < GATE_LABELS {
-        why.push(format!("{pos} defect and {neg} clean labels (needs {GATE_LABELS} of each)"));
+        why.push(format!("{pos} defect and {neg} clean labels of yours (needs {GATE_LABELS} of each)"));
     }
-    if h.projects < GATE_PROJECTS {
-        why.push(format!("labels from {} projects (needs {GATE_PROJECTS})", h.projects));
+    if own_projects < GATE_PROJECTS {
+        why.push(format!("your labels from {own_projects} projects (needs {GATE_PROJECTS})"));
     }
     match h.held_out {
         Some(a) if a < GATE_AUC => why.push(format!("held-out AUC {a:.2} (needs {GATE_AUC})")),

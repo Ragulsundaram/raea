@@ -9,8 +9,18 @@ use image::{ImageBuffer, Rgb as Px, imageops};
 pub const PICTURE: [&str; 5] = ["blur", "dark", "glow", "flash", "freeze"];
 pub const SOUND: [&str; 3] = ["noise", "dropout", "clip"];
 /// Each cheat and the defect it hides: a de-rez sharpened after, glow at half strength, noise at a third of the level,
-/// and a freeze with a slow zoom on it
-pub const CHEATS: [(&str, &str); 4] = [("sharpblur", "blur"), ("glow_half", "glow"), ("noise_low", "noise"), ("freeze_zoom", "freeze")];
+/// a freeze with a slow zoom on it, a picture darkened half as much, a white flash where the defect is black, a gap a
+/// third as long, and clipping a third as hard
+pub const CHEATS: [(&str, &str); 8] = [
+    ("sharpblur", "blur"),
+    ("glow_half", "glow"),
+    ("noise_low", "noise"),
+    ("freeze_zoom", "freeze"),
+    ("dark_half", "dark"),
+    ("flash_white", "flash"),
+    ("dropout_short", "dropout"),
+    ("clip_soft", "clip"),
+];
 
 type Img = ImageBuffer<Px<u8>, Vec<u8>>;
 
@@ -54,13 +64,14 @@ pub fn picture(frames: &[Rgb], kind: &str) -> Vec<Rgb> {
         "glow" => frames.iter().map(|f| glow(f, 0.7)).collect(),
         "glow_half" => frames.iter().map(|f| glow(f, 0.35)).collect(),
         "dark" => frames.iter().map(|f| f.iter().map(|&x| (x as f32 * 0.3) as u8).collect()).collect(),
+        "dark_half" => frames.iter().map(|f| f.iter().map(|&x| (x as f32 * 0.65) as u8).collect()).collect(),
         "freeze" => frames.iter().map(|_| frames[0].clone()).collect(),
         "freeze_zoom" => (0..frames.len()).map(|i| zoomed(&frames[0], i)).collect(),
-        "flash" => {
+        "flash" | "flash_white" => {
             let mut v = frames.to_vec();
             if !v.is_empty() {
                 let m = v.len() / 2;
-                v[m] = vec![0; SIDE * SIDE * 3];
+                v[m] = vec![if kind == "flash" { 0 } else { 255 }; SIDE * SIDE * 3];
             }
             v
         }
@@ -89,12 +100,14 @@ pub fn sound(w: &[f32], kind: &str, rate: u32, noise: &mut Noise) -> Vec<f32> {
     match kind {
         "noise" => add(&mut w, 0.5),
         "noise_low" => add(&mut w, 0.15),
-        "dropout" => {
-            let a = (w.len() / 2).saturating_sub((0.3 * rate as f64) as usize);
-            let b = (a + (0.6 * rate as f64) as usize).min(w.len());
+        "dropout" | "dropout_short" => {
+            let gap = if kind == "dropout" { 0.6 } else { 0.2 };
+            let a = (w.len() / 2).saturating_sub((gap / 2.0 * rate as f64) as usize);
+            let b = (a + (gap * rate as f64) as usize).min(w.len());
             w[a..b].iter_mut().for_each(|x| *x = 0.0);
         }
         "clip" => w.iter_mut().for_each(|x| *x = (*x * 10.0).clamp(-0.3, 0.3)),
+        "clip_soft" => w.iter_mut().for_each(|x| *x = (*x * 3.0).clamp(-0.6, 0.6)),
         _ => {}
     }
     w
