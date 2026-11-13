@@ -44,9 +44,12 @@ fn differs(a: &Axis, b: &Axis) -> bool {
 pub fn overrides(fp: &Fingerprint, parents: &[(Folder, Fingerprint)]) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     for a in &fp.axes {
-        if let Some(b) = parents.iter().find_map(|(_, p)| p.axis(&a.name)) {
-            if differs(a, b) {
-                out.insert(a.name.clone());
+        for (_, p) in parents {
+            if let Some(b) = p.axis(&a.name) {
+                if differs(a, b) {
+                    out.insert(a.name.clone());
+                }
+                break;
             }
         }
     }
@@ -104,11 +107,11 @@ pub fn measure(fp: &Fingerprint, l: &Ledger, own: usize) -> Vec<Measured> {
     for a in &fp.axes {
         let rows = l.for_axis(&a.name);
         let mine: Vec<usize> = rows.iter().copied().filter(|&i| i < own).collect();
-        let bad = mine.iter().filter(|&&i| l.rows[i].bad).count();
-        if bad < 2 || mine.len() - bad < 2 || own == l.rows.len() {
+        let (bad, clean) = l.counts(&mine);
+        if bad < 2 || clean < 2 || own == l.rows.len() {
             continue;
         }
-        let projects: BTreeSet<String> = mine.iter().map(|&i| l.rows[i].project.clone()).collect();
+        let projects = l.projects(&mine);
         if projects.len() < 2 {
             continue;
         }
@@ -118,13 +121,12 @@ pub fn measure(fp: &Fingerprint, l: &Ledger, own: usize) -> Vec<Measured> {
             for fold in folds(&projects) {
                 let held = |i: usize| i < own && fold.contains(&l.rows[i].project);
                 let train: Vec<usize> = rows.iter().copied().filter(|&i| !held(i) && pick(i)).collect();
-                let (tb, tn) = (train.iter().filter(|&&i| l.rows[i].bad).count(), train.iter().filter(|&&i| !l.rows[i].bad).count());
+                let (tb, tn) = l.counts(&train);
                 if tb == 0 || tn == 0 {
                     continue;
                 }
                 let x: Vec<&[f32]> = train.iter().map(|&i| l.modality(i, m)).collect();
-                let y: Vec<bool> = train.iter().map(|&i| l.rows[i].bad).collect();
-                let w: Vec<f32> = train.iter().map(|&i| l.rows[i].weight).collect();
+                let (y, w) = l.labels(&train);
                 let f = Logistic::fit(Scaler::fit(&x), &x, &y, Some(&w), C, true);
                 for &i in mine.iter().filter(|&&i| held(i)) {
                     let s = f.score(l.modality(i, m));

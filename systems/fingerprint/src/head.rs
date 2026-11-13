@@ -178,6 +178,11 @@ pub fn auc(pos: &[f32], neg: &[f32]) -> f64 {
 }
 
 /// The score above which `q` of the clean scores fall (the threshold that flags 1 - q of clean work)
+/// The share of `v` above `thr`; none of nothing
+pub fn share_over(v: &[f32], thr: f32) -> f64 {
+    v.iter().filter(|x| **x > thr).count() as f64 / v.len().max(1) as f64
+}
+
 pub fn quantile(v: &[f32], q: f64) -> f32 {
     let mut s = v.to_vec();
     s.sort_by(f32::total_cmp);

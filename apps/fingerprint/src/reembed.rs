@@ -27,7 +27,7 @@ fn files(places: &[PathBuf]) -> Vec<PathBuf> {
             let p = e.path();
             if p.is_dir() && depth > 0 {
                 walk(&p, depth - 1, out);
-            } else if p.extension().and_then(|x| x.to_str()).is_some_and(|x| MEDIA.contains(&x.to_ascii_lowercase().as_str())) {
+            } else if MEDIA.iter().any(|m| p.extension().is_some_and(|x| x.eq_ignore_ascii_case(m))) {
                 out.push(p);
             }
         }

@@ -27,6 +27,12 @@ pub(crate) fn pct(v: &[f64], q: f64) -> f64 {
 /// a bed that stops under a voice shows in the band the voice doesn't fill (a projector's clatter in the highs). A band's
 /// level is its share of the step's mean square (Parseval, undoing the Hann window's power), so a tone reads the same in
 /// its band as in the mix
+/// A stretch of sound's level in dB (its RMS)
+pub(crate) fn db(f: &[f32]) -> f64 {
+    let ms = f.iter().map(|&v| (v as f64).powi(2)).sum::<f64>() / f.len().max(1) as f64;
+    20.0 * (ms.sqrt() + 1e-9).log10()
+}
+
 pub(crate) fn levels(x: &[f32]) -> (Vec<f64>, [Vec<f64>; 3]) {
     use std::f64::consts::PI;
     let n = x.len() / HOP;
@@ -44,8 +50,7 @@ pub(crate) fn levels(x: &[f32]) -> (Vec<f64>, [Vec<f64>; 3]) {
     let scale = 2.0 / (HOP * HOP) as f64 / (hann.iter().map(|h| h * h).sum::<f64>() / HOP as f64);
     let (mut rms, mut bands) = (Vec::with_capacity(n), [Vec::with_capacity(n), Vec::with_capacity(n), Vec::with_capacity(n)]);
     for f in x.chunks_exact(HOP) {
-        let ms = f.iter().map(|&v| (v as f64).powi(2)).sum::<f64>() / HOP as f64;
-        rms.push(20.0 * (ms.sqrt() + 1e-9).log10());
+        rms.push(db(f));
         let w: Vec<f64> = f.iter().zip(&hann).map(|(&v, h)| v as f64 * h).collect();
         let mut e = [0.0; 3];
         for (b, tw) in &bins {
@@ -164,7 +169,7 @@ pub(crate) fn sound(video: &str, words: Option<&[Word]>, issues: &mut Vec<Issue>
     let x: Vec<f32> = out.stdout.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
     let (rms, bands) = levels(&x);
     sound_defects(&x, issues, passed);
-    let found = |list: Vec<(f64, String)>, p: u8| list.into_iter().map(move |(at, says)| Issue { rule: "sound", p, at: Some(at), says });
+    let found = |list: Vec<(f64, String)>, p: u8| crate::defects::moments("sound", p, list);
     let stops = dead_stops(&rms, &bands);
     if stops.is_empty() {
         passed.push("sound: no steady sound stops dead".into());

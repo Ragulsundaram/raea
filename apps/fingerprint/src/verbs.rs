@@ -1,6 +1,6 @@
 //! The verbs, run with the encoders loaded: new, bootstrap, teach and score; and report, which needs no encoders.
 
-use crate::{Eval, flag, has, words};
+use crate::{Eval, at, flag, has, listed, named, words};
 use anyhow::{Context, Result, anyhow, bail};
 use raea_sys_columns::{Encoders, FPS, media};
 use raea_sys_fingerprint::evidence::{Ledger, Row, features};
@@ -8,20 +8,14 @@ use raea_sys_fingerprint::folder::{Folder, root};
 use raea_sys_fingerprint::inherit;
 use raea_sys_fingerprint_use::score::{Scored, clock, score, summary, timeline};
 use raea_sys_fingerprint_use::sheet::{Tick, sheet};
-use raea_sys_fingerprint::taxonomy::{Applies, Fingerprint, base};
+use raea_sys_fingerprint::taxonomy::{Applies, Fingerprint, base, words_of};
 use raea_sys_fingerprint::words::Words;
 use crate::bootstrap;
 use raea_sys_fingerprint::{report_text, retrain};
 use serde_json::json;
-use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// The fingerprint a verb is about: --fp, else the one `new` made first, else "me"
-
-fn at(cwd: &Path, p: &str) -> PathBuf {
-    let p = Path::new(p);
-    if p.is_absolute() { p.to_path_buf() } else { cwd.join(p) }
-}
 
 /// A verb's answer and exit code
 pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, say: &mut dyn FnMut(String)) -> (String, i32) {
@@ -44,10 +38,6 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, s
     ran.unwrap_or_else(|e| (format!("raea fingerprint {}: {e:#}", args[0]), 1))
 }
 
-fn pins(enc: &Encoders) -> BTreeMap<String, String> {
-    enc.pins().into_iter().collect()
-}
-
 /// A new fingerprint as `new` makes it: raea's base axes, or the axes of the one it --extends, with --who and --about,
 /// and the kinds of piece and project tags it judges (--kinds, --tags, each comma-separated)
 pub(crate) fn shaped(short: &str, args: &[String], parent: Option<Fingerprint>) -> Fingerprint {
@@ -58,8 +48,7 @@ pub(crate) fn shaped(short: &str, args: &[String], parent: Option<Fingerprint>) 
     }
     fp.who = flag(args, "--who").map(str::to_string).or_else(|| std::env::var("USER").ok());
     fp.about = flag(args, "--about").map(str::trim).filter(|a| !a.is_empty()).map(str::to_string);
-    let list = |f: &str| -> Vec<String> { flag(args, f).map(|v| v.split(',').map(|s| s.trim().to_ascii_lowercase()).filter(|s| !s.is_empty()).collect()).unwrap_or_default() };
-    let (kinds, tags) = (list("--kinds"), list("--tags"));
+    let (kinds, tags) = (flag(args, "--kinds").map(words_of).unwrap_or_default(), flag(args, "--tags").map(words_of).unwrap_or_default());
     if !kinds.is_empty() || !tags.is_empty() {
         fp.applies = Some(Applies { kinds, tags });
     }
@@ -76,7 +65,7 @@ fn new(enc: &mut Encoders, args: &[String]) -> Result<(String, i32)> {
     };
     let from = parent.as_ref().map(|p| format!("{}'s axes", p.name)).unwrap_or_else(|| "raea's base taxonomy".into());
     let mut fp = shaped(&short, args, parent);
-    fp.encoders = pins(enc);
+    fp.encoders = enc.pins();
     dir.create(&fp)?;
     let w = Words::build(enc, &fp)?;
     dir.write_words(&w)?;
@@ -102,7 +91,7 @@ fn new(enc: &mut Encoders, args: &[String]) -> Result<(String, i32)> {
 fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option<&Path>) -> Result<(Folder, Fingerprint, Words)> {
     let dir = crate::pick::chosen(args, file).0;
     let mut raw = dir.read(Some(eval))?;
-    let here = pins(enc);
+    let here = enc.pins();
     if raw.encoders.is_empty() {
         raw.encoders = here;
         dir.rewrite(&raw)?;
@@ -136,11 +125,9 @@ fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option<&Path>) ->
 
 fn boot(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, say: &mut dyn FnMut(String)) -> Result<(String, i32)> {
     let (dir, fp, w) = open(enc, args, eval, None)?;
-    let mut files: Vec<PathBuf> = words(args).map_err(|e| anyhow!(e))?.iter().map(|f| at(cwd, f)).collect();
+    let mut files = named(args, cwd)?;
     if let Some(list) = flag(args, "--from") {
-        let list = at(cwd, list);
-        let text = std::fs::read_to_string(&list).with_context(|| list.display().to_string())?;
-        files.extend(text.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')).map(|l| at(list.parent().unwrap_or(cwd), l)));
+        files.extend(listed(cwd, list)?);
     }
     if files.is_empty() {
         bail!("give it real finished work: raea fingerprint bootstrap FILE... or --from LIST (no placeholder footage)");
@@ -184,7 +171,7 @@ fn approved(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Resu
 fn reembedded(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
     let dir = crate::pick::chosen(args, None).0;
     let raw = dir.read(Some(eval))?;
-    let (fp, out) = crate::reembed::reembed(enc, &dir, raw, pins(enc), args, cwd)?;
+    let (fp, out) = crate::reembed::reembed(enc, &dir, raw, enc.pins(), args, cwd)?;
     let fp = inherit::axes(&fp, &inherit::parents(&fp, Some(eval)));
     let w = Words::build(enc, &fp)?;
     dir.write_words(&w)?;

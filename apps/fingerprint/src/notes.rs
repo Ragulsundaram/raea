@@ -87,7 +87,8 @@ pub fn answer(text: &str) -> Option<Vec<Value>> {
 /// Fold an answer into the notes: a kind it doesn't know or an axis not in the fingerprint is dropped
 pub fn fold(notes: &mut [Reading], fp: &Fingerprint, ans: &[Value], by: &str) {
     for a in ans {
-        let Some(n) = notes.iter_mut().find(|n| a["id"].as_str() == Some(n.note.as_str())) else { continue };
+        let Some(id) = a["id"].as_str() else { continue };
+        let Some(n) = notes.iter_mut().find(|n| n.note == id) else { continue };
         let kind = a["kind"].as_str().unwrap_or("");
         if !matches!(kind, "defect" | "direction" | "praise" | "both") {
             continue;
@@ -189,7 +190,7 @@ pub(crate) fn readings_here(args: &[String]) -> i32 {
     let dir = crate::pick::chosen(args, None).0;
     let mut r = readings_of(&dir);
     if let Some(n) = flag(args, "--ask").and_then(|n| n.parse::<usize>().ok()) {
-        let todo: Vec<usize> = (0..r.len()).filter(|&i| r[i].kind_ok.is_none()).take(n).collect();
+        let todo: Vec<usize> = r.iter().enumerate().filter(|(_, x)| x.kind_ok.is_none()).map(|(i, _)| i).take(n).collect();
         let mut cmd = std::process::Command::new(std::env::current_exe().unwrap_or_else(|_| "raea".into()));
         cmd.args(["show", "--title", "Check how raea read your notes", "--inbox", INBOX]);
         for &i in &todo {

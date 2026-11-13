@@ -81,8 +81,8 @@ impl Encoders {
     }
 
     /// Each encoder's id and its file's sha256: a fingerprint's heads are pinned to these
-    pub fn pins(&self) -> Vec<(String, String)> {
-        self.files.pins()
+    pub fn pins(&self) -> std::collections::BTreeMap<String, String> {
+        self.files.pins().into_iter().collect()
     }
 
     /// A file's columns, from the cache when it has them
@@ -160,7 +160,7 @@ impl Encoders {
 }
 
 /// `$var`, else `rel` under the home folder
-pub(crate) fn under(var: &str, rel: &str) -> PathBuf {
+pub fn under(var: &str, rel: &str) -> PathBuf {
     match std::env::var_os(var) {
         Some(p) => p.into(),
         None => Path::new(&std::env::var_os("HOME").unwrap_or_default()).join(rel),

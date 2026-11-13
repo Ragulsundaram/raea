@@ -49,7 +49,7 @@ pub fn retrain(dir: &Folder, fp: &Fingerprint, w: &Words, l: &Ledger, bootstrap:
     let (all, own) = inherit::pooled(l, &parents, &over);
     let t = train::train(fp, &all, w);
     dir.write_trained(&t, &fp.encoders)?;
-    let kept = bootstrap.or_else(|| dir.report().and_then(|r| r.get("bootstrap").cloned()));
+    let kept = bootstrap.or_else(|| Some(dir.report()?.get("bootstrap")?.clone()));
     let mut r = report(fp, &t, &all, kept);
     if !parents.is_empty() {
         r["inherits"] = json!({

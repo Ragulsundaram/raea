@@ -58,7 +58,7 @@ pub(crate) const SILENT: f64 = -80.0;
 pub(crate) const HAD_LEVEL: f64 = -45.0;
 
 pub(crate) fn dropouts(x: &[f32]) -> Vec<(f64, String)> {
-    let rms: Vec<f64> = x.as_chunks::<HOP>().0.iter().map(|f| 20.0 * ((f.iter().map(|&v| (v as f64).powi(2)).sum::<f64>() / HOP as f64).sqrt() + 1e-9).log10()).collect();
+    let rms: Vec<f64> = x.as_chunks::<HOP>().0.iter().map(|f| crate::sound::db(f)).collect();
     let step = HOP as f64 / SR as f64;
     let mut out = Vec::new();
     let mut i = 1;
@@ -132,8 +132,13 @@ pub(crate) fn flash_frame_rule(video: &str, issues: &mut Vec<Issue>, passed: &mu
     if found.is_empty() {
         passed.push("flash-frame: no stray black or white frame".into());
     }
-    issues.extend(found.into_iter().map(|(at, says)| Issue { rule: "flash-frame", p: 1, at: Some(at), says }));
+    issues.extend(moments("flash-frame", 1, found));
     Ok(())
+}
+
+/// Each moment a rule found, as an issue of that priority
+pub(crate) fn moments(rule: &'static str, p: u8, found: Vec<(f64, String)>) -> impl Iterator<Item = Issue> {
+    found.into_iter().map(move |(at, says)| Issue { rule, p, at: Some(at), says })
 }
 
 /// The sound's defects on the decoded mix (sound.rs decodes it once)
@@ -142,6 +147,6 @@ pub(crate) fn sound_defects(x: &[f32], issues: &mut Vec<Issue>, passed: &mut Vec
         if found.is_empty() {
             passed.push(ok.into());
         }
-        issues.extend(found.into_iter().map(|(at, says)| Issue { rule, p: 1, at: Some(at), says }));
+        issues.extend(moments(rule, 1, found));
     }
 }

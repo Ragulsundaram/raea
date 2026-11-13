@@ -23,8 +23,9 @@ pub const NAMES: [(&str, &str); 9] = [
     ("sharpness", "sharpness"),
 ];
 
+/// The average; nothing averages to 0
 fn mean(v: &[f32]) -> f32 {
-    if v.is_empty() { 0.0 } else { v.iter().sum::<f32>() / v.len() as f32 }
+    v.iter().sum::<f32>() / v.len().max(1) as f32
 }
 
 fn pct(v: &[f32], q: f32) -> f32 {

@@ -5,13 +5,13 @@
 //! name a defect. Notes aren't read into labels here; that is FP5a.
 
 use crate::bootstrap::WIN;
-use crate::{flag, words};
+use crate::flag;
 use anyhow::{Result, anyhow};
 use raea_sys_columns::Encoders;
 use raea_sys_fingerprint::evidence::{Row, features};
 use raea_sys_fingerprint::folder::Folder;
 use raea_sys_fingerprint::taxonomy::Fingerprint;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// The seconds a note was pinned at on `file`, from every post in its project's feed that shows a file of that name
 pub(crate) fn noted(file: &Path) -> Vec<f64> {
@@ -36,7 +36,7 @@ pub(crate) fn windows(dur: f64, notes: &[f64]) -> Vec<(f64, f64)> {
 }
 
 pub(crate) fn approve(enc: &mut Encoders, dir: &Folder, fp: &Fingerprint, args: &[String], cwd: &Path, project: impl Fn(&Path) -> String) -> Result<(String, usize)> {
-    let files: Vec<PathBuf> = words(args).map_err(|e| anyhow!(e))?.iter().map(|f| if Path::new(f).is_absolute() { PathBuf::from(f) } else { cwd.join(f) }).collect();
+    let files = crate::named(args, cwd)?;
     if files.is_empty() {
         return Err(anyhow!("which approved work? raea fingerprint approve FILE..."));
     }

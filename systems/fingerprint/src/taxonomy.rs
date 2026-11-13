@@ -69,6 +69,17 @@ pub struct Applies {
     pub tags: Vec<String>,
 }
 
+/// A comma-separated list of kinds or tags, each trimmed and lowercased, the empty ones dropped
+pub fn words_of(s: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    for w in s.split(',').map(str::trim) {
+        if !w.is_empty() {
+            out.push(w.to_ascii_lowercase());
+        }
+    }
+    out
+}
+
 impl Fingerprint {
     pub fn axis(&self, name: &str) -> Option<&Axis> {
         let i = self.axes.iter().position(|a| a.name == name)?;

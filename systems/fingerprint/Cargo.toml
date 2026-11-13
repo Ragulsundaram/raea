@@ -10,7 +10,6 @@ description = "Fingerprint (docs/fingerprint.feature FP2-FP4): a taxonomy of axe
 # the columns every head reads, the encoders that make them, and the damage the bootstrap puts in
 raea-sys-columns = { path = "../columns" }
 # evidence rows and word vectors are kept as fp16
-half = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"

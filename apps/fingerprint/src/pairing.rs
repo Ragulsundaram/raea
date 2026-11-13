@@ -5,25 +5,22 @@
 //! distance 0.01 or more) and wasn't noted again within 1 s there.
 
 use crate::approve::noted;
-use crate::{flag, words};
+use crate::flag;
 use anyhow::{Context, Result, anyhow, bail};
 use raea_sys_columns::Encoders;
 use raea_sys_columns::window::Modality;
 use raea_sys_fingerprint::evidence::{Ledger, Row, features, slice};
 use raea_sys_fingerprint::pairs::difference;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 fn row(media: &str, a: f64, b: f64, axis: &str, weight: f32, who: &str, project: String, words: Option<String>) -> Row {
     Row { media: media.into(), a, b, axis: axis.into(), bad: true, weight, who: who.into(), source: "pair".into(), project, kind: None, region: None, words, at: 0, pin: None }
 }
 
-fn files(args: &[String], cwd: &Path) -> Result<Vec<PathBuf>> {
-    Ok(words(args).map_err(|e| anyhow!(e))?.iter().map(|f| if Path::new(f).is_absolute() { PathBuf::from(f) } else { cwd.join(f) }).collect())
-}
 
 /// `pair`: one row, the worse window's features minus the better one's
 pub(crate) fn pair(enc: &mut Encoders, l: &mut Ledger, who: &str, args: &[String], cwd: &Path, project: impl Fn(&Path) -> String) -> Result<String> {
-    let f = files(args, cwd)?;
+    let f = crate::named(args, cwd)?;
     let [worse, better] = f.as_slice() else { bail!("raea fingerprint pair WORSE BETTER --axis A [--at T] [--then T2]") };
     let axis = flag(args, "--axis").ok_or_else(|| anyhow!("--axis A: the axis the better one is better on"))?;
     let span: f64 = flag(args, "--span").map_or(Ok(2.0), str::parse).context("--span takes seconds")?;
@@ -53,7 +50,7 @@ pub(crate) fn weak(before: &[f32], after: &[f32], t: f64, next_notes: &[f64]) ->
 
 /// `versions`: weak pairs along a chain of versions
 pub(crate) fn versions(enc: &mut Encoders, l: &mut Ledger, who: &str, args: &[String], cwd: &Path, project: impl Fn(&Path) -> String) -> Result<String> {
-    let f = files(args, cwd)?;
+    let f = crate::named(args, cwd)?;
     if f.len() < 2 {
         bail!("raea fingerprint versions V1 V2... takes the versions in order");
     }

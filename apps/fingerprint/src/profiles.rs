@@ -2,7 +2,7 @@
 //! FP6e): a profile's measures taken from work the person admires, kept in the fingerprint's profiles/NAME.json, and a
 //! piece critiqued against it, measure by measure, with where and which way to move.
 
-use crate::{flag, words};
+use crate::{flag, listed, named};
 use anyhow::{Context, Result, anyhow, bail};
 use raea_sys_columns::{Encoders, media};
 use raea_sys_fingerprint::folder::Folder;
@@ -13,10 +13,6 @@ use std::path::{Path, PathBuf};
 const BINS: usize = 12;
 /// The windows the critique says "where" with, seconds
 const WIN: f64 = 4.0;
-
-fn at(cwd: &Path, p: &str) -> PathBuf {
-    if Path::new(p).is_absolute() { PathBuf::from(p) } else { cwd.join(p) }
-}
 
 /// A piece's measures, whole and in windows
 pub(crate) fn measured(enc: &mut Encoders, file: &Path) -> Result<(Measures, Vec<((f64, f64), Measures)>)> {
@@ -39,7 +35,7 @@ fn path(dir: &Folder, name: &str) -> PathBuf {
 
 pub(crate) fn make(enc: &mut Encoders, dir: &Folder, args: &[String], cwd: &Path) -> Result<String> {
     let name = flag(args, "--as").ok_or_else(|| anyhow!("name it: raea fingerprint profile REFS... --as NAME"))?;
-    let refs: Vec<PathBuf> = words(args).map_err(|e| anyhow!(e))?.iter().map(|f| at(cwd, f)).collect();
+    let refs = named(args, cwd)?;
     if refs.len() < 2 {
         bail!("a profile needs two references or more (three for its leave-one-out check)");
     }
@@ -49,9 +45,8 @@ pub(crate) fn make(enc: &mut Encoders, dir: &Folder, args: &[String], cwd: &Path
     }
     let mut other = Vec::new();
     if let Some(list) = flag(args, "--against") {
-        let list = at(cwd, list);
-        for l in std::fs::read_to_string(&list).with_context(|| list.display().to_string())?.lines().map(str::trim).filter(|l| !l.is_empty() && !l.starts_with('#')) {
-            other.push(measured(enc, &at(list.parent().unwrap_or(cwd), l))?.0);
+        for f in listed(cwd, list)? {
+            other.push(measured(enc, &f)?.0);
         }
     }
     let p = profile(name, r, &other);

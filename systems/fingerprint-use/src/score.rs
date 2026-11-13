@@ -110,6 +110,7 @@ pub fn score(fp: &Fingerprint, words: Option<&Words>, trained: Option<&Trained>,
     loop {
         let b = (a + WIN).min(c.dur.max(0.25));
         let row = features(c, a, b);
+        let nearest = |m: Modality| words.and_then(|w| w.nearest(&row, m));
         let head = |name: &str| trained.and_then(|t| t.heads.iter().find(|h| h.axis == name));
         let axes: Vec<AxisScore> = fp.axes.iter().filter_map(|ax| one(head(&ax.name), words, &ax.name, ax.modality, &row)).collect();
         let (l0, l1) = ((a * 10.0) as usize, ((b * 10.0) as usize).max((a * 10.0) as usize + 1));
@@ -120,8 +121,8 @@ pub fn score(fp: &Fingerprint, words: Option<&Words>, trained: Option<&Trained>,
             a,
             b,
             axes,
-            seen: words.and_then(|w| w.nearest(&row, Modality::Picture)),
-            heard: words.and_then(|w| w.nearest(&row, Modality::Sound)),
+            seen: nearest(Modality::Picture),
+            heard: nearest(Modality::Sound),
             level,
             overall,
         });

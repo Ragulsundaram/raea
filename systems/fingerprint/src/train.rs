@@ -66,25 +66,11 @@ fn scaler(l: &Ledger, rows: &[usize], m: Modality) -> Scaler {
     Scaler::fit(&x)
 }
 
-/// The rows' labels and weights
-fn labels(l: &Ledger, rows: &[usize]) -> (Vec<bool>, Vec<f32>) {
-    let (mut y, mut w) = (Vec::with_capacity(rows.len()), Vec::with_capacity(rows.len()));
-    for &i in rows {
-        y.push(l.rows[i].bad);
-        w.push(l.rows[i].weight);
-    }
-    (y, w)
-}
 
-/// How many of the rows say the defect is there, and how many say it isn't
-fn counts(l: &Ledger, rows: &[usize]) -> (usize, usize) {
-    let bad = rows.iter().filter(|&&i| l.rows[i].bad).count();
-    (bad, rows.len() - bad)
-}
 
 fn fit(l: &Ledger, rows: &[usize], m: Modality, sc: Scaler) -> Logistic {
     let x: Vec<&[f32]> = rows.iter().map(|&i| l.modality(i, m)).collect();
-    let (y, w) = labels(l, rows);
+    let (y, w) = l.labels(rows);
     Logistic::fit(sc, &x, &y, Some(&w), C, true)
 }
 
@@ -114,8 +100,8 @@ pub fn axis(fp: &Fingerprint, l: &Ledger, words: &Words, name: &str) -> AxisHead
     for &i in &rows {
         h.labels.entry(l.rows[i].source.clone()).or_default()[usize::from(!l.rows[i].bad)] += 1;
     }
-    let (pos, neg) = counts(l, &rows);
-    let projects: BTreeSet<String> = rows.iter().map(|&i| l.rows[i].project.clone()).collect();
+    let (pos, neg) = l.counts(&rows);
+    let projects = l.projects(&rows);
     h.projects = projects.len();
     let plain: Vec<usize> = (0..l.rows.len()).filter(|&i| !matches!(l.rows[i].source.as_str(), "cheat" | "pair")).collect();
     let worded = words.axes.iter().any(|a| a.0 == name);
@@ -150,7 +136,7 @@ pub fn axis(fp: &Fingerprint, l: &Ledger, words: &Words, name: &str) -> AxisHead
         for fold in folds(&projects) {
             let held = |i: usize| fold.contains(&l.rows[i].project);
             let (test, train): (Vec<usize>, Vec<usize>) = rows.iter().copied().partition(|&i| held(i));
-            if matches!(counts(l, &train), (0, _) | (_, 0)) {
+            if matches!(l.counts(&train), (0, _) | (_, 0)) {
                 continue;
             }
             let base: Vec<usize> = plain.iter().copied().filter(|&i| !held(i)).collect();
@@ -178,8 +164,8 @@ pub fn axis(fp: &Fingerprint, l: &Ledger, words: &Words, name: &str) -> AxisHead
     let mut why = Vec::new();
     // another eye's readings (clef's, Kimi's: source "eye:NAME") train the head but never count as the person's (FP6d)
     let theirs: Vec<usize> = rows.iter().copied().filter(|&i| !l.rows[i].source.starts_with("eye:")).collect();
-    let (pos, neg) = counts(l, &theirs);
-    let own_projects = theirs.iter().map(|&i| l.rows[i].project.as_str()).collect::<BTreeSet<_>>().len();
+    let (pos, neg) = l.counts(&theirs);
+    let own_projects = l.projects(&theirs).len();
     if pos < GATE_LABELS || neg < GATE_LABELS {
         why.push(format!("{pos} defect and {neg} clean labels of yours (needs {GATE_LABELS} of each)"));
     }
@@ -206,11 +192,11 @@ pub fn train(fp: &Fingerprint, l: &Ledger, words: &Words) -> Trained {
     let heads: Vec<AxisHead> = fp.axes.iter().map(|a| axis(fp, l, words, &a.name)).collect();
     // the weighting: overall labels the person gave (axis "*", their own sources), read through every head
     let overall: Vec<usize> = (0..l.rows.len()).filter(|&i| l.rows[i].axis == "*" && matches!(l.rows[i].source.as_str(), "teach" | "note" | "approval" | "postmortem")).collect();
-    let (p, n) = counts(l, &overall);
+    let (p, n) = l.counts(&overall);
     let weighting = (p >= 8 && n >= 8).then(|| {
         let x: Vec<Vec<f32>> = overall.iter().map(|&i| scores(&heads, l.features(i))).collect();
         let xr: Vec<&[f32]> = x.iter().map(|v| v.as_slice()).collect();
-        Logistic::fit(Scaler::fit(&xr), &xr, &labels(l, &overall).0, None, C, true)
+        Logistic::fit(Scaler::fit(&xr), &xr, &l.labels(&overall).0, None, C, true)
     });
     Trained { heads, weighting }
 }

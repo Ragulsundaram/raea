@@ -4,10 +4,10 @@
 //! (FP8); heads are always retrained from them.
 
 use anyhow::Result;
-use half::f16;
+use raea_sys_columns::cache::{f16s, f32s};
 use raea_sys_columns::window::Modality;
 use serde::{Deserialize, Serialize};
-use std::io::Write;
+use std::collections::BTreeSet;
 use std::path::Path;
 
 /// Every modality's features, in Modality::ALL's order
@@ -97,7 +97,7 @@ impl Ledger {
         }
         let rows = std::fs::read_to_string(j)?.lines().filter(|l| !l.trim().is_empty()).map(serde_json::from_str).collect::<Result<Vec<Row>, _>>()?;
         let raw = std::fs::read(f).unwrap_or_default();
-        let feats = raw.as_chunks::<2>().0.iter().map(|p| f16::from_le_bytes(*p).to_f32()).collect();
+        let feats = f32s(&raw);
         Ok(Ledger { rows, feats })
     }
 
@@ -109,10 +109,7 @@ impl Ledger {
             j.push(b'\n');
         }
         std::fs::write(dir.join("evidence.jsonl"), j)?;
-        let mut f = std::io::BufWriter::new(std::fs::File::create(dir.join("evidence.f16"))?);
-        for x in &self.feats {
-            f.write_all(&f16::from_f32(*x).to_le_bytes())?;
-        }
+        std::fs::write(dir.join("evidence.f16"), f16s(&self.feats))?;
         Ok(())
     }
 
@@ -132,6 +129,22 @@ impl Ledger {
             let r = &self.rows[i];
             r.source != "cheat" && r.source != "pair" && r.pin.is_none() && (r.axis == axis || (r.axis == "*" && !r.bad))
         }).collect()
+    }
+
+    /// The rows' labels and weights, as a fit takes them
+    pub fn labels(&self, rows: &[usize]) -> (Vec<bool>, Vec<f32>) {
+        rows.iter().map(|&i| (self.rows[i].bad, self.rows[i].weight)).unzip()
+    }
+
+    /// How many of the rows say the defect is there, and how many say it isn't
+    pub fn counts(&self, rows: &[usize]) -> (usize, usize) {
+        let bad = rows.iter().filter(|&&i| self.rows[i].bad).count();
+        (bad, rows.len() - bad)
+    }
+
+    /// The projects the rows come from
+    pub fn projects(&self, rows: &[usize]) -> BTreeSet<String> {
+        rows.iter().map(|&i| self.rows[i].project.clone()).collect()
     }
 
     /// A row's features replaced, as re-embedding does

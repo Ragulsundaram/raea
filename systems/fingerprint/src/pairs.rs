@@ -8,7 +8,6 @@ use crate::evidence::Ledger;
 use crate::head::{Logistic, Scaler};
 use crate::train::{C, folds};
 use raea_sys_columns::window::Modality;
-use std::collections::BTreeSet;
 
 /// The pair rows for an axis
 pub fn rows(l: &Ledger, axis: &str) -> Vec<usize> {
@@ -23,13 +22,13 @@ pub fn fit(l: &Ledger, rows: &[usize], m: Modality) -> Logistic {
     let mut sc = Scaler::fit(&x);
     sc.mean.iter_mut().for_each(|v| *v = 0.0);
     let y: Vec<bool> = (0..x.len()).map(|i| i < d.len()).collect();
-    let w: Vec<f32> = rows.iter().chain(rows).map(|&i| l.rows[i].weight).collect();
+    let w = l.labels(rows).1.repeat(2);
     Logistic::fit(sc, &x, &y, Some(&w), C, false)
 }
 
 /// Share of held-out pairs (by project) the fit orders right
 pub fn held_out(l: &Ledger, rows: &[usize], m: Modality) -> Option<f64> {
-    let projects: BTreeSet<String> = rows.iter().map(|&i| l.rows[i].project.clone()).collect();
+    let projects = l.projects(&rows);
     if projects.len() < 2 {
         return None;
     }

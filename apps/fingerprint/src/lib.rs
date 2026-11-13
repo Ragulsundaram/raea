@@ -64,6 +64,25 @@ pub(crate) fn has(args: &[String], name: &str) -> bool {
     args.iter().any(|a| a == name)
 }
 
+/// A path as given, against the folder the verb ran in (an absolute one stays itself)
+pub(crate) fn at(cwd: &Path, p: &str) -> std::path::PathBuf {
+    cwd.join(p)
+}
+
+/// The files a verb names, against the folder it ran in
+pub(crate) fn named(args: &[String], cwd: &Path) -> anyhow::Result<Vec<std::path::PathBuf>> {
+    Ok(words(args).map_err(anyhow::Error::msg)?.iter().map(|f| at(cwd, f)).collect())
+}
+
+/// The files a list names, one a line against the list's own folder; blank lines and # lines are skipped
+pub(crate) fn listed(cwd: &Path, list: &str) -> anyhow::Result<Vec<std::path::PathBuf>> {
+    use anyhow::Context;
+    let list = at(cwd, list);
+    let text = std::fs::read_to_string(&list).with_context(|| list.display().to_string())?;
+    let base = list.parent().unwrap_or(cwd);
+    Ok(text.lines().map(str::trim).filter(|l| !(l.is_empty() || l.starts_with('#'))).map(|l| at(base, l)).collect())
+}
+
 /// The words that aren't flags or their values; an unknown flag is an error
 pub(crate) fn words(args: &[String]) -> Result<Vec<&str>, String> {
     let mut out = Vec::new();
@@ -83,9 +102,12 @@ pub(crate) fn words(args: &[String]) -> Result<Vec<&str>, String> {
 
 /// `raea fingerprint VERB ...`, printed; its exit code (1: the verb failed, 2: the command was wrong)
 pub fn cli(args: &[String], eval: Eval) -> i32 {
-    let Some(verb) = args.first().map(String::as_str).filter(|v| !matches!(*v, "--help" | "-h" | "help")) else {
-        println!("{USAGE}");
-        return 0;
+    let verb = match args.first().map(String::as_str) {
+        None | Some("--help" | "-h" | "help") => {
+            println!("{USAGE}");
+            return 0;
+        }
+        Some(v) => v,
     };
     if let Err(e) = words(&args[1..]) {
         eprintln!("raea fingerprint: {e}\n{USAGE}");

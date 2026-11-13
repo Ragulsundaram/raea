@@ -78,7 +78,7 @@ pub struct Tick {
 
 /// The sheet for a scored piece: `frames` are THUMBS frames spread over it (224 x 224 RGB), `pcm16` its sound
 pub fn sheet(s: &Scored, frames: &[Frame], pcm16: &[f32], ticks: &[Tick], modality: &dyn Fn(&str) -> Option<Modality>, out: &std::path::Path) -> Result<()> {
-    let axes: Vec<&str> = s.windows.first().map(|w| w.axes.iter().map(|a| a.axis.as_str()).collect()).unwrap_or_default();
+    let axes: Vec<&str> = s.windows.first().into_iter().flat_map(|w| w.axes.iter().map(|a| a.axis.as_str())).collect();
     let span = W - LEFT - 10;
     let thumb = span / THUMBS;
     let h = 30 + thumb + 20 + axes.len() as u32 * LANE + 10 + 40 + 10 + SPEC + 10 + 16 + ticks.len().min(12) as u32 * 10 + 20;

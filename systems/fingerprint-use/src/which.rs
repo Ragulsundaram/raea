@@ -7,7 +7,7 @@
 //! or a sound); its tags are the project's `tags`.
 
 use raea_sys_fingerprint::folder::{Folder, root};
-use raea_sys_fingerprint::taxonomy::Fingerprint;
+use raea_sys_fingerprint::taxonomy::{Fingerprint, words_of};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
@@ -40,11 +40,17 @@ fn up(from: &Path, marker: &str) -> Option<PathBuf> {
     from.ancestors().find(|d| d.join(".raea").join(marker).is_file()).map(Path::to_path_buf)
 }
 
+/// A folder and the fingerprint read from it, when it reads
+fn opened(f: Folder) -> Option<(Folder, Fingerprint)> {
+    let fp = f.read(None).ok()?;
+    Some((f, fp))
+}
+
 pub fn piece(path: &Path) -> Piece {
     let start = if path.is_dir() { path } else { path.parent().unwrap_or(path) };
     let project = up(start, "project");
     let workspace = up(start, "workspace");
-    let text = project.as_ref().and_then(|p| std::fs::read_to_string(p.join(".raea/project")).ok()).unwrap_or_default();
+    let text = project.as_ref().map(|p| p.join(".raea/project")).and_then(|f| std::fs::read_to_string(f).ok()).unwrap_or_default();
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
     let by_file = match ext.as_str() {
         "png" | "jpg" | "jpeg" | "webp" => Some("still"),
@@ -52,7 +58,7 @@ pub fn piece(path: &Path) -> Piece {
         _ => None,
     };
     let kind = key(&text, "kind").or_else(|| by_file.map(str::to_string));
-    let tags = key(&text, "tags").map(|t| t.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect()).unwrap_or_default();
+    let tags = key(&text, "tags").map(|t| words_of(&t)).unwrap_or_default();
     Piece { kind, tags, project, workspace }
 }
 
@@ -64,7 +70,7 @@ pub fn at_level(dir: &Path) -> Vec<(Folder, Fingerprint)> {
         .flatten()
         .map(|e| Folder { dir: e.path() })
         .filter(Folder::exists)
-        .filter_map(|f| f.read(None).ok().map(|fp| (f, fp)))
+        .filter_map(opened)
         .collect();
     out.sort_by(|a, b| a.1.name.cmp(&b.1.name));
     out
@@ -95,7 +101,7 @@ pub fn levels(p: &Piece) -> Vec<(&'static str, PathBuf)> {
 
 /// A level's `default`, found at that level or above
 fn named(name: &str, levels: &[(&'static str, PathBuf)], from: usize) -> Option<(Folder, Fingerprint)> {
-    levels[from..].iter().map(|(_, d)| Folder { dir: d.join(name) }).find(Folder::exists).and_then(|f| f.read(None).ok().map(|fp| (f, fp)))
+    levels[from..].iter().map(|(_, d)| Folder { dir: d.join(name) }).find(Folder::exists).and_then(opened)
 }
 
 fn choice((f, fp): (Folder, Fingerprint), level: &str, why: String) -> Choice {

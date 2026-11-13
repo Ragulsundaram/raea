@@ -9,7 +9,7 @@
 //! modality and on the one FP0b used; and each word head's AUC and catch rate with no labels (FP0g).
 
 use raea_sys_fingerprint::evidence::{Ledger, Row, features, slice};
-use raea_sys_fingerprint::head::{Logistic, Scaler, auc, quantile};
+use raea_sys_fingerprint::head::{Logistic, Scaler, auc, quantile, share_over};
 use raea_sys_fingerprint::taxonomy::Fingerprint;
 use raea_sys_fingerprint::train::{C, folds};
 use raea_sys_fingerprint::words::Words;
@@ -51,6 +51,26 @@ pub struct Made {
     /// windows too quiet for a gap or clipping to change them, which get only the noise damage
     pub quiet: usize,
     pub skipped: Vec<String>,
+}
+
+/// The rows a bootstrap makes, which the next bootstrap replaces
+fn made_here(r: &Row) -> bool {
+    matches!(r.source.as_str(), "damage" | "cheat")
+}
+
+/// A plain damage row on `axis` ("*" for the clean windows)
+fn damage_on(r: &Row, axis: &str) -> bool {
+    r.source == "damage" && r.axis == axis
+}
+
+/// The plain damage rows on `axis`
+fn damage_rows(l: &Ledger, axis: &str) -> Vec<usize> {
+    (0..l.rows.len()).filter(|&i| damage_on(&l.rows[i], axis)).collect()
+}
+
+/// Each defect of a sense as (kind, axis, source): the plain ones, then their disguises
+fn damages(sense: &[&'static str]) -> Vec<(&'static str, &'static str, &'static str)> {
+    sense.iter().map(|k| (*k, *k, "damage")).chain(CHEATS.iter().filter(|c| sense.contains(&c.1)).map(|c| (c.0, c.1, "cheat"))).collect()
 }
 
 /// Below this a window is near silence: a gap or clipping changes nothing, and a row saying it does teaches noise
@@ -98,7 +118,7 @@ fn picture_of(enc: &mut Encoders, clean: &[Rgb], sig: &[f32], look: &[f32], d: &
 
 /// The bootstrap's rows for `files` into the ledger, replacing any it made before. `say` hears each source's progress.
 pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mut Ledger, say: &mut dyn FnMut(String)) -> Result<Made> {
-    l.retain(|r| !matches!(r.source.as_str(), "damage" | "cheat"));
+    l.retain(|r| !made_here(r));
     let mut made = Made::default();
     let mut noise = Noise::new(0);
     for (n, file) in files.iter().enumerate() {
@@ -140,15 +160,13 @@ pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mu
                 l.push(r, &features(c, 0.0, WIN));
             };
             push(l, &clean, "*", "clean", "damage");
-            let picture = PICTURE.iter().map(|k| (*k, *k, "damage")).chain(CHEATS.iter().filter(|c| PICTURE.contains(&c.1)).map(|c| (c.0, c.1, "cheat")));
-            for (kind, axis, source) in picture {
+            for (kind, axis, source) in damages(&PICTURE) {
                 let (sig, look) = picture_of(enc, fr, &clean.sig, &clean.look, &damage::picture(fr, kind))?;
                 push(l, &Columns { sig, look, ..clean.clone() }, axis, kind, source);
             }
             let quiet = loudness(&w16) < QUIET_DB;
             made.quiet += quiet as usize;
-            let sound = SOUND.iter().map(|k| (*k, *k, "damage")).chain(CHEATS.iter().filter(|c| SOUND.contains(&c.1)).map(|c| (c.0, c.1, "cheat")));
-            for (kind, axis, source) in sound.filter(|s| !quiet || s.1 == "noise") {
+            for (kind, axis, source) in damages(&SOUND).into_iter().filter(|s| !quiet || s.1 == "noise") {
                 let (d16, d48) = (damage::sound(&w16, kind, 16_000, &mut noise), damage::sound(&w48, kind, 48_000, &mut noise));
                 let (clap, yam) = enc.sound(&d16, &d48)?;
                 push(l, &Columns { clap, yam, level: media::levels(&d16, 16_000), ..clean.clone() }, axis, kind, source);
@@ -157,7 +175,7 @@ pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mu
         }
         say(format!("source {}/{} {}: {} windows so far", n + 1, files.len(), file.display(), made.windows));
     }
-    made.rows = l.rows.iter().filter(|r| matches!(r.source.as_str(), "damage" | "cheat")).count();
+    made.rows = l.rows.iter().filter(|r| made_here(r)).count();
     Ok(made)
 }
 
@@ -184,9 +202,8 @@ pub fn curve(l: &Ledger, axis: &str, m: Modality, rng: &mut fastrand::Rng) -> Cu
     let s = slice(m);
     let row = |i: usize| &l.features(i)[s.clone()];
     let plain = |i: &usize| l.rows[*i].source == "damage";
-    let clean: Vec<usize> = (0..l.rows.len()).filter(|i| plain(i) && l.rows[*i].axis == "*").collect();
-    let bad: Vec<usize> = (0..l.rows.len()).filter(|i| plain(i) && l.rows[*i].axis == axis).collect();
-    let projects: BTreeSet<String> = clean.iter().map(|&i| l.rows[i].project.clone()).collect();
+    let (clean, bad) = (damage_rows(l, "*"), damage_rows(l, axis));
+    let projects = l.projects(&clean);
     let mut k_auc = BTreeMap::new();
     for k in KS {
         let mut aucs = Vec::new();
@@ -246,13 +263,16 @@ pub struct WordScore {
 /// Each word head on the bootstrap's windows (FP0g)
 pub fn word_scores(l: &Ledger, words: &Words) -> Vec<WordScore> {
     let z = |i: usize, axis: &str| words.z(axis, l.features(i));
-    let of = |axis: &str, pick: &dyn Fn(&Row) -> bool| -> Vec<f32> { (0..l.rows.len()).filter(|&i| pick(&l.rows[i])).filter_map(|i| z(i, axis)).collect() };
+    let of = |axis: &str, pick: &dyn Fn(&Row) -> bool| -> Vec<f32> { l.rows.iter().enumerate().filter(|(_, r)| pick(r)).filter_map(|(i, _)| z(i, axis)).collect() };
     let mut out = Vec::new();
-    for axis in PICTURE.iter().chain(&SOUND).filter(|a| words.axes.iter().any(|w| w.0 == **a)) {
-        let clean = of(axis, &|r| r.source == "damage" && r.axis == "*");
-        let bad = of(axis, &|r| r.source == "damage" && r.axis == *axis);
+    for axis in PICTURE.iter().chain(&SOUND) {
+        if !words.axes.iter().any(|w| w.0 == *axis) {
+            continue;
+        }
+        let clean = of(axis, &|r| damage_on(r, "*"));
+        let bad = of(axis, &|r| damage_on(r, axis));
         let thr = quantile(&clean, 0.9);
-        let share = |v: &[f32]| v.iter().filter(|x| **x > thr).count() as f64 / v.len().max(1) as f64;
+        let share = |v: &[f32]| share_over(v, thr);
         let cheats = CHEATS.iter().filter(|c| c.1 == *axis).map(|c| (c.0.to_string(), share(&of(axis, &|r| r.source == "cheat" && r.kind.as_deref() == Some(c.0))))).collect();
         out.push(WordScore { axis: axis.to_string(), auc: auc(&bad, &clean), caught: share(&bad), cheats });
     }

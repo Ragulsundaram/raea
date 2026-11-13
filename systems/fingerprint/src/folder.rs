@@ -14,7 +14,7 @@ use crate::taxonomy::{Fingerprint, to_ts};
 use crate::train::Trained;
 use crate::words::Words;
 use anyhow::{Context, Result, anyhow, bail};
-use half::f16;
+use raea_sys_columns::cache::{f16s, f32s};
 use raea_sys_columns::window::Modality;
 use raea_sys_columns::{CLAP, SIG};
 use serde::{Deserialize, Serialize};
@@ -26,10 +26,7 @@ pub type Eval = fn(&Path) -> Result<String, String>;
 
 /// Where a person's fingerprints live: $RAEA_FINGERPRINTS, else ~/.raea/fingerprints
 pub fn root() -> PathBuf {
-    match std::env::var_os("RAEA_FINGERPRINTS") {
-        Some(p) => p.into(),
-        None => Path::new(&std::env::var_os("HOME").unwrap_or_default()).join(".raea/fingerprints"),
-    }
+    raea_sys_columns::under("RAEA_FINGERPRINTS", ".raea/fingerprints")
 }
 
 pub struct Folder {
@@ -50,14 +47,6 @@ struct WordsHead {
     picture_words: Vec<String>,
 }
 
-fn f16s(v: &[f32]) -> Vec<u8> {
-    v.iter().flat_map(|x| f16::from_f32(*x).to_le_bytes()).collect()
-}
-
-fn f32s_of_f16(b: &[u8]) -> Vec<f32> {
-    b.as_chunks::<2>().0.iter().map(|p| f16::from_le_bytes(*p).to_f32()).collect()
-}
-
 impl Folder {
     /// A person's fingerprint by name, or a folder given as a path
     pub fn named(name: &str) -> Folder {
@@ -66,11 +55,14 @@ impl Folder {
     }
 
     pub fn exists(&self) -> bool {
-        self.dir.join("fingerprint.ts").is_file()
+        std::fs::metadata(self.ts()).is_ok_and(|m| m.is_file())
     }
 
+    /// Its fingerprint.ts, the axes a person edits
     pub fn ts(&self) -> PathBuf {
-        self.dir.join("fingerprint.ts")
+        let mut p = self.dir.clone();
+        p.push("fingerprint.ts");
+        p
     }
 
     /// A new fingerprint's folder: its fingerprint.ts; refused when one is there already
@@ -109,7 +101,7 @@ impl Folder {
 
     pub fn words(&self) -> Option<Words> {
         let head: WordsHead = serde_json::from_slice(&std::fs::read(self.dir.join("words.json")).ok()?).ok()?;
-        let v = f32s_of_f16(&std::fs::read(self.dir.join("words.f16")).ok()?);
+        let v = f32s(&std::fs::read(self.dir.join("words.f16")).ok()?);
         let mut at = 0;
         let mut take = |n: usize| -> Option<Vec<f32>> {
             let r = v.get(at..at + n)?.to_vec();

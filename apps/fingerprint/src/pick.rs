@@ -21,7 +21,7 @@ pub(crate) fn chosen(args: &[String], file: Option<&Path>) -> (Folder, Option<Ch
 
 fn here(cwd: &Path, args: &[String], at: usize) -> PathBuf {
     let w = words(args).unwrap_or_default();
-    w.get(at).map_or_else(|| cwd.to_path_buf(), |p| if Path::new(p).is_absolute() { PathBuf::from(p) } else { cwd.join(p) })
+    w.get(at).map_or_else(|| cwd.to_path_buf(), |p| cwd.join(p))
 }
 
 pub(crate) fn which_here(args: &[String], cwd: &Path) -> i32 {
@@ -63,7 +63,8 @@ pub(crate) fn use_here(args: &[String], cwd: &Path) -> i32 {
         eprintln!("raea fingerprint use: no fingerprint {name} at the {level} or above it");
         return 1;
     }
-    if let Err(e) = std::fs::create_dir_all(file.parent().unwrap_or(cwd)).and_then(|()| std::fs::write(&file, &name)) {
+    let wrote = std::fs::create_dir_all(file.parent().unwrap_or(cwd)).and(std::fs::write(&file, &name));
+    if let Err(e) = wrote {
         eprintln!("raea fingerprint use: {}: {e}", file.display());
         return 1;
     }

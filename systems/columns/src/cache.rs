@@ -26,15 +26,27 @@ fn path(media: &str) -> PathBuf {
     root().join("columns").join(format!("{media}-{STEP}.cols"))
 }
 
+/// Numbers as little-endian half floats, as the column cache and a fingerprint's files keep them
+pub fn f16s(v: &[f32]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(2 * v.len());
+    for x in v {
+        out.extend(f16::from_f32(*x).to_le_bytes());
+    }
+    out
+}
+
+/// Little-endian half floats read back
+pub fn f32s(b: &[u8]) -> Vec<f32> {
+    b.as_chunks::<2>().0.iter().map(|p| f16::from_le_bytes(*p).to_f32()).collect()
+}
+
 pub fn save(c: &Columns) -> Result<()> {
     let cols = [&c.sig, &c.look, &c.clap, &c.yam, &c.level];
     let head = Head { media: c.media.clone(), dur: c.dur, step: STEP, lens: cols.iter().map(|v| v.len()).collect() };
     let mut b = serde_json::to_vec(&head)?;
     b.push(b'\n');
     for v in cols {
-        for x in v.iter() {
-            b.extend(f16::from_f32(*x).to_le_bytes());
-        }
+        b.extend(f16s(v));
     }
     let p = path(&c.media);
     std::fs::create_dir_all(p.parent().unwrap())?;
@@ -56,7 +68,7 @@ pub fn load(media: &str) -> Option<Columns> {
     for &n in &head.lens {
         let end = at + 2 * n;
         let raw = b.get(at..end)?;
-        cols.push(raw.as_chunks::<2>().0.iter().map(|p| f16::from_le_bytes(*p).to_f32()).collect());
+        cols.push(f32s(raw));
         at = end;
     }
     let mut it = cols.into_iter();

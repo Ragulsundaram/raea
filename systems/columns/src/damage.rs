@@ -57,14 +57,24 @@ fn zoomed(f: &Rgb, i: usize) -> Rgb {
 }
 
 /// A window's frames with a picture defect (or cheat) put in
+/// A frame with every channel scaled by `k`
+fn darker(f: &Rgb, k: f32) -> Rgb {
+    f.iter().map(|&x| (x as f32 * k) as u8).collect()
+}
+
+/// Sound driven `gain` times louder into a hard ceiling at `ceil`
+fn clipped(w: &mut [f32], gain: f32, ceil: f32) {
+    w.iter_mut().for_each(|x| *x = (*x * gain).clamp(-ceil, ceil));
+}
+
 pub fn picture(frames: &[Rgb], kind: &str) -> Vec<Rgb> {
     match kind {
         "blur" => frames.iter().map(|f| soft(f).into_raw()).collect(),
         "sharpblur" => frames.iter().map(sharpened).collect(),
         "glow" => frames.iter().map(|f| glow(f, 0.7)).collect(),
         "glow_half" => frames.iter().map(|f| glow(f, 0.35)).collect(),
-        "dark" => frames.iter().map(|f| f.iter().map(|&x| (x as f32 * 0.3) as u8).collect()).collect(),
-        "dark_half" => frames.iter().map(|f| f.iter().map(|&x| (x as f32 * 0.65) as u8).collect()).collect(),
+        "dark" => frames.iter().map(|f| darker(f, 0.3)).collect(),
+        "dark_half" => frames.iter().map(|f| darker(f, 0.65)).collect(),
         "freeze" => frames.iter().map(|_| frames[0].clone()).collect(),
         "freeze_zoom" => (0..frames.len()).map(|i| zoomed(&frames[0], i)).collect(),
         "flash" | "flash_white" => {
@@ -106,8 +116,8 @@ pub fn sound(w: &[f32], kind: &str, rate: u32, noise: &mut Noise) -> Vec<f32> {
             let b = (a + (gap * rate as f64) as usize).min(w.len());
             w[a..b].iter_mut().for_each(|x| *x = 0.0);
         }
-        "clip" => w.iter_mut().for_each(|x| *x = (*x * 10.0).clamp(-0.3, 0.3)),
-        "clip_soft" => w.iter_mut().for_each(|x| *x = (*x * 3.0).clamp(-0.6, 0.6)),
+        "clip" => clipped(&mut w, 10.0, 0.3),
+        "clip_soft" => clipped(&mut w, 3.0, 0.6),
         _ => {}
     }
     w
