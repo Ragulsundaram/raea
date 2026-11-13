@@ -64,6 +64,7 @@ pub(crate) fn approve(enc: &mut Encoders, dir: &Folder, fp: &Fingerprint, args: 
                 region: None,
                 words: None,
                 at: 0,
+                pin: None,
             };
             l.push(row, &features(&c, *a, *b));
         }

@@ -13677,6 +13677,7 @@ dependencies = [
  "raea-app-check",
  "raea-sys-columns",
  "raea-sys-fingerprint",
+ "raea-sys-fingerprint-use",
  "serde",
  "serde_json",
 ]
@@ -15473,8 +15474,19 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "half",
+ "raea-sys-columns",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "raea-sys-fingerprint-use"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "image",
  "raea-sys-columns",
+ "raea-sys-fingerprint",
  "serde",
  "serde_json",
 ]

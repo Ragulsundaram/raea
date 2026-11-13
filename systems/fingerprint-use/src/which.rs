@@ -6,8 +6,8 @@
 //! A piece's kind is its project's `kind` in .raea/project (film, ad, game, playable), else what the file is (a still
 //! or a sound); its tags are the project's `tags`.
 
-use crate::folder::{Folder, root};
-use crate::taxonomy::Fingerprint;
+use raea_sys_fingerprint::folder::{Folder, root};
+use raea_sys_fingerprint::taxonomy::Fingerprint;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 

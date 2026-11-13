@@ -45,6 +45,11 @@ pub struct AxisHead {
     pub flag: Option<f32>,
     /// what this head can't judge (earshot's LIMITS.md)
     pub cannot: Vec<String>,
+    /// pairs on this axis (FP6b, FP6c), and the share of held-out pairs its Bradley-Terry fit orders right
+    #[serde(default)]
+    pub pairs: usize,
+    #[serde(default)]
+    pub pairs_held_out: Option<f64>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -112,13 +117,25 @@ pub fn axis(fp: &Fingerprint, l: &Ledger, words: &Words, name: &str) -> AxisHead
     let (pos, neg) = counts(l, &rows);
     let projects: BTreeSet<String> = rows.iter().map(|&i| l.rows[i].project.clone()).collect();
     h.projects = projects.len();
-    let plain: Vec<usize> = (0..l.rows.len()).filter(|&i| l.rows[i].source != "cheat").collect();
+    let plain: Vec<usize> = (0..l.rows.len()).filter(|&i| !matches!(l.rows[i].source.as_str(), "cheat" | "pair")).collect();
     let worded = words.axes.iter().any(|a| a.0 == name);
     if worded {
         let s: Vec<(f32, bool)> = rows.iter().filter_map(|&i| words.z(name, l.features(i)).map(|z| (z, l.rows[i].bad))).collect();
         let (p, n): (Vec<f32>, Vec<f32>) = (s.iter().filter(|x| x.1).map(|x| x.0).collect(), s.iter().filter(|x| !x.1).map(|x| x.0).collect());
         h.words = Some(auc(&p, &n)).filter(|a| a.is_finite());
         h.word_flag = Some(quantile(&n, 0.9)).filter(|v| v.is_finite());
+    }
+    let pairs = crate::pairs::rows(l, name);
+    h.pairs = pairs.len();
+    if pairs.len() >= 2 {
+        h.pairs_held_out = crate::pairs::held_out(l, &pairs, m);
+    }
+    if (pos < 2 || neg < 2) && pairs.len() >= 4 {
+        // only pairs: the Bradley-Terry fit is the head, advice until labels earn a gate
+        h.head = Some(crate::pairs::fit(l, &pairs, m));
+        h.state = "advice".into();
+        h.why = format!("{} pairs and no labels of each kind yet: it ranks, it doesn't gate", pairs.len());
+        return h;
     }
     if pos < 2 || neg < 2 {
         h.state = if worded { "words".into() } else { "none".into() };

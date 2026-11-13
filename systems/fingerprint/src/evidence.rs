@@ -55,6 +55,10 @@ pub struct Row {
     pub words: Option<String>,
     /// the row's index in evidence.f16
     pub at: u64,
+    /// the encoders its features came from, when they aren't the fingerprint's own any more (FP8c): such a row waits
+    /// to be re-embedded or re-labelled, and no head trains on it
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pin: Option<String>,
 }
 
 fn one() -> f32 {
@@ -122,12 +126,19 @@ impl Ledger {
         }
     }
 
-    /// Rows for training `axis`: its own labels (not cheats), and "*" rows that say it's clean
+    /// Rows for training `axis`: its own labels (not cheats, not rows on old encoders), and "*" rows that say it's clean
     pub fn for_axis(&self, axis: &str) -> Vec<usize> {
         (0..self.rows.len()).filter(|&i| {
             let r = &self.rows[i];
-            r.source != "cheat" && (r.axis == axis || (r.axis == "*" && !r.bad))
+            r.source != "cheat" && r.source != "pair" && r.pin.is_none() && (r.axis == axis || (r.axis == "*" && !r.bad))
         }).collect()
+    }
+
+    /// A row's features replaced, as re-embedding does
+    pub fn set_features(&mut self, i: usize, f: &[f32]) {
+        let w = width();
+        let at = self.rows[i].at as usize * w;
+        self.feats[at..at + w].copy_from_slice(f);
     }
 }
 

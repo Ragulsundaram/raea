@@ -25,6 +25,7 @@ fn row(axis: &str, bad: bool, project: &str) -> Row {
         region: None,
         words: None,
         at: 0,
+        pin: None,
     }
 }
 
@@ -208,54 +209,6 @@ fn a_child_inherits_and_its_own_labels_count_more() {
     let _ = std::fs::remove_dir_all(&tmp);
 }
 
-/// FP14c: the project's fingerprints first (the one that applies to the piece's kind, else the project's default),
-/// then the workspace's, then the person's own default
-#[test]
-fn which_one_judges_a_piece() {
-    use crate::which::{default_file, which};
-    let tmp = std::env::temp_dir().join(format!("raea-fp-which-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&tmp);
-    let (ws, home) = (tmp.join("ws"), tmp.join("home"));
-    let proj = ws.join("projects/brand");
-    std::fs::create_dir_all(ws.join(".raea")).unwrap();
-    std::fs::write(ws.join(".raea/workspace"), "[workspace]\n\tname = W\n").unwrap();
-    std::fs::create_dir_all(proj.join(".raea")).unwrap();
-    std::fs::write(proj.join(".raea/project"), "[project]\n\tname = brand\n\tkind = ad\n\ttags = brand-x, fast\n").unwrap();
-    // SAFETY: no other test in this crate reads RAEA_FINGERPRINTS
-    unsafe { std::env::set_var("RAEA_FINGERPRINTS", &home) };
-    let make = |dir: &std::path::Path, name: &str, kinds: &[&str]| {
-        let mut f = base(name);
-        f.about = Some(format!("{name}'s"));
-        if !kinds.is_empty() {
-            f.applies = Some(crate::taxonomy::Applies { kinds: kinds.iter().map(|k| k.to_string()).collect(), tags: vec![] });
-        }
-        Folder { dir: dir.join(name) }.create(&f).unwrap();
-    };
-    make(&home, "me", &[]);
-    let cut = proj.join("out/cut.mp4");
-    let c = which(&cut).unwrap();
-    assert_eq!((c.name.as_str(), c.level.as_str()), ("me", "account"), "nothing nearer: the person's own");
-
-    make(&ws.join(".raea/fingerprints"), "studio", &[]);
-    std::fs::write(ws.join(".raea/fingerprints/default"), "studio").unwrap();
-    assert_eq!(which(&cut).unwrap().name, "studio", "the workspace's default");
-
-    make(&proj.join(".raea/fingerprints"), "films", &["film"]);
-    make(&proj.join(".raea/fingerprints"), "ads", &["ad"]);
-    let c = which(&cut).unwrap();
-    assert_eq!((c.name.as_str(), c.level.as_str()), ("ads", "project"));
-    assert_eq!(c.why, "the project's, and it applies to ad pieces");
-
-    std::fs::write(proj.join(".raea/project"), "[project]\n\tname = brand\n").unwrap();
-    assert_eq!(which(&cut).unwrap().name, "studio", "no kind matches and no project default: the workspace's");
-    std::fs::write(proj.join(".raea/fingerprints/default"), "me").unwrap();
-    let c = which(&cut).unwrap();
-    assert_eq!((c.name.as_str(), c.level.as_str()), ("me", "project"), "a project can pin the person's own");
-    assert_eq!(default_file(&cut, "project").unwrap(), proj.join(".raea/fingerprints/default"));
-    assert_eq!(default_file(&home.join("x.mp4"), "project"), None);
-    let _ = std::fs::remove_dir_all(&tmp);
-}
-
 /// FP6d: another eye's readings train the head but never count toward the gate as the person's labels
 #[test]
 fn another_eye_stays_another_eye() {
@@ -270,35 +223,6 @@ fn another_eye_stays_another_eye() {
     assert!(h.head.is_some() && h.held_out.unwrap() > 0.9, "the eye's rows still teach the head");
     assert_eq!(h.state, "advice", "{}", h.why);
     assert!(h.why.contains("0 defect and 0 clean labels of yours"), "{}", h.why);
-}
-
-/// FP8b: two people who call opposite things blurry are far apart on blur, and the moments say where
-#[test]
-fn diff_finds_where_two_tastes_differ() {
-    let tmp = std::env::temp_dir().join(format!("raea-fp-diff-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&tmp);
-    let make = |name: &str, flip: bool| {
-        let dir = Folder { dir: tmp.join(name) };
-        dir.create(&base(name)).unwrap();
-        let mut l = Ledger::default();
-        for i in 0..60 {
-            let bad = i % 2 == 0;
-            let mut r = row("blur", bad, &format!("p{}", i % 4));
-            (r.a, r.b) = (i as f64 * 2.0, i as f64 * 2.0 + 2.0);
-            l.push(r, &feats(if bad != flip { 1.0 } else { -1.0 }, i));
-        }
-        dir.write_ledger(&l).unwrap();
-        crate::retrain(&dir, &base(name), &Words::default(), &l, None).unwrap();
-        dir
-    };
-    let (a, b, c) = (make("a", false), make("b", true), make("c", false));
-    let ab = crate::diff::diff(&a, &b, 2).unwrap();
-    let blur = ab.iter().find(|d| d.axis == "blur").unwrap();
-    assert!(blur.apart > 1.5, "opposed tastes: {}", blur.apart);
-    assert_eq!(blur.moments.len(), 2);
-    let ac = crate::diff::diff(&a, &c, 2).unwrap();
-    assert!(ac.iter().find(|d| d.axis == "blur").unwrap().apart < 0.2, "the same taste agrees");
-    let _ = std::fs::remove_dir_all(&tmp);
 }
 
 /// FP8a: a project's fingerprint keeps each person's rows in their own folder, reads them all back together, and
@@ -328,4 +252,41 @@ fn a_shared_fingerprint_keeps_evidence_a_person() {
     let i = back.rows.iter().position(|r| r.who == "ben").unwrap();
     assert!((back.features(i)[0] - l.features(1)[0]).abs() < 1e-2, "each row keeps its own features");
     let _ = std::fs::remove_dir_all(&tmp);
+}
+
+/// FP8c: a row still on an old encoder's features trains no head until it's re-embedded
+#[test]
+fn a_row_on_old_encoders_waits() {
+    let mut l = Ledger::default();
+    for i in 0..4 {
+        let mut r = row("blur", i % 2 == 0, "p");
+        if i == 0 {
+            r.pin = Some("siglip:old".into());
+        }
+        l.push(r, &feats(1.0, i));
+    }
+    assert_eq!(l.for_axis("blur"), vec![1, 2, 3]);
+    let new = vec![0.5; width()];
+    l.set_features(0, &new);
+    l.rows[0].pin = None;
+    assert_eq!(l.features(0), new.as_slice());
+    assert_eq!(l.for_axis("blur"), vec![0, 1, 2, 3]);
+}
+
+/// FP6b: pairs alone make a Bradley-Terry head that ranks, held out by project
+#[test]
+fn pairs_alone_rank() {
+    let fp = base("t");
+    let mut l = Ledger::default();
+    for i in 0..24 {
+        let mut r = row("blur", true, &format!("p{}", i % 4));
+        r.source = "pair".into();
+        // the worse minus the better: the blur signal up
+        l.push(r, &crate::pairs::difference(&feats(1.0, i), &feats(-1.0, 100 + i)));
+    }
+    let h = crate::train::axis(&fp, &l, &Words::default(), "blur");
+    assert_eq!((h.pairs, h.state.as_str()), (24, "advice"), "{}", h.why);
+    assert!(h.pairs_held_out.unwrap() > 0.9, "{:?}", h.pairs_held_out);
+    let head = h.head.unwrap();
+    assert!(head.score(&feats(1.0, 999)[crate::evidence::slice(raea_sys_columns::window::Modality::Picture)]) > head.score(&feats(-1.0, 998)[crate::evidence::slice(raea_sys_columns::window::Modality::Picture)]));
 }

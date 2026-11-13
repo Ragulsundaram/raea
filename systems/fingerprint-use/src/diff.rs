@@ -2,9 +2,9 @@
 //! cheats) through each one's learned heads and lists the axes they rank most differently, each with the moments that
 //! show it: the windows one ranks high and the other low.
 
-use crate::evidence::Ledger;
-use crate::folder::Folder;
-use crate::train::AxisHead;
+use raea_sys_fingerprint::evidence::Ledger;
+use raea_sys_fingerprint::folder::Folder;
+use raea_sys_fingerprint::train::AxisHead;
 use anyhow::{Result, anyhow};
 use serde::Serialize;
 

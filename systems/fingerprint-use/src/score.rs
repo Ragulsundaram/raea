@@ -3,10 +3,10 @@
 //! axis above the score that flags 10% of clean held-out work; a gating flag is a gating head's flag in its strong
 //! band (precision 0.9 held out). Flagged windows in a row make a moment, the thing a note is expected on.
 
-use crate::evidence::{features, slice};
-use crate::taxonomy::Fingerprint;
-use crate::train::{AxisHead, Trained, scores};
-use crate::words::Words;
+use raea_sys_fingerprint::evidence::{features, slice};
+use raea_sys_fingerprint::taxonomy::Fingerprint;
+use raea_sys_fingerprint::train::{AxisHead, Trained, scores};
+use raea_sys_fingerprint::words::Words;
 use raea_sys_columns::Columns;
 use raea_sys_columns::window::Modality;
 use serde::Serialize;

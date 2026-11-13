@@ -1,6 +1,7 @@
 //! Fingerprint (docs/fingerprint.feature FP2-FP4, docs/fingerprint.md): a person's or a team's sense of good work as
 //! a taxonomy of axes, each with a small head over the frozen encoders' columns (raea-sys-columns), trained on the
-//! device in milliseconds from evidence rows, gated until it has earned it, and scored per moment.
+//! device in milliseconds from evidence rows, and gated until it has earned it. Scoring a piece with one, and the
+//! tools around it, are raea-sys-fingerprint-use.
 //!
 //! - taxonomy.rs: the axes and raea's base taxonomy (FP2b)
 //! - folder.rs: the fingerprint's folder (FP2a)
@@ -8,22 +9,17 @@
 //! - head.rs, train.rs: the heads, held-out scores, bands, cheats and the gate (FP2c, FP2d)
 //! - words.rs: word heads from day one (FP2e)
 //! - inherit.rs: a fingerprint that extends another, its evidence and axes (FP14b)
-//! - diff.rs: where two fingerprints rank the same evidence differently (FP8b)
+//! - pairs.rs: Bradley-Terry fits on picks, hand edits and version pairs (FP6b, FP6c)
 //! - share.rs: a project's or workspace's fingerprint, its evidence a folder a person (FP8a)
-//! - which.rs: which fingerprint judges a piece: its project's, its workspace's, then the person's (FP14c)
-//! - score.rs, sheet.rs: scoring a piece, its summary, timeline and sheet (FP3a, FP3c)
 
-pub mod diff;
 pub mod evidence;
 pub mod folder;
 pub mod head;
 pub mod inherit;
-pub mod score;
+pub mod pairs;
 pub mod share;
-pub mod sheet;
 pub mod taxonomy;
 pub mod train;
-pub mod which;
 pub mod words;
 
 use anyhow::Result;

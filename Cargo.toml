@@ -83,6 +83,7 @@ members = [
     "systems/vision",
     "systems/columns",
     "systems/fingerprint",
+    "systems/fingerprint-use",
     "systems/song",
     "systems/perceive",
     "systems/footage",

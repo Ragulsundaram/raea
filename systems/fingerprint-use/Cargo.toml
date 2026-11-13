@@ -1,0 +1,18 @@
+[package]
+name = "raea-sys-fingerprint-use"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "Using a fingerprint (docs/fingerprint.feature FP3, FP6e, FP8b, FP14c): a piece scored per moment and drawn as a sheet, which fingerprint judges a piece, where two differ, and profiles of admired work"
+
+[dependencies]
+# the fingerprint: its taxonomy, folder, evidence, heads and words
+raea-sys-fingerprint = { path = "../fingerprint" }
+# a piece's columns, and the frames and sound the sheet draws
+raea-sys-columns = { path = "../columns" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+# the sheet (sheet.rs) is a PNG
+image = { version = "0.25", default-features = false, features = ["png"] }

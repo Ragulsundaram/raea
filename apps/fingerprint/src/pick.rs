@@ -4,7 +4,7 @@
 
 use crate::{flag, has, words};
 use raea_sys_fingerprint::folder::{Folder, root};
-use raea_sys_fingerprint::which::{Choice, default_file, levels, piece, which};
+use raea_sys_fingerprint_use::which::{Choice, default_file, levels, piece, which};
 use std::path::{Path, PathBuf};
 
 /// The fingerprint a verb uses: --fp, else the one that judges `file`, else the account's default, else "me"
@@ -78,7 +78,7 @@ pub(crate) fn diff_here(args: &[String]) -> i32 {
         eprintln!("raea fingerprint diff: which two? raea fingerprint diff A B");
         return 2;
     };
-    match raea_sys_fingerprint::diff::diff(&Folder::named(a), &Folder::named(b), 3) {
+    match raea_sys_fingerprint_use::diff::diff(&Folder::named(a), &Folder::named(b), 3) {
         Ok(d) if has(args, "--json") => {
             println!("{}", serde_json::to_string_pretty(&d).unwrap_or_default());
             0

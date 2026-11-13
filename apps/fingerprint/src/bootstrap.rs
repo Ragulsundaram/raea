@@ -48,7 +48,20 @@ pub struct Made {
     pub sources: usize,
     pub windows: usize,
     pub rows: usize,
+    /// windows too quiet for a gap or clipping to change them, which get only the noise damage
+    pub quiet: usize,
     pub skipped: Vec<String>,
+}
+
+/// Below this a window is near silence: a gap or clipping changes nothing, and a row saying it does teaches noise
+const QUIET_DB: f32 = -45.0;
+
+/// The window's loudness in dB over all of it
+fn loudness(pcm: &[f32]) -> f32 {
+    if pcm.is_empty() {
+        return -100.0;
+    }
+    (10.0 * (pcm.iter().map(|x| x * x).sum::<f32>() / pcm.len() as f32).max(1e-10).log10()).max(-100.0)
 }
 
 fn zeros_to(mut v: Vec<f32>, n: usize) -> Vec<f32> {
@@ -122,6 +135,7 @@ pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mu
                     region: None,
                     words: None,
                     at: 0,
+                    pin: None,
                 };
                 l.push(r, &features(c, 0.0, WIN));
             };
@@ -131,8 +145,10 @@ pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mu
                 let (sig, look) = picture_of(enc, fr, &clean.sig, &clean.look, &damage::picture(fr, kind))?;
                 push(l, &Columns { sig, look, ..clean.clone() }, axis, kind, source);
             }
+            let quiet = loudness(&w16) < QUIET_DB;
+            made.quiet += quiet as usize;
             let sound = SOUND.iter().map(|k| (*k, *k, "damage")).chain(CHEATS.iter().filter(|c| SOUND.contains(&c.1)).map(|c| (c.0, c.1, "cheat")));
-            for (kind, axis, source) in sound {
+            for (kind, axis, source) in sound.filter(|s| !quiet || s.1 == "noise") {
                 let (d16, d48) = (damage::sound(&w16, kind, 16_000, &mut noise), damage::sound(&w48, kind, 48_000, &mut noise));
                 let (clap, yam) = enc.sound(&d16, &d48)?;
                 push(l, &Columns { clap, yam, level: media::levels(&d16, 16_000), ..clean.clone() }, axis, kind, source);

@@ -6,9 +6,9 @@ use raea_sys_columns::{Encoders, FPS, media};
 use raea_sys_fingerprint::evidence::{Ledger, Row, features};
 use raea_sys_fingerprint::folder::{Folder, root};
 use raea_sys_fingerprint::inherit;
-use raea_sys_fingerprint::score::{Scored, clock, score, summary, timeline};
-use raea_sys_fingerprint::sheet::{Tick, sheet};
-use raea_sys_fingerprint::taxonomy::{Fingerprint, base};
+use raea_sys_fingerprint_use::score::{Scored, clock, score, summary, timeline};
+use raea_sys_fingerprint_use::sheet::{Tick, sheet};
+use raea_sys_fingerprint::taxonomy::{Applies, Fingerprint, base};
 use raea_sys_fingerprint::words::Words;
 use crate::bootstrap;
 use raea_sys_fingerprint::{report_text, retrain};
@@ -31,6 +31,13 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, s
         "bootstrap" => boot(enc, rest, cwd, eval, say),
         "teach" => teach(enc, rest, cwd, eval),
         "approve" => approved(enc, rest, cwd, eval),
+        "reembed" => reembedded(enc, rest, cwd, eval),
+        "pair" | "versions" => paired(enc, args[0].as_str(), rest, cwd, eval),
+        "learn-notes" => learned(enc, rest, eval),
+        "profile" => {
+            let dir = crate::pick::chosen(rest, None).0;
+            crate::profiles::make(enc, &dir, rest, cwd).map(|o| (o, 0))
+        }
         "score" => scored(enc, rest, cwd, eval),
         v => Err(anyhow!("no verb {v}")),
     };
@@ -41,7 +48,8 @@ fn pins(enc: &Encoders) -> BTreeMap<String, String> {
     enc.pins().into_iter().collect()
 }
 
-/// A new fingerprint as `new` makes it: raea's base axes, or the axes of the one it --extends, with --who and --about
+/// A new fingerprint as `new` makes it: raea's base axes, or the axes of the one it --extends, with --who and --about,
+/// and the kinds of piece and project tags it judges (--kinds, --tags, each comma-separated)
 pub(crate) fn shaped(short: &str, args: &[String], parent: Option<Fingerprint>) -> Fingerprint {
     let mut fp = base(short);
     if let Some(p) = parent {
@@ -50,6 +58,11 @@ pub(crate) fn shaped(short: &str, args: &[String], parent: Option<Fingerprint>) 
     }
     fp.who = flag(args, "--who").map(str::to_string).or_else(|| std::env::var("USER").ok());
     fp.about = flag(args, "--about").map(str::trim).filter(|a| !a.is_empty()).map(str::to_string);
+    let list = |f: &str| -> Vec<String> { flag(args, f).map(|v| v.split(',').map(|s| s.trim().to_ascii_lowercase()).filter(|s| !s.is_empty()).collect()).unwrap_or_default() };
+    let (kinds, tags) = (list("--kinds"), list("--tags"));
+    if !kinds.is_empty() || !tags.is_empty() {
+        fp.applies = Some(Applies { kinds, tags });
+    }
     fp
 }
 
@@ -94,7 +107,12 @@ fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option<&Path>) ->
         raw.encoders = here;
         dir.rewrite(&raw)?;
     } else if raw.encoders != here {
-        bail!("{} was trained on other encoders ({:?}) than this machine has ({:?}); its heads refuse these columns", dir.ts().display(), raw.encoders, here);
+        bail!(
+            "{} was trained on other encoders ({:?}) than this machine has ({:?}); its heads refuse these columns. `raea fingerprint reembed FOLDER...` moves its evidence to these, re-embedding the rows whose media it finds",
+            dir.ts().display(),
+            raw.encoders,
+            here
+        );
     }
     // a fingerprint that extends another judges with its parents' axes too (FP14b)
     let fp = inherit::axes(&raw, &inherit::parents(&raw, Some(eval)));
@@ -162,6 +180,40 @@ fn approved(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Resu
     Ok((out, 0))
 }
 
+/// `reembed`: the evidence moved to this machine's encoders (reembed.rs, FP8c), the words remade and the heads retrained
+fn reembedded(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
+    let dir = crate::pick::chosen(args, None).0;
+    let raw = dir.read(Some(eval))?;
+    let (fp, out) = crate::reembed::reembed(enc, &dir, raw, pins(enc), args, cwd)?;
+    let fp = inherit::axes(&fp, &inherit::parents(&fp, Some(eval)));
+    let w = Words::build(enc, &fp)?;
+    dir.write_words(&w)?;
+    retrain(&dir, &fp, &w, &dir.ledger()?, None)?;
+    Ok((out, 0))
+}
+
+/// `pair` and `versions` (pairing.rs, FP6b, FP6c), then the heads retrained
+fn paired(enc: &mut Encoders, verb: &str, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
+    let first = words(args).map_err(|e| anyhow!(e))?.first().map(|f| at(cwd, f));
+    let (dir, fp, w) = open(enc, args, eval, first.as_deref())?;
+    let who = fp.who.clone().unwrap_or_else(|| "me".into());
+    let mut l = dir.ledger()?;
+    let out = if verb == "pair" { crate::pairing::pair(enc, &mut l, &who, args, cwd, project_of)? } else { crate::pairing::versions(enc, &mut l, &who, args, cwd, project_of)? };
+    dir.write_ledger(&l)?;
+    retrain(&dir, &fp, &w, &l, None)?;
+    Ok((out, 0))
+}
+
+/// `learn-notes` (notes.rs, FP5a): checked readings as evidence, then the heads retrained
+fn learned(enc: &mut Encoders, args: &[String], eval: Eval) -> Result<(String, i32)> {
+    let (dir, fp, w) = open(enc, args, eval, None)?;
+    let mut l = dir.ledger()?;
+    let out = crate::notes::learn(enc, &dir, &mut l)?;
+    dir.write_ledger(&l)?;
+    retrain(&dir, &fp, &w, &l, None)?;
+    Ok((out, 0))
+}
+
 fn teach(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<(String, i32)> {
     let file = at(cwd, words(args).map_err(|e| anyhow!(e))?.first().ok_or_else(|| anyhow!("which file?"))?);
     let (dir, fp, w) = open(enc, args, eval, Some(&file))?;
@@ -193,6 +245,7 @@ fn teach(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result<
         region: region.transpose()?,
         words: flag(args, "--words").map(str::to_string),
         at: 0,
+        pin: None,
     };
     let mut l = dir.ledger()?;
     l.push(row, &features(&c, a, b));
@@ -256,6 +309,9 @@ fn scored(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result
     if has(args, "--timeline") {
         out += &timeline(&s);
     }
+    if let Some(p) = flag(args, "--profile") {
+        out += &crate::profiles::against(enc, &dir, p, &file)?.0;
+    }
     if let Some(png) = flag(args, "--sheet") {
         let png = at(cwd, png);
         let frames: Vec<media::Rgb> = (0..12).filter_map(|i| media::frames(&file, FPS, c.dur * (i as f64 + 0.5) / 12.0, 0.25).ok()?.into_iter().next()).collect();
@@ -289,7 +345,7 @@ pub(crate) fn report_here(args: &[String]) -> i32 {
 #[cfg(test)]
 mod tests {
     use super::shaped;
-    use raea_sys_fingerprint::taxonomy::base;
+    use raea_sys_fingerprint::taxonomy::{Applies, base};
 
     fn args(xs: &[&str]) -> Vec<String> {
         xs.iter().map(|x| x.to_string()).collect()
@@ -311,5 +367,8 @@ mod tests {
         assert_eq!(ads.extends.as_deref(), Some("me"));
         assert_eq!(ads.axes, parent.axes);
         assert_eq!(shaped("x", &args(&["x", "--about", "  "]), None).about, None);
+        assert_eq!(own.applies, None);
+        let judged = shaped("ads", &args(&["ads", "--kinds", "ad, Playable", "--tags", "brand,"]), None);
+        assert_eq!(judged.applies, Some(Applies { kinds: vec!["ad".into(), "playable".into()], tags: vec!["brand".into()] }));
     }
 }

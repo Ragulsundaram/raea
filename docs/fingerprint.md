@@ -46,15 +46,16 @@ media ─► columns (once, at ingest, cached by content hash)
 | part | model | size on disk | runs at score time | cost for a 90 s render |
 |---|---|---|---|---|
 | picture columns | SigLIP 2 base p16-224 (image tower) | 95 MB int8, 372 MB fp32 | yes | 17 s on ort's CPU path (47 ms a frame); MLX on the Mac once MX5 lands; never Core ML's GPU |
-| sound columns | CLAP htsat-unfused (audio tower) | 34 MB q8, 117 MB fp32 | yes | about 3 s (33 ms a 2 s clip) |
+| sound columns | CLAP htsat-unfused (audio tower) | 117 MB fp32 (34 MB q8 copy, off by default) | yes | about 3 s (33 ms a 2 s clip) |
 | sound events | YAMNet | 16 MB | yes | under 1 s |
 | change and look | none | none | yes | negligible |
 | words, scripts, boards, stills | EmbeddingGemma 2 | 841 MB q8, already the Library's | only for non-video items | 2.3 s a window; reads Library rows instead where they exist |
-| axis words → vectors | CLAP text tower (127 MB q8), SigLIP 2 text tower | | **no**: only when an axis's words change; the vectors are stored in the fingerprint | |
+| axis words → vectors | CLAP text tower (502 MB fp32), SigLIP 2 text tower | | **no**: only when an axis's words change; the vectors are stored in the fingerprint | |
 | heads, weighting, profile | ours | 7 KB a head | yes | milliseconds |
 | things (footage only) | EdgeTAM, Depth Anything 3 Small | 37 MB, 51 MB (both already in perception) | only for thing-level axes and checks | about 86 ms a frame for EdgeTAM |
 
-Only CLAP is a new download. Its q8 audio and text towers come to 161 MB. Every encoder runs in Rust:
+Only CLAP is a new download. Its fp32 audio and text towers come to 619 MB. The q8 copies (161 MB) match fp32 only to
+cosine 0.998, and differ between ONNX Runtime builds, so fp32 is the default (RAEA_CLAP_DTYPE=q8 picks the copies). Every encoder runs in Rust:
 - **ONNX Runtime** (ort, through raea-sys-ml) is the path on every platform and the reference. YAMNet already runs on
   it, CLAP's audio and text towers join it, and CLAP's tokenizer is the `tokenizers` crate raea-sys-speech already
   uses.
@@ -72,6 +73,12 @@ safer than earshot's cache key of path, size, modification time and sampled bloc
 **Used only for labelling and training, never at score time:** the Director reading notes into labels, EdgeTAM
 growing a click into a region, the open-vocabulary grounder (gated, FP13b), the damage and red-team generators, the
 text towers, and the gated LoRA trainer (FP10).
+
+**Training stays plain Rust until FP10.** The encoders are frozen and inference only, so they stay on ort. A head is
+a logistic fit on a few hundred to a few thousand rows of at most 1,024 values; L-BFGS in plain Rust fits one in
+milliseconds and needs no framework. A training framework earns its place only with FP10's adapter, which back-propagates
+through SigLIP 2; then MLX's autograd and Burn (Metal, CUDA and CPU backends) are compared on PyTorch parity and on
+what the person's device can run.
 
 ### Axes and their heads
 
@@ -253,6 +260,15 @@ source. Each cell is AUC at k = 4 / 16 / 32 labelled windows a class:
 - **Window length.** 5 s windows change little: words 0.99 / 0.60 / 0.98; heads at k = 4 0.98 / 0.76 / 0.98.
 - **q8 copy.** It holds the numbers (words 0.99 / 0.67 / 0.97), with audio vectors at cosine 0.9975 to fp32.
 - **Cost.** 33 ms a clip on the CPU.
+
+**FP1a. The Rust columns match, measured 11-12.** raea-sys-columns runs every encoder on ONNX Runtime's CPU kernels
+(raea-sys-ml), and its tests check it against the spike (systems/columns/src/tests.rs, run with --ignored):
+- **SigLIP 2's image tower** against ONNX fp32 in Python on the same frames: cosine 1.000000.
+- **CLAP's audio tower**, fp32, its log-mel front end in Rust: mean and worst cosine 1.00000 over 260 clips. The q8
+  copy came to a worst cosine of 0.9978, a difference between ONNX Runtime builds rather than the front end (fp32
+  against fp32 matches), so fp32 is the default.
+- **CLAP's text tower**: 1.00000 over the 40 vocabulary descriptions, once padded as transformers.js padded the
+  batch. The export takes no attention mask, so raea embeds each text alone, unpadded.
 
 **FP0b's lessons on method.**
 - Standardise columns. Unstandardised, SigLIP hid behind YAMNet's larger values: blur scored 0.75 at k = 32.
