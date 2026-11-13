@@ -33,8 +33,14 @@ pub(crate) fn text_doc(opt: &usvg::Options, font: &Value, text: &str, at: (f32, 
         }).collect(),
         None => escape(text),
     };
+    // the context's letterSpacing and wordSpacing (px): usvg spaces after every letter, the last one's too, as Chrome's
+    // canvas does (vendor/usvg)
+    let spacing: String = [("letter-spacing", "letterSpacing"), ("word-spacing", "wordSpacing")]
+        .iter()
+        .filter_map(|(attr, key)| font[key].as_f64().filter(|v| *v != 0.0).map(|v| format!(" {attr}=\"{v}\"")))
+        .collect();
     format!(
-        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\"><text x=\"{}\" y=\"{}\" font-size=\"{}\" font-family=\"{fam}\" font-weight=\"{}\" font-style=\"{}\" text-anchor=\"{anchor}\" dominant-baseline=\"{base}\" {paint}>{esc}</text></svg>",
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\"><text x=\"{}\" y=\"{}\" font-size=\"{}\" font-family=\"{fam}\" font-weight=\"{}\" font-style=\"{}\" text-anchor=\"{anchor}\" dominant-baseline=\"{base}\"{spacing} {paint}>{esc}</text></svg>",
         at.0,
         at.1,
         crate::paint::f(&font["size"]),
@@ -111,7 +117,9 @@ pub fn advances(opt: &usvg::Options, args: &Value) -> Value {
             break;
         }
         db.with_face_data(id, |data, index| {
-            let Ok(f) = ttf_parser::Face::parse(data, index) else { return };
+            let Ok(mut f) = ttf_parser::Face::parse(data, index) else { return };
+            // a variable face at the weight asked for, as usvg draws it (a space's advance moves with it)
+            f.set_variation(ttf_parser::Tag::from_bytes(b"wght"), f32::from(weight));
             let em = f64::from(f.units_per_em());
             for (c, slot) in chars.iter().zip(out.iter_mut()).filter(|(_, s)| s.is_none()) {
                 if let Some(a) = f.glyph_index(*c).and_then(|g| f.glyph_hor_advance(g)) {
@@ -157,5 +165,10 @@ mod tests {
         assert!(g(&mt("  ", "left"), "width") > 50.0 && g(&mt("  ", "left"), "actualBoundingBoxRight") == 0.0);
         assert!((g(&mt(" H ", "left"), "width") - g(&h, "width") - g(&mt("  ", "left"), "width")).abs() < 0.01, "{}", mt(" H ", "left"));
         assert_eq!(g(&mt("", "left"), "width"), 0.0);
+        // letterSpacing after every character, the last one's too, and wordSpacing after each space, as Chrome
+        let spaced = |ls: f64, ws: f64| g(&metrics(&opt, &json!({"font": {"family": "Arial", "size": 100, "weight": "400", "style": "normal", "letterSpacing": ls, "wordSpacing": ws}, "text": "im im", "align": "left", "baseline": "alphabetic"})), "width");
+        let plain = spaced(0.0, 0.0);
+        assert!((spaced(-2.0, 0.0) - (plain - 10.0)).abs() < 0.01, "{plain} {}", spaced(-2.0, 0.0));
+        assert!((spaced(0.0, 7.0) - (plain + 7.0)).abs() < 0.01, "{plain} {}", spaced(0.0, 7.0));
     }
 }

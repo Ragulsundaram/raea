@@ -1,7 +1,7 @@
 // CanvasRenderingContext2D.
 import * as wire from "../wire";
 import { base64, encodePng } from "./png";
-import { COMPOSITES, CanvasHost, Gradient, ID, ImageData_, Paint, Path, Path2D_, S, State, fresh, measure, mul, paintOf, parseColor, parseFilter, parseFont, unb64 } from "./all";
+import { COMPOSITES, CanvasHost, Gradient, ID, ImageData_, Paint, Path, Path2D_, S, State, fresh, measure, mul, paintOf, parseColor, parseFilter, parseFont, parseSpacing, unb64 } from "./all";
 
 export class CanvasRenderingContext2D_ {
   private s: State = fresh();
@@ -234,6 +234,28 @@ export class CanvasRenderingContext2D_ {
   set font(v: string) {
     if (parseFont(v)) this.s.font = v;
   }
+  // tracking and word spacing, as Chrome's canvas has them (snapcn's sky-lockup measures its words with letterSpacing
+  // set: layout-reads LR10); an em is the font's as it is when it's set
+  get letterSpacing() {
+    return `${this.s.letterSpacing}px`;
+  }
+  set letterSpacing(v: string) {
+    const n = parseSpacing(v, this.s.font);
+    if (n !== null) this.s.letterSpacing = n;
+  }
+  get wordSpacing() {
+    return `${this.s.wordSpacing}px`;
+  }
+  set wordSpacing(v: string) {
+    const n = parseSpacing(v, this.s.font);
+    if (n !== null) this.s.wordSpacing = n;
+  }
+  /** the font the host shapes text in: the CSS font's parts, and the spacing when there is any */
+  private get shaped() {
+    const f = parseFont(this.s.font)!;
+    const { letterSpacing, wordSpacing } = this.s;
+    return letterSpacing || wordSpacing ? { ...f, letterSpacing, wordSpacing } : f;
+  }
   get textAlign() {
     return this.s.align;
   }
@@ -411,7 +433,7 @@ export class CanvasRenderingContext2D_ {
     this.push(["clear", p.d, { ...this.state(), shadow: null }]);
   }
   private text(kind: "fill" | "stroke", text: string, x: number, y: number, maxWidth?: number) {
-    const f = parseFont(this.s.font)!;
+    const f = this.shaped;
     const align = this.side;
     const paint = kind === "fill" ? paintOf(this.s.fill, this.s.ts) : paintOf(this.s.stroke, this.s.ts);
     this.push(["text", kind, String(text), x, y, f, align, this.s.baseline, maxWidth ?? null, paint, kind === "stroke" ? this.strokeParams() : null, this.state()]);
@@ -427,7 +449,7 @@ export class CanvasRenderingContext2D_ {
     return this.s.align === "start" ? "left" : this.s.align === "end" ? "right" : this.s.align;
   }
   measureText(text: string) {
-    return measure(this.s.font, String(text), this.side, this.s.baseline);
+    return measure(this.shaped, String(text), this.side, this.s.baseline);
   }
   drawImage(img: { src?: string; currentSrc?: string; _canvas2d?: CanvasRenderingContext2D_; width?: number; height?: number; naturalWidth?: number; naturalHeight?: number }, ...a: number[]) {
     let s: (number | null)[];

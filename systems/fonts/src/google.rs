@@ -86,8 +86,9 @@ pub fn load_now(family: &str) -> usize {
         return faces.len();
     }
     let faces = Arc::new(fetch(family));
-    for (ttf, _, _) in faces.iter() {
-        blitz_dom::util::add_svg_font(ttf.to_vec(), Some(family));
+    for (ttf, weight, italic) in faces.iter() {
+        // each at the weight and style its @font-face gives it (one variable file is every weight of a family)
+        blitz_dom::util::add_svg_font(ttf.to_vec(), Some(family), Some((*weight as u16, *italic)));
     }
     known.insert(family.to_string(), faces.clone());
     faces.len()
@@ -132,7 +133,7 @@ pub fn face_now(family: &str, url: &str) -> usize {
     let Ok(bytes) = raea_io_net::cache::read(url) else { return 0 };
     let ttf = if bytes.starts_with(b"wOF2") { wuff::decompress_woff2(&bytes).ok() } else { Some(bytes) };
     let Some(ttf) = ttf else { return 0 };
-    blitz_dom::util::add_svg_font(ttf, Some(family));
+    blitz_dom::util::add_svg_font(ttf, Some(family), None);
     LOADED.lock().unwrap().push(key);
     1
 }

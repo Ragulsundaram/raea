@@ -50,20 +50,69 @@ pub(crate) static FONT_DB: LazyLock<Mutex<Arc<fontdb::Database>>> = LazyLock::ne
     Mutex::new(Arc::new(db))
 });
 
-/// raea: a face for SVG text (a page's @font-face, an app's bundled faces), as HTML text has it; `family` is the name
-/// the page knows it by (an @font-face's font-family), which the face is found by first
+/// raea: the faces the app bundles, by family in lower case: a page's own faces of a family take its place, as an
+/// @font-face shadows a local font of the same name in Chrome
 #[cfg(feature = "svg")]
-pub fn add_svg_font(bytes: Vec<u8>, family: Option<&str>) {
+static BUNDLED: LazyLock<Mutex<std::collections::HashMap<String, Vec<fontdb::ID>>>> = LazyLock::new(Default::default);
+
+/// raea: a face the page gives SVG text (its @font-face's), as HTML text has it; `family` is the name the page knows
+/// it by (an @font-face's font-family), which the face is found by first. `face`: the @font-face's weight and whether
+/// it's italic. SVG text finds a face by them, as Chrome does, not by the file's own: Google serves one variable file
+/// as each of Inter's weights, whose own weight is 400, so a 500 found a 400 face (or the bundled static 400) and 600
+/// the bundled static 700, and the text drew at 400 or 700 (layout-reads LR10). The app's bundled faces of the family
+/// leave once the page gives its own.
+#[cfg(feature = "svg")]
+pub fn add_svg_font(bytes: Vec<u8>, family: Option<&str>, face: Option<(u16, bool)>) {
+    add_face(bytes, family, face, false);
+}
+
+/// raea: a face the app bundles for SVG text (raea-sys-fonts' faces), found by `family` until a page gives its own
+#[cfg(feature = "svg")]
+pub fn add_bundled_svg_font(bytes: Vec<u8>, family: Option<&str>, face: Option<(u16, bool)>) {
+    add_face(bytes, family, face, true);
+}
+
+#[cfg(feature = "svg")]
+fn add_face(bytes: Vec<u8>, family: Option<&str>, face: Option<(u16, bool)>, bundled: bool) {
+    // once each: a face given again (document.fonts.load and the page's @font-face both give Google's) would be two
+    // faces of one weight and style, which canvas text takes for a family split by unicode-range (raea-sys-canvas
+    // subsets.rs)
+    {
+        use std::hash::{Hash, Hasher};
+        static SEEN: LazyLock<Mutex<std::collections::HashSet<u64>>> = LazyLock::new(Default::default);
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        (&bytes, family, face).hash(&mut h);
+        if !SEEN.lock().unwrap().insert(h.finish()) {
+            return;
+        }
+    }
     let mut db = FONT_DB.lock().unwrap();
     let db = Arc::make_mut(&mut db);
-    let ids = db.load_font_source(fontdb::Source::Binary(Arc::new(bytes)));
-    let Some(family) = family else { return };
-    for id in ids {
-        if let Some(mut info) = db.face(id).cloned() {
+    let mut bundled_ids = BUNDLED.lock().unwrap();
+    // the page's own faces of a family: the bundled ones of that name go
+    if let (false, Some(family)) = (bundled, family) {
+        for id in bundled_ids.remove(&family.to_lowercase()).unwrap_or_default() {
             db.remove_face(id);
-            info.families.insert(0, (family.to_string(), fontdb::Language::English_UnitedStates));
-            db.push_face_info(info);
         }
+    }
+    let mut ids = db.load_font_source(fontdb::Source::Binary(Arc::new(bytes))).to_vec();
+    if family.is_some() || face.is_some() {
+        for id in std::mem::take(&mut ids) {
+            if let Some(mut info) = db.face(id).cloned() {
+                db.remove_face(id);
+                if let Some(family) = family {
+                    info.families.insert(0, (family.to_string(), fontdb::Language::English_UnitedStates));
+                }
+                if let Some((weight, italic)) = face {
+                    info.weight = fontdb::Weight(weight);
+                    info.style = if italic { fontdb::Style::Italic } else { fontdb::Style::Normal };
+                }
+                ids.push(db.push_face_info(info));
+            }
+        }
+    }
+    if let (true, Some(family)) = (bundled, family) {
+        bundled_ids.entry(family.to_lowercase()).or_default().extend(ids);
     }
 }
 
@@ -247,17 +296,9 @@ fn base64_decode(s: &str) -> Option<Vec<u8>> {
 /// Parse an SVG image.
 #[cfg(feature = "svg")]
 pub(crate) fn parse_svg_image(source: &[u8]) -> Result<crate::node::SvgImageData, usvg::Error> {
-    // raea: its own @font-face faces join the SVG faces first (once each), so its text is drawn in them
-    {
-        use std::hash::{Hash, Hasher};
-        static SEEN: LazyLock<Mutex<std::collections::HashSet<u64>>> = LazyLock::new(Default::default);
-        for (family, bytes) in svg_font_faces(source) {
-            let mut h = std::collections::hash_map::DefaultHasher::new();
-            (&family, &bytes).hash(&mut h);
-            if SEEN.lock().unwrap().insert(h.finish()) {
-                add_svg_font(bytes, Some(&family));
-            }
-        }
+    // raea: its own @font-face faces join the SVG faces first (add_svg_font takes each once), so its text is drawn in them
+    for (family, bytes) in svg_font_faces(source) {
+        add_svg_font(bytes, Some(&family), None);
     }
     let options = usvg::Options {
         fontdb: Arc::clone(&FONT_DB.lock().unwrap()),
@@ -283,6 +324,40 @@ impl ToColorColor for AbsoluteColor {
 #[cfg(all(test, feature = "svg"))]
 mod svg_tests {
     use super::parse_svg_image;
+
+    /// raea: a face is found by its @font-face weight, not its file's, and a page's faces of a family shadow the app's
+    /// bundled ones (Google's variable Inter beside raea's bundled static Inter drew 500 as 400, layout-reads LR10)
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn an_svg_face_is_found_at_its_font_face_weight() {
+        use super::{add_bundled_svg_font, add_svg_font, fontdb, svg_fonts};
+        let family = "raea lr10 weight";
+        let stat = std::fs::read("/System/Library/Fonts/Supplemental/Arial.ttf").unwrap();
+        let var = std::fs::read("/System/Library/Fonts/SFNS.ttf").unwrap();
+        add_bundled_svg_font(stat, Some(family), Some((400, false)));
+        let named = |db: &fontdb::Database| db.faces().filter(|f| f.families.iter().any(|(n, _)| n == family)).count();
+        assert_eq!(named(&svg_fonts()), 1, "the bundled face, until the page gives its own");
+        for w in [400, 500, 600] {
+            add_svg_font(var.clone(), Some(family), Some((w, false)));
+        }
+        let db = svg_fonts();
+        assert_eq!(named(&db), 3, "the page's three; the bundled one has gone");
+        let at = |w: u16| {
+            let q = fontdb::Query { families: &[fontdb::Family::Name(family)], weight: fontdb::Weight(w), ..Default::default() };
+            let id = db.query(&q).unwrap();
+            let face = db.face(id).unwrap();
+            (face.weight.0, face.post_script_name.clone())
+        };
+        let (w, name) = at(500);
+        assert_eq!(w, 500, "{name}");
+        assert!(!name.contains("Arial"), "500 found the static 400: {name}");
+        assert_eq!(at(600).0, 600);
+        // given again, it isn't a second face of that weight
+        let count = |db: &fontdb::Database| db.faces().filter(|f| f.families.iter().any(|(n, _)| n == family) && f.weight.0 == 500).count();
+        assert_eq!(count(&db), 1);
+        add_svg_font(var, Some(family), Some((500, false)));
+        assert_eq!(count(&svg_fonts()), 1);
+    }
 
     #[test]
     fn svg_without_xmlns_parses() {

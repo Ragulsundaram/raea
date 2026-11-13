@@ -19,5 +19,6 @@ resvg = { version = "=0.48.1", default-features = false, features = ["text"] }
 tiny-skia = { version = "=0.12.0", default-features = false, features = ["std", "simd"] }
 # read's pixels across the wire
 base64 = "0.22"
-# which file of a family split by unicode-range has a glyph (subsets.rs)
-ttf-parser = { version = "0.25", default-features = false, features = ["std"] }
+# which file of a family split by unicode-range has a glyph (subsets.rs), and a character's advance at the weight asked
+# for (measure.rs: a variable face's HVAR)
+ttf-parser = { version = "0.25", default-features = false, features = ["std", "variable-fonts"] }

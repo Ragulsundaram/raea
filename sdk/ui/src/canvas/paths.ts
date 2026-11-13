@@ -108,6 +108,9 @@ export type State = {
   alpha: number;
   comp: string;
   font: string;
+  /** ctx.letterSpacing and ctx.wordSpacing, px */
+  letterSpacing: number;
+  wordSpacing: number;
   align: CanvasTextAlign;
   baseline: CanvasTextBaseline;
   shadowColor: RGBA;
@@ -123,7 +126,7 @@ export type State = {
 
 export const fresh = (): State => ({
   ts: ID, fill: [0, 0, 0, 1], stroke: [0, 0, 0, 1], lineWidth: 1, lineCap: "butt", lineJoin: "miter", miterLimit: 10, dash: [], dashOffset: 0,
-  alpha: 1, comp: "source-over", font: "10px sans-serif", align: "start", baseline: "alphabetic", shadowColor: [0, 0, 0, 0], shadowBlur: 0, shadowX: 0,
+  alpha: 1, comp: "source-over", font: "10px sans-serif", letterSpacing: 0, wordSpacing: 0, align: "start", baseline: "alphabetic", shadowColor: [0, 0, 0, 0], shadowBlur: 0, shadowX: 0,
   shadowY: 0, smooth: true, filter: "none", filters: [], clip: [],
 });
 
@@ -136,6 +139,16 @@ export function parseFont(f: string): { size: number; family: string; weight: st
   const n = parseFloat(m[5]);
   const size = m[6] === "pt" ? (n * 4) / 3 : m[6] === "em" || m[6] === "rem" ? n * 16 : n;
   return { size, family: m[7].trim(), weight: m[3] === "bold" ? "700" : m[3] && /\d/.test(m[3]) ? m[3] : "400", style: m[1] === "italic" || m[4] === "italic" ? "italic" : "normal" };
+}
+
+/** ctx.letterSpacing or ctx.wordSpacing as px: a CSS length (px, em of the context's font as it is, rem), or null for
+ *  one a browser ignores */
+export function parseSpacing(v: string, font: string): number | null {
+  const m = String(v).match(/^\s*(-?(?:\d+\.?\d*|\.\d+))(px|em|rem)?\s*$/);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  if (!m[2]) return n === 0 ? 0 : null;
+  return m[2] === "px" ? n : m[2] === "rem" ? n * 16 : n * (parseFont(font)?.size ?? 10);
 }
 
 /** Fonts' advances as the host measured them: family -> {em, advance per char, default advance} (`fonts` event). */

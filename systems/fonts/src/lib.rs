@@ -82,7 +82,7 @@ fn build(dir: &Path) -> (FontContext, Own) {
         let named = p.file_name().and_then(|f| index.get(f.to_str()?));
         // SVG text and a canvas's text (usvg's font database) have the bundled faces too, by the same family name: a
         // composition's canvas measured and drew Inter in a fallback face (layout-reads LR6)
-        blitz_dom::util::add_svg_font(ttf.clone(), named.map(|(family, _, _)| family.as_str()));
+        blitz_dom::util::add_bundled_svg_font(ttf.clone(), named.map(|(family, _, _)| family.as_str()), named.map(|(_, weight, italic)| (*weight as u16, *italic)));
         let info = named.map(|(family, weight, italic)| FontInfoOverride {
             family_name: Some(family.as_str()),
             weight: Some(FontWeight::new(*weight)),
