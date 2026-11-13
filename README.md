@@ -103,7 +103,9 @@ floor (`raea check hello.mp4`). `raea init` starts a project, and `raea --help` 
 - **Agent skills.** They live in [raea-skills](https://github.com/shinyobjectz/raea-skills), pinned here as
   [`skills/`](skills): `raea` teaches an agent to write, render and check raea compositions, 3D and games
   included. The installer adds it to `~/.claude/skills`, and `raea skills install --agent NAME` to other agents.
-- **Claude Code plugin.** `/plugin marketplace add shinyobjectz/raea`, then `/plugin install raea@raea`.
+- **Claude plugin.** The raea skill and two hooks (raea's quick check after a composition is saved, and media shown in
+  the raea app). In Claude Code: `/plugin install raea --marketplace shinyobjectz/raea-skills`. It's the `skills/`
+  folder of raea-skills, and `/plugin marketplace add shinyobjectz/raea` installs the same one.
 - **Craft guides.** `raea guide` prints the floor every edit is held to and the guides for pitches, explainers, stories,
   games, motion, music and layout. `raea context PROJECT` says what to read before working on a project.
 

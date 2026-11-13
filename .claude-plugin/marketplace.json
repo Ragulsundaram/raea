@@ -1,11 +1,14 @@
 {
   "name": "raea",
-  "owner": { "name": "Shane Murphy", "url": "https://raea.io" },
+  "owner": { "name": "raea", "url": "https://raea.io" },
+  "metadata": {
+    "description": "raea's plugin for Claude, from the skills/ folder of shinyobjectz/raea-skills: the raea skill and its hooks."
+  },
   "plugins": [
     {
       "name": "raea",
-      "source": "./",
-      "description": "Make video, motion graphics, games and 3D with raea, the Render Anything Engine."
+      "source": { "source": "git-subdir", "url": "https://github.com/shinyobjectz/raea-skills.git", "path": "skills" },
+      "description": "Make video, motion graphics, games and 3D scenes with raea, the Render Anything Engine: the raea skill, and hooks that run raea's quick check on a composition after it's saved and show media in the raea app instead of the Mac's viewer."
     }
   ]
 }
