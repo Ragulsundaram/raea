@@ -651,13 +651,21 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         camera, with no model run
       And 11-12, so far: `raea fingerprint things FILE [--json]` (raea-sys-fingerprint-things things.rs): the shots
         (raea-perceive cuts), each thing's box, the median 1/depth of it, of its base and of the ground under it every
-        half second, and one SigLIP 2 vector on its box where it's largest (the box pooled, until FP12a's patch tokens);
+        half second, and one SigLIP 2 vector where it's largest: its frame's patch tokens (FP12a) averaged over the cells
+        its mask covers half of or more, the one it covers most for a thing under a cell (on the floating red-team
+        render the two boxes from one component are the nearest pair, 0.77, and the two end posts the next, 0.61);
         and the camera's path (raea-perceive flow, Lucas-Kanade at 512: Vision's flow read a pan over plain ground at a
         quarter of its speed). A thing comes from each mark drawn on the piece's notes, followed by EdgeTAM (grow.rs
         follow), or on a render from NAME.layers beside it (the reader moved from runtime/world into raea-sys-layers
         read.rs, both use it). Depth is the render's own reverse Z when NAME.aov (`raea render EDIT --aov -o NAME.aov`)
-        is beside it, else Depth Anything 3 Small (depth-values now takes many frames to one model load). The scene's
-        camera isn't read yet: a render's path is the flow's too
+        is beside it, else Depth Anything 3 Small (depth-values now takes many frames to one model load). A render's
+        camera path is its own, from the same pass's motion vectors (NAME.aov/motion): the median move of every pixel as
+        the pan and the median move out from the middle, after the pan, as the zoom, eight times a second, with no
+        model run; footage keeps the flow's. On the lurch red-team render (the camera trucks 0.02 a frame, then 0.06
+        from 1.5 s) the pass reads -0.063 frames a second, then -0.190, three times as fast, where flow read -0.015,
+        then -0.066; on the two renders whose camera holds still it reads 0 where flow read moves up to 0.1. Not yet:
+        footage's camera path from Depth Anything 3 Small. raea-perceive's port gives depth only (depth-values), not the
+        model's camera head, so footage's path is still the flow's, which reads a pan over plain ground slow
 
     @needs:FP13a,FP5a
     Scenario: FP13b. A note's words find its thing (the test that decides whether a grounder ships)

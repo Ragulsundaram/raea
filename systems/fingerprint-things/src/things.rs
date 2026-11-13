@@ -1,9 +1,10 @@
 //! A shot's things (docs/fingerprint.feature FP13a): per shot, its things, each with its box, its depth and the ground
-//! under it at every half second, and one SigLIP 2 vector; the camera's path; and each frame's detail. A thing comes
+//! under it at every half second, and one SigLIP 2 vector (its patch tokens pooled in its mask); the camera's path; and each frame's detail. A thing comes
 //! from a person's mark, followed by EdgeTAM (grow.rs), or on a raea render from its layer pass (NAME.layers beside
 //! the video), with no model run for its masks. Depth is the render's own when its AOV pass is beside it (NAME.aov,
-//! `raea render EDIT --aov -o NAME.aov`), else Depth Anything 3 Small's (raea-perceive depth-values), the
-//! camera's path Vision's optical flow (raea-perceive flow), the shots raea-perceive cuts'. geometry.rs measures them.
+//! `raea render EDIT --aov -o NAME.aov`), else Depth Anything 3 Small's (raea-perceive depth-values). The camera's path
+//! is the render's own motion vectors from the same pass, else optical flow (raea-perceive flow); the shots are
+//! raea-perceive cuts'. geometry.rs measures them.
 
 use crate::geometry::{self, Frame, Issue, Move, Seen};
 use raea_sys_fingerprint_use::grow::{self, Matte, bounds, perceive};
@@ -140,6 +141,54 @@ fn rendered(file: &Path, times: &[f64], (w, h): (u32, u32), fps: f64) -> Option<
         .collect()
 }
 
+/// A render's camera path from its own motion vectors (NAME.aov/motion, `raea render EDIT --aov`), FLOW_FPS times a
+/// second over its frames: the median of every pixel's move as the pan, and the median of its move out from the
+/// middle over its distance from it as the zoom, both a second. None when the AOV pass has no motion
+fn moved(file: &Path, (w, h): (u32, u32), fps: f64, dur: f64) -> Option<Vec<Move>> {
+    let dir = file.with_extension("aov").join("motion");
+    let mut out = Vec::new();
+    for i in 1..((dur * FLOW_FPS).floor() as usize).max(2) {
+        let t = i as f64 / FLOW_FPS;
+        let Ok(b) = std::fs::read(dir.join(format!("frame-{:05}.f32", (t * fps).round() as i64))) else { break };
+        let v: Vec<f32> = b.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+        let dw = ((v.len() as f64 / 2.0 * w as f64 / h as f64).sqrt().round() as usize).max(1);
+        let (px, py) = (quantile(&v.iter().step_by(2).copied().collect::<Vec<_>>(), 0.5), quantile(&v.iter().skip(1).step_by(2).copied().collect::<Vec<_>>(), 0.5));
+        // the zoom from what the pan leaves
+        let mut z = Vec::new();
+        for (k, m) in v.chunks_exact(2).enumerate() {
+            let (rx, ry) = (((k % dw) as f32 + 0.5) / dw as f32 - 0.5, ((k / dw) as f32 + 0.5) / (v.len() / 2 / dw) as f32 - 0.5);
+            let r = rx * rx + ry * ry;
+            if r > 0.01 {
+                z.push(((m[0] - px) * rx + (m[1] - py) * ry) / r);
+            }
+        }
+        let f = fps as f32;
+        out.push(Move { t, dx: px * f, dy: py * f, zoom: quantile(&z, 0.5) * f });
+    }
+    (!out.is_empty()).then_some(out)
+}
+
+/// A thing's one vector: its frame's SigLIP 2 patch tokens averaged over the 14 x 14 cells its matte covers half of or
+/// more (the cell it covers most, for a thing smaller than a cell), L2-normalised
+fn pooled(patches: &[f32], m: &Matte) -> Vec<f32> {
+    use raea_sys_columns::SIG;
+    let g = 14;
+    let mut on = vec![(0usize, 0usize); g * g];
+    for y in 0..m.h {
+        for x in 0..m.w {
+            let c = &mut on[(y * g / m.h) * g + x * g / m.w];
+            (c.0, c.1) = (c.0 + usize::from(m.px[y * m.w + x] > 127), c.1 + 1);
+        }
+    }
+    let best = (0..g * g).max_by(|a, b| (on[*a].0 * on[*b].1).cmp(&(on[*b].0 * on[*a].1))).unwrap_or(0);
+    let mut v = vec![0f32; SIG];
+    for (_, p) in patches.chunks(SIG).enumerate().filter(|(i, _)| on[*i].0 * 2 >= on[*i].1.max(1) || *i == best) {
+        v.iter_mut().zip(p).for_each(|(a, b)| *a += b);
+    }
+    let n = v.iter().map(|x| x * x).sum::<f32>().sqrt().max(1e-12);
+    v.into_iter().map(|x| x / n).collect()
+}
+
 /// A thing at `t` from its matte on that frame's depth
 fn seen(t: f64, m: &Matte, d: &Depth) -> Option<Seen> {
     let b = bounds(&m.px, m.w, m.h)?;
@@ -238,12 +287,11 @@ pub fn things(enc: &mut Encoders, file: &Path, marks: &[Mark]) -> Result<Things>
             let seen: Vec<Seen> = mattes.iter().filter_map(|(t, m)| seen(*t, m, &depth[near(*t)])).collect();
             let Some(big) = seen.iter().max_by(|a, b| ((a.b[2] - a.b[0]) * (a.b[3] - a.b[1])).total_cmp(&((b.b[2] - b.b[0]) * (b.b[3] - b.b[1])))) else { continue };
             let s = &small[near(big.t)];
-            let (w, h) = (s.width() as f32, s.height() as f32);
-            let crop = image::imageops::crop_imm(s, (big.b[0] * w) as u32, (big.b[1] * h) as u32, (((big.b[2] - big.b[0]) * w) as u32).max(1), (((big.b[3] - big.b[1]) * h) as u32).max(1)).to_image();
-            let embed = enc.picture(&[raea_sys_columns::media::squash(crop.as_raw(), crop.width() as usize, crop.height() as usize)])?.0;
+            let Some((_, m)) = mattes.iter().find(|x| (x.0 - big.t).abs() < 1e-6) else { continue };
+            let embed = pooled(&enc.patches(&[raea_sys_columns::media::squash(s.as_raw(), s.width() as usize, s.height() as usize)])?, m);
             all.push(Thing { name, from, seen, embed });
         }
-        let cam = camera(&bin, file);
+        let cam = moved(file, (info.width, info.height), info.fps, dur).unwrap_or_else(|| camera(&bin, file));
         let mut edges = vec![0.0];
         for c in grow::cuts(&bin, file) {
             if c > 0.0 && c < dur {
@@ -302,5 +350,71 @@ mod tests {
         foot[95] = 255;
         foot[85] = 255;
         assert_eq!(seen(1.0, &Matte { w: 10, h: 10, px: foot }, &d).unwrap().under, None, "its base is at the frame's foot");
+    }
+
+    #[test]
+    fn a_render_s_camera_is_its_own_motion() {
+        // a 40 x 20 pass at 8 fps: frames 1-8 pan right a hundredth of the frame a frame, 9-16 zoom in 2% a frame
+        let dir = std::env::temp_dir().join(format!("raea-things-moved-{}", std::process::id()));
+        let m = dir.join("cut.aov/motion");
+        std::fs::create_dir_all(&m).unwrap();
+        for f in 1..=16 {
+            let v: Vec<f32> = (0..800).flat_map(|k| {
+                let (rx, ry) = (((k % 40) as f32 + 0.5) / 40.0 - 0.5, ((k / 40) as f32 + 0.5) / 20.0 - 0.5);
+                if f <= 8 { [0.01, 0.0] } else { [0.02 * rx, 0.02 * ry] }
+            }).collect();
+            std::fs::write(m.join(format!("frame-{f:05}.f32")), v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>()).unwrap();
+        }
+        let c = moved(&dir.join("cut.mp4"), (40, 20), 8.0, 2.0).unwrap();
+        std::fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(c.len(), 15);
+        assert!((c[0].dx - 0.08).abs() < 1e-5 && c[0].zoom.abs() < 1e-5, "{:?}", c[0]);
+        assert!((c[10].zoom - 0.16).abs() < 1e-3 && c[10].dx.abs() < 0.005 && c[10].dy.abs() < 0.005, "{:?}", c[10]);
+        assert_eq!(moved(&dir.join("none.mp4"), (40, 20), 8.0, 2.0).map(|c| c.len()), None, "no pass, no path");
+    }
+
+    /// `RAEA_CAMERA_MEDIA=FILE cargo test -p raea-sys-fingerprint-things camera_two_ways -- --ignored --nocapture`: a
+    /// render's camera from its motion vectors beside the flow's, FILE.aov beside it
+    #[test]
+    #[ignore]
+    fn camera_two_ways() {
+        let f = PathBuf::from(std::env::var("RAEA_CAMERA_MEDIA").expect("RAEA_CAMERA_MEDIA"));
+        let d = raea_sys_columns::media::video(&f).unwrap();
+        let i = d.info();
+        let (own, flow) = (moved(&f, (i.width, i.height), i.fps, i.duration).expect("FILE.aov/motion"), camera(&perceive().expect("raea-perceive"), &f));
+        for (a, b) in own.iter().zip(&flow) {
+            eprintln!("{:.3} own {:+.3} {:+.3} {:+.3}  flow {:.3} {:+.3} {:+.3} {:+.3}", a.t, a.dx, a.dy, a.zoom, b.t, b.dx, b.dy, b.zoom);
+        }
+    }
+
+    #[test]
+    fn a_thing_s_vector_is_its_cells_patches() {
+        use raea_sys_columns::SIG;
+        // patch i carries i in its first value; a 28 x 28 matte on over cells (2, 3) and (3, 3), and a quarter of (5, 5)
+        let patches: Vec<f32> = (0..196 * SIG).map(|j| if j % SIG == 0 { (j / SIG) as f32 } else { 0.0 }).collect();
+        let mut px = vec![0u8; 28 * 28];
+        for (x, y) in [(4, 6), (5, 6), (4, 7), (5, 7), (6, 6), (7, 6), (6, 7), (7, 7), (10, 10)] {
+            px[y * 28 + x] = 255;
+        }
+        let v = pooled(&patches, &Matte { w: 28, h: 28, px });
+        // cells 3 * 14 + 2 = 44 and 45 in, 75 (a quarter) out: 89 over its length
+        assert!((v[0] - 1.0).abs() < 1e-6, "{}", v[0]);
+        let one = pooled(&patches, &Matte { w: 28, h: 28, px: { let mut p = vec![0u8; 784]; p[10 * 28 + 10] = 255; p } });
+        assert!((one[0] - 1.0).abs() < 1e-6, "a thing under a cell is its cell's patch");
+    }
+
+    /// `RAEA_THINGS_MEDIA=FILE cargo test -p raea-sys-fingerprint-things things_on -- --ignored --nocapture`: a render's
+    /// things, each vector's length and how alike each two are
+    #[test]
+    #[ignore]
+    fn things_on_a_real_render() {
+        let f = PathBuf::from(std::env::var("RAEA_THINGS_MEDIA").expect("RAEA_THINGS_MEDIA"));
+        let t = things(&mut Encoders::load().unwrap(), &f, &[]).unwrap();
+        let all: Vec<&Thing> = t.shots.iter().flat_map(|s| &s.things).collect();
+        for (i, a) in all.iter().enumerate() {
+            let near: Vec<String> = all.iter().map(|b| format!("{:.2}", a.embed.iter().zip(&b.embed).map(|(x, y)| x * y).sum::<f32>())).collect();
+            eprintln!("{i} {} {} [{}]", a.name, a.embed.len(), near.join(" "));
+        }
+        assert!(all.iter().all(|a| a.embed.len() == raea_sys_columns::SIG));
     }
 }
