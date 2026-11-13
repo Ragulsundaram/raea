@@ -61,7 +61,9 @@ jobs:
         run: |
           rustup show active-toolchain
           sudo apt-get update && sudo apt-get install -y ripgrep
-          cargo install --locked cargo-shear cargo-dupes
+          # the versions L0 runs on the Mac, so a new release can't change the verdict (cargo-shear 1.14.1 calls
+          # engine/cli's feature-only ignores redundant, which 1.14.0 needs; both ran red on main 11-13)
+          cargo install --locked cargo-shear@1.14.0 cargo-dupes@0.2.1
       - name: layers
         run: bash tools/layers.sh
       - name: names
