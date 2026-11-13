@@ -76,6 +76,21 @@ fn media(project: &Path, m: &Value) -> Option<PathBuf> {
     [home.join(".raea/feed/media").join(p), project.join(p)].into_iter().find(|f| f.is_file())
 }
 
+/// Every video in the project's feed, each version's, found on this machine (FP7a's postmortem looks back on them)
+pub fn videos(project: &Path) -> Vec<PathBuf> {
+    let mut out: Vec<PathBuf> = Vec::new();
+    for e in std::fs::read_dir(project.join(".raea/feed")).into_iter().flatten().flatten() {
+        let Some(post) = std::fs::read_to_string(e.path()).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()) else { continue };
+        for m in post["media"].as_array().into_iter().flatten().filter(|m| m["kind"] == "video") {
+            if let Some(v) = media(project, m).filter(|v| !out.contains(v)) {
+                out.push(v);
+            }
+        }
+    }
+    out.sort();
+    out
+}
+
 /// Every person's pinned note on a video in the project's feed
 pub fn pinned(project: &Path) -> Vec<Reading> {
     let name = project.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();

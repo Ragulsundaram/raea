@@ -29,6 +29,7 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, s
         "pair" | "versions" => paired(enc, args[0].as_str(), rest, cwd, eval),
         "learn-notes" => learned(enc, rest, cwd, eval),
         "move" => moved(enc, rest, eval),
+        "postmortem" => crate::postmortem::run(enc, rest, cwd, eval),
         "profile" => {
             let dir = crate::pick::chosen(rest, None).0;
             crate::profiles::make(enc, &dir, rest, cwd).map(|o| (o, 0))
@@ -89,7 +90,7 @@ fn new(enc: &mut Encoders, args: &[String]) -> Result<(String, i32)> {
 /// The fingerprint, its encoders checked against this machine's, and its words, made again when they changed
 /// The fingerprint a verb uses (pick.rs: --fp, else the one that judges the file), its axes with its parents', and its
 /// words
-fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option<&Path>) -> Result<(Folder, Fingerprint, Words)> {
+pub(crate) fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option<&Path>) -> Result<(Folder, Fingerprint, Words)> {
     let dir = crate::pick::chosen(args, file).0;
     let mut raw = dir.read(Some(eval))?;
     let here = enc.pins();
@@ -294,8 +295,23 @@ fn scored(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result
     let mut s = score(&fp, Some(&w), trained.as_ref(), &c, &file.display().to_string());
     let found = checks(&file);
     arbitrate(&mut s, &fp, &found);
+    // FP9a: each gating flag on the cut before, judged on this one, and its axis's disguises rerun on the fix
+    let fixes = match flag(args, "--was") {
+        Some(old) => {
+            let was = at(cwd, old);
+            let mut ws = score(&fp, Some(&w), trained.as_ref(), &enc.columns(&was)?, &was.display().to_string());
+            arbitrate(&mut ws, &fp, &checks(&was));
+            Some(raea_sys_fingerprint_use::fixed::fixes(&ws, &s, &fp, &dir.ledger()?, &c))
+        }
+        None => None,
+    };
     let mut out = if has(args, "--json") {
-        serde_json::to_string_pretty(&json!({"fingerprint": {"name": fp.name, "about": fp.about, "why": why}, "scored": s, "checks": found.iter().map(|(r, a, b, says)| json!({"check": r, "a": a, "b": b, "says": says})).collect::<Vec<_>>()}))?
+        serde_json::to_string_pretty(&json!({"fingerprint": {"name": fp.name, "about": fp.about, "why": why}, "scored": s, "checks": found.iter().map(|(r, a, b, says)| json!({"check": r, "a": a, "b": b, "says": says})).collect::<Vec<_>>(), "fixes": fixes}))?
+    } else if let Some(f) = &fixes {
+        let mut t = format!("judged by {}: {why}\n", fp.name);
+        t += &raea_sys_fingerprint_use::fixed::said(f);
+        t += &summary(&s);
+        t
     } else {
         let mut t = format!("judged by {}: {why}\n", fp.name);
         t += &summary(&s);
@@ -319,7 +335,8 @@ fn scored(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result
         sheet(&s, &frames, &pcm, &ticks, &|axis| fp.axis(axis).map(|a| a.modality), &png)?;
         out += &format!("sheet: {}\n", png.display());
     }
-    Ok((out, i32::from(s.moments.iter().any(|m| m.gating))))
+    let unfixed = fixes.iter().flatten().any(|f| f.verdict != "fixed");
+    Ok((out, i32::from(unfixed || s.moments.iter().any(|m| m.gating))))
 }
 
 /// `raea fingerprint report`: report.json, read; no encoders needed

@@ -395,6 +395,11 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         the person's history, and asks at most ten yes/no questions on them with `raea show --question`, each with the
         moment playing
       And each answer is an evidence row, and the report says how each head's held-out score moved
+      And so far (11-12): `raea fingerprint postmortem [PROJECT] [--ask N]` scores every video version in the project's
+        feed with the fingerprint that judges it, asks first where a head goes against the person's own label on that
+        moment, then where a head sits nearest its flag, one per axis and piece within 4 s, at most ten, as Yes/No
+        questions in one `raea show` item with the moment cut to a clip; `--tally` makes each answer a "postmortem" row,
+        retrains and prints each head's held-out AUC before and after. Not yet: running on its own when a project closes
 
   Rule: FP8. Teams
     @needs:FP2d @done
@@ -512,6 +517,11 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         why not
       And the agent is told the axis and the moment in the person's words, never a score or a threshold
       And a fix is checked against the flag it claims to fix, and the axis's cheats are rerun on it
+      And so far (11-12): `raea fingerprint score NEW --was OLD` judges each of OLD's gating flags on NEW: still there
+        (the axis flags within a second of it), looks disguised (the moment is nearer the axis's disguised defects, its
+        cheat rows, than its clean work, so the fix hid the defect), or fixed; it exits 1 unless every flag is fixed.
+        The raea skill tells agents to score before posting, fix or say why, name the axis and moment and never a score,
+        and to check each fix with --was (raea-skills fingerprint-fix f6d6654)
 
   Rule: FP11. Markup: the player asks for a mark that means "this thing"
     @needs:FP5a
