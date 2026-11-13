@@ -6,7 +6,8 @@
 //! once the kind is right 45 times in 50 and the axis 40 (FP5b) does `raea fingerprint learn-notes` make each defect
 //! or praise an evidence row over its span (1.5 s before the pin to 0.5 s after). A direction goes to the brief and the
 //! agent, never into a head. A note's marks (FP11b) make its row a region label: the box around its marks, boxes and
-//! lassos; a span pin sets the row's time.
+//! lassos; a span pin sets the row's time. On a render with a layer pass, a reading keeps the layers under its pin,
+//! and the reader is told them.
 
 use crate::{flag, has, words};
 use raea_sys_fingerprint::folder::Folder;
@@ -44,6 +45,9 @@ pub struct Reading {
     /// where in the frame the note's marks say the thing is, x0,y0,x1,y1 in 0-1 (FP11b)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub region: Option<[f32; 4]>,
+    /// the layers under the pin's x,y in the layer pass, on a render with one (FP5a)
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub layers: Vec<String>,
 }
 
 
@@ -82,7 +86,9 @@ pub fn pinned(project: &Path) -> Vec<Reading> {
                 continue;
             }
             let to = n["pin"]["to"].as_f64().filter(|&to| to > t);
-            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: raea_sys_fingerprint_use::grow::marked(&n["pin"]), ..Default::default() });
+            let at = n["pin"]["x"].as_f64().zip(n["pin"]["y"].as_f64()).map(|(x, y)| [x - 0.01, y - 0.01, x + 0.01, y + 0.01].map(|v| v.clamp(0.0, 1.0)));
+            let layers = at.map(|b| raea_sys_fingerprint_things::located::layers(&video, t, b)).unwrap_or_default();
+            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: raea_sys_fingerprint_use::grow::marked(&n["pin"]), layers, ..Default::default() });
         }
     }
     out
@@ -91,7 +97,8 @@ pub fn pinned(project: &Path) -> Vec<Reading> {
 /// The reading prompt: the axes with their words, then the notes, and the JSON to answer
 pub fn prompt(fp: &Fingerprint, notes: &[Reading]) -> String {
     let axes = fp.axes.iter().map(|a| format!("- {}: {}", a.name, a.words.join("; "))).collect::<Vec<_>>().join("\n");
-    let list = notes.iter().map(|n| format!("{}: {}", n.note, n.text.replace('\n', " "))).collect::<Vec<_>>().join("\n");
+    let on = |n: &Reading| if n.layers.is_empty() { String::new() } else { format!(" (pinned on {})", n.layers.join(", ")) };
+    let list = notes.iter().map(|n| format!("{}: {}{}", n.note, n.text.replace('\n', " "), on(n))).collect::<Vec<_>>().join("\n");
     format!(
         "You read a person's review notes on their videos. Read each note only; open no file and change nothing.\n\
 For each note say its kind: \"defect\" (it names something wrong at that moment), \"direction\" (it asks for a creative change, \
@@ -322,7 +329,8 @@ mod tests {
         assert_eq!((n[0].kind.as_str(), n[0].axis.as_deref()), ("defect", Some("glitch")));
         assert_eq!((n[1].kind.as_str(), n[1].axis.as_deref()), ("direction", None), "an axis the fingerprint hasn't is dropped");
         assert_eq!(n[2].kind, "", "a kind it doesn't know is no reading");
-        assert!(prompt(&fp, &n).contains("n1: "));
+        n[0].layers = vec!["Floor".into()];
+        assert!(prompt(&fp, &n).contains("n1: ") && prompt(&fp, &n).contains("(pinned on Floor)"), "the reader is told the layer");
     }
 
     #[test]

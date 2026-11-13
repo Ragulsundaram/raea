@@ -333,7 +333,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         one isn't a gate unless its check found it too
 
   Rule: FP5. Notes become evidence
-    @needs:FP2b
+    @needs:FP2b @done
     Scenario: FP5a. A pinned note is read into a label
       Given the plan
         | crate                  | file                               | lines | job                                                                    |
@@ -344,6 +344,13 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         through the layer pass (review.feature R2), when the video has one
       And a defect or praise becomes an evidence row with the note's words, its id and who wrote it; a direction goes to
         the brief and the agent only
+      And 11-12: `raea fingerprint read PROJECT [--by kimi|claude]` (notes.rs) has a fresh session read each person's
+        pinned note on the project's videos into a kind and one of the fingerprint's axes (an axis it hasn't, or a kind
+        it doesn't know, is dropped), kept in readings.jsonl with the note's id, words, author, its moment or span and the
+        region its marks name. On a render with a layer pass the reading keeps the layers under the pin (a pin on a
+        things red-team block reads "Box", one on the empty sky none), and the reader is told them ("pinned on Box").
+        `learn-notes` makes a defect or praise an evidence row over 1.5 s before the pin to 0.5 s after, with the note's
+        words, id and author; a direction stays with the brief. It trains only past FP5b's gate
 
     @needs:FP5a
     Scenario: FP5b. The reading is checked against the person

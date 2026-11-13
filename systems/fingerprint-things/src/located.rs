@@ -69,7 +69,7 @@ pub fn bootstrap(enc: &mut Encoders, dir: &Path, files: &[PathBuf], per: usize, 
 
 /// The layers a box covers in a render's layer pass (NAME.layers beside it) at time t, by name, most of the box first;
 /// a layer under a tenth of the box is left out
-fn layers(file: &Path, t: f64, b: [f64; 4]) -> Vec<String> {
+pub fn layers(file: &Path, t: f64, b: [f64; 4]) -> Vec<String> {
     let Ok(m) = raea_sys_layers::read::read(&file.with_extension("layers")) else { return Vec::new() };
     let fps = media::video(file).map(|d| d.info().fps).unwrap_or(30.0);
     let f = (t * fps).round() as i64;
@@ -115,6 +115,18 @@ mod tests {
         let mut enc = Encoders::load().unwrap();
         let said = bootstrap(&mut enc, &out, &files, PER, &mut |s| eprintln!("{s}")).unwrap();
         eprintln!("{}", serde_json::to_string_pretty(&said).unwrap());
+    }
+
+    /// `RAEA_LAYERS_MEDIA=FILE RAEA_LAYERS_AT=t,x,y cargo test -p raea-sys-fingerprint-things layers_under -- --ignored
+    /// --nocapture`: the layers under a pin at x,y (0-1) at t s, as FP5a's reading keeps them
+    #[test]
+    #[ignore]
+    fn layers_under_a_pin() {
+        let f = PathBuf::from(std::env::var("RAEA_LAYERS_MEDIA").expect("RAEA_LAYERS_MEDIA"));
+        let a: Vec<f64> = std::env::var("RAEA_LAYERS_AT").expect("RAEA_LAYERS_AT").split(',').filter_map(|v| v.parse().ok()).collect();
+        let l = layers(&f, a[0], [a[1] - 0.01, a[2] - 0.01, a[1] + 0.01, a[2] + 0.01]);
+        eprintln!("{l:?}");
+        assert!(!l.is_empty(), "no layer under the pin");
     }
 
     #[test]
