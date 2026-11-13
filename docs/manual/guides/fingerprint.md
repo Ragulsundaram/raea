@@ -2,13 +2,14 @@
 title: "Fingerprint: teach raea your eye"
 summary: "What raea learns about good work from your notes, marks and approvals, on your Mac: the axes it judges, how one is trained and trusted, keeping one fingerprint for each kind of work, and sharing one with a team."
 order: 6
-sources: ["docs/fingerprint.feature", "docs/fingerprint.md", "apps/fingerprint/src", "systems/fingerprint/src", "systems/fingerprint-use/src", "apps/app/src/fingerprint"]
+sources: ["docs/fingerprint.feature", "docs/fingerprint.md", "apps/fingerprint/src", "systems/fingerprint/src", "systems/fingerprint-use/src", "systems/fingerprint-things/src", "apps/app/src/fingerprint"]
 ---
 
 A fingerprint is your sense of good work, as raea has learned it on your Mac. It's a list of axes, the things you
 notice: blur, a black frame, hiss, clipping, a glow over everything, a frozen picture, and taste axes such as fake,
 barren or unreadable text. Each axis has a small model over encoders that run on your Mac (SigLIP 2 for pictures, CLAP
-for sound, YAMNet for sound events), so nothing leaves the machine unless you share it.
+for sound, YAMNet for sound events, EmbeddingGemma 2 for scripts and other text), so nothing leaves the machine unless
+you share it.
 
 Your agents use it before they post a cut: `raea fingerprint score` lists the moments your fingerprint expects a note
 on, each named in your words, and the agent fixes them or tells you why it didn't. It tells you the axis and the
@@ -52,7 +53,43 @@ raea fingerprint readings --ask 50                              # check 50 of th
 Notes become evidence only after you've checked how they were read: the kind right 45 times in 50 and the axis 40. A
 note that asks for a creative change goes to the brief, never into an axis. An axis is trusted once it has 16 labels of
 each kind from 3 projects, ranks real defects above clean work on projects it never saw, and catches its disguises.
-`raea fingerprint report` says where each one stands.
+`raea fingerprint report` says where each one stands. An axis that is still under its bar with 300 labels is
+**stuck**: more labels won't help it, so `report` names it as one to try on another encoder.
+
+## Scripts, briefs and stills
+
+A fingerprint reads more than video. A script, a brief or another text file gets EmbeddingGemma 2 rows, one per
+paragraph, and a still gets the picture columns. Each axis judges only what the file has, so a script is never called
+blurry. raea's own axes judge pictures, sound and motion. To judge writing, add an axis that reads text to your
+fingerprint.ts and teach it like any other.
+
+## Looking back on a project
+
+When a project is done, a post-mortem asks you what the fingerprint is least sure of:
+
+```sh
+raea fingerprint postmortem projects/film            # at most ten yes/no questions in the app, each with its moment
+raea fingerprint postmortem projects/film --tally    # your answers become evidence; each head's score before and after
+```
+
+It scores every version in the project's feed and first asks where a head disagrees with a label you gave on that
+moment, then where a head is nearest its flag, one question per axis within four seconds.
+
+## Things in a shot
+
+```sh
+raea render shot.tsx --layers -o shot.mp4           # the video and its layers (shot.layers)
+raea render shot.tsx --aov -o shot.aov              # its depth, beside it
+raea fingerprint things shot.mp4 --json > things.json
+raea check shot.mp4 --things things.json
+```
+
+`things` finds a piece's shots, the things in each (a render's layers, and anything marked on its notes) with their
+depth, and the camera's path. It says where a thing floats, where two pass through each other, where the camera lurches
+in the middle of a move, and where nothing is on screen. `raea check --things` turns those into findings beside the
+rest. Floating needs real depth: with the render's `--aov` pass beside it (`shot.aov` for `shot.mp4`) it uses the
+render's own depth, and without one it estimates depth from the picture, which can't always tell a hanging box from
+one on the floor.
 
 ## One for each kind of work
 

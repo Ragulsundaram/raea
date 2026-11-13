@@ -35,8 +35,8 @@ media ─► columns (once, at ingest, cached by content hash)
            picture: SigLIP 2 per frame at 4 fps (pooled vector; 14x14 patch grid for flagged or marked frames)
            change:  frame-to-frame SigLIP distance          look: luminance histogram, saturation, contrast, sharpness
            sound:   CLAP audio, 2 s windows, 1 s hop          YAMNet, 0.48 s frames (event classes and timing)
-           other:   EmbeddingGemma 2 for scripts, briefs, boards, stills (the Library's rows)
-           things:  EdgeTAM masks, Depth Anything 3 depth and camera (footage only, when an axis needs them)
+           text:    EmbeddingGemma 2 for scripts, briefs and other text (a still gets the picture columns)
+           things:  a render's layers or EdgeTAM masks, depth from its AOV or Depth Anything 3, and the camera
        ─► checks (no model): loudness, silence gaps, clipping, flash, freeze, sync to cut, floating, passing through
        ─► axis heads: word head (zero-shot) → learned head (logistic / Bradley-Terry) → patch head (heatmap)
        ─► person's weighting over axis scores          ─► profile ranges from reference work
@@ -49,10 +49,10 @@ media ─► columns (once, at ingest, cached by content hash)
 | sound columns | CLAP htsat-unfused (audio tower) | 117 MB fp32 (34 MB q8 copy, off by default) | yes | about 3 s (33 ms a 2 s clip) |
 | sound events | YAMNet | 16 MB | yes | under 1 s |
 | change and look | none | none | yes | negligible |
-| words, scripts, boards, stills | EmbeddingGemma 2 | 841 MB q8, already the Library's | only for non-video items | 2.3 s a window; reads Library rows instead where they exist |
+| words, scripts, briefs | EmbeddingGemma 2 | 841 MB q8, the Library's copy when it has one | only for text files; a still gets the picture columns | 2.3 s a window |
 | axis words → vectors | CLAP text tower (502 MB fp32), SigLIP 2 text tower | | **no**: only when an axis's words change; the vectors are stored in the fingerprint | |
 | heads, weighting, profile | ours | 7 KB a head | yes | milliseconds |
-| things (footage only) | EdgeTAM, Depth Anything 3 Small | 37 MB, 51 MB (both already in perception) | only for thing-level axes and checks | about 86 ms a frame for EdgeTAM |
+| things | EdgeTAM, Depth Anything 3 Small | 37 MB, 51 MB (both already in perception) | only for thing-level axes and checks | about 86 ms a frame for EdgeTAM |
 
 Only CLAP is a new download. Its fp32 audio and text towers come to 619 MB. The q8 copies (161 MB) match fp32 only to
 cosine 0.998, and differ between ONNX Runtime builds, so fp32 is the default (RAEA_CLAP_DTYPE=q8 picks the copies). Every encoder runs in Rust:
@@ -194,7 +194,7 @@ which raea doesn't ship. We take six ideas:
 |---|---|---|
 | text-audio match calibrated as a z against a 322-term vocabulary, with verdict bands whose precision is measured on held-out recordings | word heads from the axis words, for sound (CLAP) and picture (SigLIP 2); bands on gated heads | FP2e, FP2d |
 | `profile` reference films, `critique` against their ranges with timestamped fixes, checked leave-one-out (86% in range against a 71% baseline) | profiles from golden references and approved work: the positives that notes don't give (3 approvals in 205 notes) | FP6e |
-| realness: real against code-synthesised sound, a small head on CLAP vectors, grouped CV AUC 0.92 held out by category and engine | a realness axis for sound, with labels by construction from raea's own generators (TokenSynth, SAO, Fish) against recorded foley; matches the taste rule "real material only" | FP2f |
+| realness: real against code-synthesised sound, a small head on CLAP vectors, grouped CV AUC 0.92 held out by category and engine | measured, not shipped: a head on CLAP and YAMNet means, labelled by construction from raea's own generators (TokenSynth, SAO, Fish) against recordings under CC0 and CC BY, scored 0.90, 0.80 and 0.57 held out by generator, under the 0.85 it needed on all three, so there is no realness axis | FP2f |
 | summary first, `--json`, an annotated `sheet` PNG, a `timeline` transcript | the same outputs from `raea fingerprint score` | FP3a, FP3c |
 | a resident MCP server, because loading the models costs 20-40 s | everything in the feed host, models loaded once | FP3a |
 | "model critics stop discriminating after search; model-free measurements still do"; a "cannot judge" list | checks as arbiter, red-team cheats per axis, limits in report.json | FP4b, FP4c, FP9a |
@@ -316,7 +316,7 @@ frozen (VADB, arXiv 2510.25238). Rich Human Feedback (CVPR 2024) learns heatmaps
 
 | phase | step | what | confidence | why |
 |---|---|---|---|---|
-| 1, foundation | FP1 | columns at ingest: SigLIP 2, change, look, CLAP, YAMNet; EmbeddingGemma 2 rows read from the Library | high | every model is measured; only the look columns and CLAP's Rust front end are new |
+| 1, foundation | FP1 | columns at ingest: SigLIP 2, change, look, CLAP, YAMNet; EmbeddingGemma 2 rows for text files | high | every model is measured; only the look columns and CLAP's Rust front end are new |
 | | FP2 | the folder, the base taxonomy, word heads, learned heads, the trainer and the gate, in Rust | high | FP0b-d and FP0g: heads learn from 4-32 labels in milliseconds, and words already score noise and clipping at 0.97-0.98 |
 | | FP3 | `raea fingerprint score` through the feed host: summary, JSON, sheet, timeline, watch lane | high | plumbing over FP1-2; earshot shows the outputs agents can use |
 | | FP4 | bootstrap from damage variants; red-team cheats; measured checks for dropout, clipping, loudness, flash, freeze | high; glow was low on the look columns and holds out 0.90 on SigLIP 2 pictures (FP10a, 11-12) | FP0b, FP0d, FP0g |
@@ -328,7 +328,7 @@ frozen (VADB, arXiv 2510.25238). Rich Human Feedback (CVPR 2024) learns heatmaps
 | | FP13 | things per shot (EdgeTAM, DA3); geometry checks; a note's nouns grounded near its pin | high, high, gated | both models are in perception; the grounder ships only if FP13b passes |
 | 4, share and use | FP8 | teams: shared evidence, retrain, diff | medium-high | FP0c measured pooling; the transport is the project |
 | | FP9 | the agent scores before posting and can't game it | medium | needs FP5-7 and red-team sets |
-| gated | FP2f | realness axis for sound | medium, measured first | earshot's 0.92; our labels come free from raea's generators |
+| measured | FP2f | realness axis for sound | not shipped | held out by generator, SAO foley scored 0.57 against a bar of 0.85 (TokenSynth 0.90, Fish 0.80) |
 | | FP10 | a LoRA adapter on SigLIP 2, or another device-sized encoder | low | only for an axis stuck after its own columns |
 
 **The first proof that matters is FP5c.** A fingerprint built from Shane's evidence on Stay assemblies 18-22 has to

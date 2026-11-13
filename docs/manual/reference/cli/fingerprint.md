@@ -2,16 +2,19 @@
 title: "raea fingerprint"
 summary: "A person's sense of good work, learned on this Mac: axes with small heads over on-device encoders that score a render moment by moment and say what they can't judge yet."
 order: 44
-sources: ["apps/fingerprint/src/lib.rs", "systems/fingerprint/src/taxonomy.rs"]
+sources: ["apps/fingerprint/src/lib.rs", "systems/fingerprint/src/taxonomy.rs", "systems/fingerprint-things/src/things.rs"]
 ---
 
 A fingerprint is one person's sense of good work, kept in `~/.raea/fingerprints/NAME`. It is a list of axes (blur,
 flash, clipping, pace, a brand's colours) with a small head for each over encoders that run on this Mac: SigLIP for
-pictures, CLAP for sound and YAMNet for sound events. A new axis judges from its words until it has been trained;
+pictures, CLAP for sound, YAMNet for sound events and EmbeddingGemma 2 for scripts and other text; each axis judges
+only what a file has. A new axis judges from its words until it has been trained;
 `bootstrap` trains the mechanical axes by damaging moments of your own renders, and `teach` adds a label at a moment
 you point at. A person can keep several, each saying what it's for, and one can build on another with `--extends`.
 The app's Fingerprint page shows the same thing: what each one knows, what it's still learning, and what it can't
-judge yet. See [docs/fingerprint.md](https://github.com/shinyobjectz/raea/blob/main/docs/fingerprint.md) for the plan.
+judge yet. `postmortem` looks back on a finished project with at most ten questions, and `things` says where a
+thing floats or passes through another, the camera lurches or the frame is empty, for `raea check --things`. See
+[docs/fingerprint.md](https://github.com/shinyobjectz/raea/blob/main/docs/fingerprint.md) for the plan.
 
 ```sh
 raea fingerprint new me
@@ -20,6 +23,8 @@ raea fingerprint bootstrap renders/*.mp4 --fp client-ads
 raea fingerprint score cut.mp4 --timeline
 raea fingerprint teach cut.mp4 --axis blur --at 4.2 --bad
 raea fingerprint report
+raea fingerprint postmortem projects/film
+raea fingerprint things shot.mp4 --json > things.json
 ```
 
 <!-- generated:begin by tools/manual-ref/cli.ts from `raea help --json`; edit only the flag descriptions -->
