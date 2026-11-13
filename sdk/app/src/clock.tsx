@@ -87,6 +87,8 @@ export interface LocalTime {
   width: number;
   /** in px, what the Sequence gives its children */
   height: number;
+  /** frames the subtree lasts: the composition's at the root, a Sequence's (cut short by its parent's) inside one */
+  duration: number;
 }
 
 export const ClockContext = createContext<ClockState | null>(null);
@@ -198,8 +200,8 @@ export function useLocalTime(caller: string): LocalTime {
   useClockTick(local ? null : clock);
   if (local) return local;
   let t = rootTimes.get(clock);
-  if (!t || t.frame !== clock.frame || t.width !== clock.config.width || t.height !== clock.config.height) {
-    t = { frame: clock.frame, origin: 0, width: clock.config.width, height: clock.config.height };
+  if (!t || t.frame !== clock.frame || t.width !== clock.config.width || t.height !== clock.config.height || t.duration !== clock.config.durationInFrames) {
+    t = { frame: clock.frame, origin: 0, width: clock.config.width, height: clock.config.height, duration: clock.config.durationInFrames };
     rootTimes.set(clock, t);
   }
   return t;
@@ -210,12 +212,13 @@ export function useCurrentFrame(): number {
   return useLocalTime("useCurrentFrame").frame;
 }
 
-/** The settings of the composition being rendered (a Sequence's width and height win inside it). */
+/** The settings of the composition being rendered (a Sequence's width, height and length win inside it). */
 export function useVideoConfig(): VideoConfig {
   const clock = useClockState("useVideoConfig");
   const local = useContext(LocalTimeContext);
-  if (!local || (local.width === clock.config.width && local.height === clock.config.height)) return clock.config;
-  return { ...clock.config, width: local.width, height: local.height };
+  const c = clock.config;
+  if (!local || (local.width === c.width && local.height === c.height && local.duration === c.durationInFrames)) return c;
+  return { ...c, width: local.width, height: local.height, durationInFrames: local.duration };
 }
 
 export interface ClockProps {
@@ -303,7 +306,7 @@ export function Clock(props: ClockProps) {
   if (!LITE) return <ClockContext.Provider value={state}>{props.children}</ClockContext.Provider>;
   return (
     <ClockContext.Provider value={state}>
-      <LocalTimeContext.Provider value={{ frame, origin: 0, width, height }}>{props.children}</LocalTimeContext.Provider>
+      <LocalTimeContext.Provider value={{ frame, origin: 0, width, height, duration: durationInFrames }}>{props.children}</LocalTimeContext.Provider>
     </ClockContext.Provider>
   );
 }
