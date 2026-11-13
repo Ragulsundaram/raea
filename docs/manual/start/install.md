@@ -43,6 +43,14 @@ The installer needs no account and no API key. Rendering, playing and checking a
 
 If `~/.local/bin` is not on your PATH, the installer says so and prints the line to add to your shell's profile.
 
+For another agent, `raea skills install --agent claude|codex|kimi|gemini` puts the skill where that agent reads
+skills, adds raea's hooks (the quick check after a composition is saved, and media sent to the raea app instead of the
+Mac's viewer) and the Blender MCP server; `--no-hooks` and `--no-mcp` leave them out.
+
+In Claude Code you can take the skill and the hooks as a plugin instead:
+`/plugin install raea --marketplace shinyobjectz/raea-skills`. Install raea with `RAEA_NO_SKILLS=1` then, so the
+skill isn't copied twice.
+
 ## Update
 
 Run the installer again. It replaces the engine with the newest release that has a build for your machine and
@@ -104,7 +112,7 @@ cargo build --release -p raea-cli     # the binary is target/release/raea
 | System | Status |
 |---|---|
 | macOS on Apple Silicon | Supported |
-| Linux on x86_64 | Supported. An app's window needs a display (X11, Wayland, or Xvfb on a server) |
+| Linux on x86_64 | Supported. raea needs ALSA and fontconfig (Ubuntu 24.04 and Debian: `apt install libasound2t64 libfontconfig1`; `libasound2` before 24.04). An app's window needs a display (X11, Wayland, or Xvfb on a server) |
 | Windows 10 and 11 on x86_64 | Supported through `install.ps1` |
 | Intel Macs, Linux on ARM | Not yet |
 
