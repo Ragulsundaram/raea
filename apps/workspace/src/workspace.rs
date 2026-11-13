@@ -9,14 +9,25 @@ const USAGE: &str = "usage: raea workspace [--json] | raea workspace init [NAME]
 
 /// git for raea's own commits. A new Mac has no user.email and a hostname git can't make one from, so every commit
 /// failed with "Author identity unknown" and the person's first project was never made. git reads $EMAIL only when
-/// user.email isn't set, so this gives a fresh Mac an address without overriding anyone's own.
+/// user.email isn't set, so this gives a fresh Mac an address without overriding anyone's own. A Linux account with no
+/// full name (a CI runner's, a container's) has no name either ("empty ident name ... not allowed"), and git has no
+/// fallback below user.name to give it, so when no user.name is set the author and committer are named for the account.
 pub(crate) fn git_cmd() -> Command {
     let mut c = Command::new("git");
+    let user = std::env::var("USER").unwrap_or_else(|_| "raea".into());
     if std::env::var_os("EMAIL").is_none() {
-        let user = std::env::var("USER").unwrap_or_else(|_| "raea".into());
         c.env("EMAIL", format!("{user}@raea.local"));
     }
+    if !has_name() {
+        c.env("GIT_AUTHOR_NAME", &user).env("GIT_COMMITTER_NAME", &user);
+    }
     c
+}
+
+/// Whether git has a user.name to sign commits with (asked once a process).
+fn has_name() -> bool {
+    static HAS: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *HAS.get_or_init(|| Command::new("git").args(["config", "--get", "user.name"]).output().is_ok_and(|o| o.status.success() && !o.stdout.trim_ascii().is_empty()))
 }
 
 pub(crate) fn git(dir: &Path, args: &[&str]) -> R<String> {
