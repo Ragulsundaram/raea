@@ -230,6 +230,8 @@ raea-sys-layout = true
 raea-sys-vision = true
 # a file's encoder columns (Fingerprint's heads read them)
 raea-sys-columns = true
+# a fingerprint's taxonomy, evidence and heads (raea-sys-fingerprint-use scores, compares and picks with them)
+raea-sys-fingerprint = true
 raea-sys-song = true
 raea-sys-k = true
 raea-sys-wear = true
