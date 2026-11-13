@@ -249,11 +249,24 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           letter-spacing. capture-reveal and font-shuffle (svg text in URL faces) and search-typing (a Range) no
           longer throw or hang.
 
+    @done
     Scenario: LR8. Observers, from the same layout
       Then ResizeObserver calls back after a layout in which an observed element's size changed, with
         contentRect, borderBoxSize and contentBoxSize
       And MutationObserver and IntersectionObserver are present. Each calls back if the harness shows a component needs
         it, and otherwise exists but never fires, which is stated in the manual
+      And 11-12, built:
+        - sdk/raea/src/dom-observers.ts. ResizeObserver calls back once on observe and after any commit whose layout
+          changed an observed element's size. While a delayRender hold is open it checks every 16 ms, as a browser
+          goes on rendering while a page waits. It reads the layout only while something is observed.
+        - No snapcn component makes an observer, so MutationObserver and IntersectionObserver exist and never call
+          back (LR11's manual page says so).
+        - A pass that draws no page (the sound pass, the 3D rows' pre-pass) answers every read with a 0 x 0 page.
+          A hold waiting on a size there could never end, so on that answer the pass's holds are released and later
+          ones don't hold (hold.ts noPage).
+        - The harness's Chrome ran no rendering step: a headless --dump-dom under --virtual-time-budget fires neither
+          requestAnimationFrame nor ResizeObserver. bench/layout-reads/chrome.ts drives the same Chrome through
+          Playwright in real time. probes/observe.tsx then matches Chrome (0.1 px).
 
   Rule: the frame waits for the measure
 
