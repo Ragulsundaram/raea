@@ -11,6 +11,11 @@ pub(crate) fn snapshot_bevy(world: &mut World, page: &mut raea_runtime_page::Bev
     let f = cx.now;
     let (px, mut pics) = bevy_page_frame(world, page, cx)?;
     let (px, twice) = raea_gpu_device::check::black_checked(f, px, raea_sys_page::redraw_full, || {
+        // the frame drawn again is the same frame: its manifest entry replaces the first draw's, as the fed render's
+        // redraw does (a held first frame that's all black was listed twice, each later frame one place late)
+        if let Some(m) = cx.manifest.as_mut() {
+            m.pop();
+        }
         let (px, again) = bevy_page_frame(world, page, cx)?;
         pics = again;
         Ok(px)

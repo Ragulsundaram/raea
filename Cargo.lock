@@ -14525,6 +14525,7 @@ dependencies = [
  "blitz-dom",
  "blitz-html",
  "image",
+ "parley",
  "raea-core-wire",
  "raea-gpu-device",
  "raea-io-media",

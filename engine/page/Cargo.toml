@@ -19,6 +19,8 @@ raea-runtime-input = { path = "../../runtime/input" }
 bevy = { version = "=0.20.0", default-features = false, features = ["std", "default_app", "bevy_render", "bevy_asset", "bevy_image", "bevy_log", "bevy_window", "ui_bevy_render", "bevy_picking", "ui_picking", "bevy_input_focus"] }
 # the document: stylo's styles, Taffy's and Blitz's layout (floats on, as Chrome lays them out)
 blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["svg", "woff", "system-fonts", "floats", "text-transform-icu", "complex-scripts"] }
+# the laid-out lines' glyph runs, where a render manifest's text has its ink (motion/manifest.rs)
+parley = { version = "=0.12.0", default-features = false, features = ["std"] }
 vello = { version = "=0.11.0", default-features = false, features = ["wgpu"] }
 wgpu = "=30.0.1"
 # a page's script host: JS engines, native calls, media, canvas, accessibility records

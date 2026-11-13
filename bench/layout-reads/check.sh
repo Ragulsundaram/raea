@@ -111,8 +111,9 @@ EOF
     r=$D/raea/frame-0000$i.png
     if [ $rr != 0 ] || [ ! -f "$r" ]; then line="$line	@$f no frame"; ok=0; continue; fi
     [ -s "$D/chrome-$f.json" ] || { line="$line	@$f no Chrome runs"; ok=0; continue; }
-    cmp=$(jq -c -n --slurpfile m "$D/manifest.json" --slurpfile c "$D/chrome-$f.json" --argjson i $i \
-      "\$m[0].frames[\$i].text as \$r | \$c[0] as \$c | $(cat "$BENCH/compare.jq")")
+    # the manifest's entry for frame f, by its number (a frame drawn twice has one entry, the last)
+    cmp=$(jq -c -n --slurpfile m "$D/manifest.json" --slurpfile c "$D/chrome-$f.json" --argjson f "$f" \
+      "([\$m[0].frames[] | select(.frame == \$f)] | last | .text // []) as \$r | \$c[0] as \$c | $(cat "$BENCH/compare.jq")")
     echo "$cmp" > "$D/compare-$f.json"
     dssim=$(magick compare -metric SSIM <(magick "$r" -background black -alpha remove png:-) <(magick "$D/chrome-$f.png" -background black -alpha remove png:-) null: 2>&1 | grep -oE '\(([0-9.e-]+)\)' | tr -d '()')
     read -r paired alone box ink < <(echo "$cmp" | jq -r '[.paired, (.raea_only + .chrome_only | length), (.box * 10 | round / 10), (.ink * 10 | round / 10)] | @tsv')

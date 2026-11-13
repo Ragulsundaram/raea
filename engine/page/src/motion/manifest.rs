@@ -120,10 +120,27 @@ impl BlitzPage {
                 let (fl, scale) = (node.final_layout(), doc.viewport().scale() as f64);
                 let fx = b.width / (fl.size.width as f64).max(1e-6);
                 let (mut x0, mut x1) = (f64::MAX, f64::MIN);
+                // the glyph runs' and inline-blocks' span on each line, inside the line's advance (its trailing spaces
+                // hang past it): an inline element's padding at the line's ends (its edge spacers) is its box's, not
+                // ink (a caption's padded word pill)
                 for line in l.layout.lines() {
                     let m = line.metrics();
-                    x0 = x0.min(m.offset as f64);
-                    x1 = x1.max((m.offset + m.advance) as f64);
+                    let (end, mut seen) = ((m.offset + m.advance) as f64, false);
+                    for item in line.items() {
+                        let (a, b) = match item {
+                            parley::PositionedLayoutItem::GlyphRun(g) => (g.offset(), g.offset() + g.advance()),
+                            parley::PositionedLayoutItem::InlineBox(b)
+                                if b.kind == parley::InlineBoxKind::InFlow && b.id & parley::InlineBox::EDGE == 0 => (b.x, b.x + b.width),
+                            _ => continue,
+                        };
+                        seen = true;
+                        x0 = x0.min(a as f64);
+                        x1 = x1.max((b as f64).min(end));
+                    }
+                    if !seen {
+                        x0 = x0.min(m.offset as f64);
+                        x1 = x1.max(end);
+                    }
                 }
                 if x1 > x0 {
                     let left = b.x + ((fl.border.left + fl.padding.left) as f64 + x0 / scale) * fx;

@@ -76,6 +76,7 @@ else throws a SyntaxError, as Chrome's does.
   call back.
 - An `<img>`'s `onError` never fires: an image that doesn't load fails the render, naming its src.
 - `new Image()` has no `naturalWidth` or `naturalHeight` (they stay 0).
+- An element has no `innerHTML` or `outerHTML`: read `textContent`, or walk `children` and `childNodes`.
 - A Range across wrapped lines is one rect, not one per line, and an inline element's `getClientRects()` is one rect
   too.
 - In a pass that draws no page (the sound pass, a 3D pre-pass) every read answers 0, and holds there are released.

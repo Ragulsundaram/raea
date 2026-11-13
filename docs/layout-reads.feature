@@ -322,6 +322,28 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And a composition that measures every frame (karaoke-captions, 300 frames) has its cost per read and per frame
         measured and written here
       And sdk/raea/conformance covers the JS side, and Rust tests cover the call, the wait and the hang guard
+      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 now):
+        - Kerning across spans. blitz-dom gave every composition span a border edge: with `border-style: none` (the
+          initial style) a border's computed width is still `medium`, and inline_edges read the width alone, so each
+          plain span got a zero-width spacer box at both ends and parley split its shaping there. "AVAWATAVAWAT" in a
+          span a letter was 632 px against 578 written once; Chrome draws both at 578. An app page never showed it
+          (Tailwind's preflight sets border-width: 0). sdk/ui/parity's p13-text/kerning-spans holds it. word-flip
+          (its typed letters a span each, 5.6 px wide) passes.
+        - A visibility: hidden inline element's text isn't drawn (blitz-paint drew every glyph run; only boxes were
+          hidden), though it keeps its place: #13's word-flip strut showed as a fake "features".
+        - A render manifest's frames: a still that drew all black and was drawn again listed the frame twice (the fed
+          render popped the first draw's entry, the still loop didn't), so every later frame was read one place late.
+          check.sh now finds each frame by its number. text-reveal and text-swell pass.
+        - A manifest text's ink spans its glyph runs and inline-blocks, not the line's whole advance: an inline
+          element's padding at a line's end (a caption's word pill) isn't ink. karaoke-captions and word-captions
+          pass.
+        - Still off (16), not yet traced: announce-title (frame 0's runs), bloom-lockup, capture-reveal (3 runs only
+          raea has), font-shuffle, portal-intro, prompt-send, punch-lines, search-typing, status-cycle, text-build,
+          text-rewrite, text-select, word-gather, card-rail, hero-launch (a video's frame, not text) and wordmark-cut.
+        - P26 with these: 185 of 215 frames at the bar, the same frames at the same SSIM (to six places) as a binary
+          before them. The 12 compositions under it are all 3D (classbg, datamaps, paint, planes, texmaps, the four
+          volumetric benches, box3d, arena3d) plus css/edit.tsx, which throws before its first commit; the volumetric
+          three draw no page text, so the shared tree's 3D work moved them, not this.
 
     @needs:LR10
     Scenario: LR11. Docs, skills, and the issues
@@ -331,7 +353,8 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And 11-12, in progress:
         - docs/manual/guides/web-components.md: measuring then letting the frame be taken (delayRender, loadFont),
           what a ref, document and window answer, and what's missing (MutationObserver and IntersectionObserver never
-          call back, an img's onError never fires, a wrapped Range is one rect, a pass with no page reads 0).
+          call back, an img's onError never fires, a wrapped Range is one rect, a pass with no page reads 0, no
+          innerHTML or outerHTML).
         - The skills: the motion router's rule 2 names the web APIs and the modules that install them (raea-skills
           #50). It merges when 0.1.3 is published, because raea-skills main is what the Claude plugin serves to
           people on 0.1.1.

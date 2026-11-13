@@ -5,6 +5,7 @@ use parley::{Affinity, Cursor, Layout, Line, PositionedLayoutItem, Selection};
 use peniko::Fill;
 use std::collections::HashMap;
 use style::properties::generated::longhands::_moz_osx_font_smoothing::computed_value::T as FontSmoothing;
+use style::properties::generated::longhands::visibility::computed_value::T as StyloVisibility;
 use style::properties::generated::longhands::text_decoration_style::computed_value::T as TextDecorationStyle;
 use style::values::computed::{
     Length, LengthPercentage, TextDecorationLength, TextDecorationLine, TextUnderlinePosition,
@@ -889,6 +890,13 @@ pub(crate) fn stroke_text<'a>(
                 let font_size = run.font_size();
                 let metrics = run.font_metrics();
                 let style = glyph_run.style();
+                // raea: a run whose element is visibility: hidden (or collapse) isn't drawn, though it keeps its place
+                // in the line, as Chrome draws it: `visibility` inherits, so the run's own element says (a visible
+                // child of a hidden span draws). Blitz hid only boxes, so a hidden inline word drew (#13, word-flip's
+                // slot strut)
+                if doc.get_node(style.brush.id).and_then(|n| n.primary_styles()).is_some_and(|s| s.get_inherited_box().visibility != StyloVisibility::Visible) {
+                    continue;
+                }
                 let _painting = crate::Painting::enter(style.brush.id);
                 let synthesis = run.synthesis();
                 // raea: a bevy_ui <Text> draws its glyphs upright, as bevy_text does: it takes no synthetic italic's
