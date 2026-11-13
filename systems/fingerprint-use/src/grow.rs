@@ -51,7 +51,12 @@ pub fn bounds(matte: &[u8], w: usize, h: usize) -> Option<[f32; 4]> {
 
 /// The box around boxes
 pub fn union(a: Option<[f32; 4]>, b: [f32; 4]) -> [f32; 4] {
-    a.map_or(b, |a| [a[0].min(b[0]), a[1].min(b[1]), a[2].max(b[2]), a[3].max(b[3])])
+    let Some(mut u) = a else { return b };
+    for i in 0..2 {
+        u[i] = u[i].min(b[i]);
+        u[i + 2] = u[i + 2].max(b[i + 2]);
+    }
+    u
 }
 
 /// The note's frames from `from` toward `to` (either way), the first at `from`, as PNGs in `dir`
