@@ -102,12 +102,6 @@ fn camera(bin: &Path, file: &Path) -> Vec<Move> {
         .collect()
 }
 
-/// The visible cuts, from raea-perceive cuts; none where it can't read them
-fn cuts(bin: &Path, file: &Path) -> Vec<f64> {
-    let Ok(o) = std::process::Command::new(bin).arg("cuts").arg(file).output() else { return Vec::new() };
-    serde_json::from_slice::<serde_json::Value>(&o.stdout).ok().and_then(|v| v["cuts"].as_array().map(|c| c.iter().filter_map(serde_json::Value::as_f64).collect())).unwrap_or_default()
-}
-
 /// Each frame's depth, the model loaded once for them all
 fn depths(bin: &Path, imgs: &[PathBuf]) -> Result<Vec<Depth>> {
     let outs: Vec<PathBuf> = imgs.iter().map(|p| p.with_extension("f32")).collect();
@@ -251,7 +245,7 @@ pub fn things(enc: &mut Encoders, file: &Path, marks: &[Mark]) -> Result<Things>
         }
         let cam = camera(&bin, file);
         let mut edges = vec![0.0];
-        for c in cuts(&bin, file) {
+        for c in grow::cuts(&bin, file) {
             if c > 0.0 && c < dur {
                 edges.push(c);
             }

@@ -556,31 +556,45 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         and to check each fix with --was (raea-skills fingerprint-fix f6d6654)
 
   Rule: FP11. Markup: the player asks for a mark that means "this thing"
-    @needs:FP5a
+    @needs:FP5a @done
     Scenario: FP11a. Marks beside the pin
       Given the review player (docs/review.feature R1), where a pin places a note
       Then a note can carry marks: mark (a click on the thing), box, lasso, arrow (from a thing to a place), strike (a
-        stroke through a thing), span (a drag along the timeline) and, on sound, a box on the spectrogram
+        stroke through a thing) and span (a drag along the timeline); on sound, a box on the spectrogram is FP11c
       And each mark is stored with the note, in the frame's 0-1 coordinates, with its frame or span and the layer keys
         under it from the layer pass when the video has one
       And a note without a mark keeps its pin, which is never read as a mark (FP0f)
       And so far (11-12, raea-feed fingerprint-page 2265d91): a pin dropped on the picture opens its composer with mark,
         box, lasso, arrow and strike tools; the next drag draws one, kept in pin.marks in 0-1 with its frame (`t`) and
         the layer keys under it on a render with a layer pass, and an opened note draws them again (e2e/marks.spec.ts).
-        A span is the time pin's `to` (MomentComposer). Not yet: a box on a spectrogram, which the player doesn't show
+        A span is the time pin's `to` (MomentComposer)
 
-    @needs:FP11a
+    @needs:FP11a @done
     Scenario: FP11b. What each mark teaches
       Then a mark or a box on a defect note is a region label for that axis on those frames; an arrow is a direction
         (the layer and its displacement) and goes to the agent as an instruction; a strike is "remove this layer" for
-        the agent; a span sets the label's time; a spectrogram box is a time and frequency label on the sound
+        the agent; a span sets the label's time
       And a click is grown into a region by EdgeTAM and tracked through its shot, so one mark labels every frame of it,
         with the frames EdgeTAM loses dropped
       And so far (11-12): the agent reads arrows, strikes and the marked thing as lines in the note's prompt and on a
         poster's line (raea-feed 02fc49a, model/pin.ts marksLines); `learn-notes` makes a defect note's mark, box and
-        lasso its row's region, grown and tracked over the label's span by EdgeTAM (raea-perceive track, frames it
-        loses dropped; on an app render a blind seed kept 3 frames of 10) and a span pin its time. Not yet: the spectrogram
-        box, and tracking through the whole shot rather than the label's span
+        lasso its row's region and a span pin its time. The mark is followed through its whole shot (grow.rs through:
+        raea-perceive cuts for the shot, at most 8 s either side, then EdgeTAM forward and back at 4 frames a second),
+        and the note becomes one row for each 2 s window of the shot where EdgeTAM kept the thing on half its frames or
+        more, at the box around it there. The note's own window is always a row, at the mark. Without raea-perceive it
+        is one row over the label's span. On the things red-team renders (3 s shots), a mark on a still block kept both
+        windows, the second at the block's own box (overlap 0.97 of its layer-pass box), and a mark on a moving block
+        followed it left across the frame, a looser box (overlap 0.41). A blind seed in the middle of an app render
+        kept only the note's frame, so only its own window
+
+    @needs:FP11b
+    Scenario: FP11c. Marks on the sound
+      Given the review player shows a sound's spectrogram under its picture (or in its place, for sound alone)
+      Then a box drawn on it is a note's mark there, kept in 0-1 of the span shown (time) and of the frequencies (mel)
+      And on a defect note on a sound axis, `learn-notes` makes its time the label's span and keeps its band in the row
+      And decided 11-12: not in 0.1.2. The player draws no spectrogram, and raea-feed is fixed at what 0.1.2 ships.
+        Until then a sound note's span (FP11a) is its time label, and the sound heads are per window, so a band
+        would be kept but not yet learned from
 
   Rule: FP12. Heatmaps: a picture axis says where, not only whether
     @needs:FP11b,FP2c @done

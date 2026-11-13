@@ -294,25 +294,15 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
         if b - a < 0.5 {
             continue;
         }
-        // a defect's marks, grown into the thing and tracked over the label by EdgeTAM where raea-perceive is (grow.rs)
-        let region = x.region.filter(|_| bad).map(|seed| raea_sys_fingerprint_use::grow::grow(&x.media, x.t, a, b, seed).ok().flatten().map_or(seed, |g| g.region));
-        let row = raea_sys_fingerprint::evidence::Row {
-            media: c.media.clone(),
-            a,
-            b,
-            axis,
-            bad,
-            weight: 1.0,
-            who: x.who.clone(),
-            source: "note".into(),
-            project: x.project.clone(),
-            kind: Some(x.note.clone()),
-            region,
-            words: Some(x.text.clone()),
-            at: 0,
-            pin: None,
-        };
-        l.push(row, &raea_sys_fingerprint::evidence::features(&c, a, b));
+        // a defect's marks, grown into the thing by EdgeTAM and followed through its shot: a row for each 2 s it stays
+        // in, with its box there (grow.rs through); else the mark's own box over the label
+        let seed = x.region.filter(|_| bad);
+        let shot = seed.and_then(|s| raea_sys_fingerprint_use::grow::through(&x.media, x.t, c.dur, s, 2.0).ok().flatten()).filter(|w| !w.is_empty());
+        for (a, b, region) in shot.map_or_else(|| vec![(a, b, seed)], |w| w.into_iter().map(|(a, b, r)| (a, b, Some(r))).collect()) {
+            let (media, axis, who, project, kind, words) = (c.media.clone(), axis.clone(), x.who.clone(), x.project.clone(), Some(x.note.clone()), Some(x.text.clone()));
+            let row = raea_sys_fingerprint::evidence::Row { media, a, b, axis, bad, weight: 1.0, who, source: "note".into(), project, kind, region, words, at: 0, pin: None };
+            l.push(row, &raea_sys_fingerprint::evidence::features(&c, a, b));
+        }
         made += 1;
     }
     Ok(format!("{made} notes are evidence now (defects and praise; directions stay with the brief)\n"))

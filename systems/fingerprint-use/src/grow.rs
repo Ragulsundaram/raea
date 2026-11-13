@@ -1,7 +1,8 @@
 //! A mark grown into its thing (docs/fingerprint.feature FP11b): the region a note's click, box or lasso names is
-//! tracked by EdgeTAM (raea-perceive track) forward from the note's frame to the end of its label and back to its
-//! start, so one mark labels every frame of it. A frame where EdgeTAM loses the thing is dropped; the row's region is
-//! the box around the frames it kept. Without raea-perceive the mark's own region stands.
+//! tracked by EdgeTAM (raea-perceive track) forward from the note's frame to the end of its shot and back to its
+//! start (raea-perceive cuts), so one mark labels every frame of the shot it stays in. A window where EdgeTAM loses the
+//! thing is dropped; each kept window's region is the box around the thing there. Without raea-perceive the mark's own
+//! region stands, over the label's span.
 
 use anyhow::{Result, anyhow};
 use std::path::{Path, PathBuf};
@@ -15,12 +16,8 @@ const LOST: f64 = 0.0005;
 /// A click marks this far around it, of the frame
 const CLICK: f32 = 0.05;
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Grown {
-    pub region: [f32; 4],
-    pub kept: usize,
-    pub lost: usize,
-}
+/// A shot is followed at most this far either side of its note, seconds
+pub const SHOT_MAX: f64 = 8.0;
 
 /// raea-perceive: $RAEA_PERCEIVE, else beside this raea, else on PATH
 pub fn perceive() -> Option<PathBuf> {
@@ -134,19 +131,58 @@ pub fn follow(media: &Path, t: f64, a: f64, b: f64, seed: [f32; 4], fps: f64) ->
     ran.map(Some)
 }
 
-/// The mark's region tracked over a..b from the note's moment `t`; Ok(None) without raea-perceive
-pub fn grow(media: &Path, t: f64, a: f64, b: f64, seed: [f32; 4]) -> Result<Option<Grown>> {
-    let Some(seen) = follow(media, t, a, b, seed, FPS)? else { return Ok(None) };
-    let mut g = Grown { region: seed, kept: 0, lost: 0 };
-    let mut region = None;
-    for (_, m) in &seen {
-        match m.as_ref().and_then(|m| bounds(&m.px, m.w, m.h)) {
-            Some(r) => (region, g.kept) = (Some(union(region, r)), g.kept + 1),
-            None => g.lost += 1,
+/// The visible cuts, from raea-perceive cuts; none where it can't read them
+pub fn cuts(bin: &Path, file: &Path) -> Vec<f64> {
+    let Ok(o) = std::process::Command::new(bin).arg("cuts").arg(file).output() else { return Vec::new() };
+    serde_json::from_slice::<serde_json::Value>(&o.stdout).ok().and_then(|v| v["cuts"].as_array().map(|c| c.iter().filter_map(serde_json::Value::as_f64).collect())).unwrap_or_default()
+}
+
+/// The shot around `t`: from the cut before it to the cut after (the piece's ends where there's none), at most
+/// SHOT_MAX either side, since EdgeTAM runs on every frame of it
+pub fn shot(cuts: &[f64], t: f64, dur: f64) -> (f64, f64) {
+    let a = cuts.iter().copied().filter(|c| *c <= t).fold(0.0, f64::max);
+    let b = cuts.iter().copied().filter(|c| *c > t).fold(dur, f64::min);
+    (a.max(t - SHOT_MAX), b.min(t + SHOT_MAX))
+}
+
+/// The thing in each `win`-second window of a..b where EdgeTAM kept it on half the frames or more: the window and the
+/// box around the thing in it
+pub fn windows(seen: &[(f64, Option<Matte>)], a: f64, b: f64, win: f64) -> Vec<(f64, f64, [f32; 4])> {
+    let mut out = Vec::new();
+    let mut s = a;
+    while s < b - 1e-6 {
+        let e = (s + win).min(b);
+        let (mut region, mut kept, mut all) = (None, 0, 0);
+        for (_, m) in seen.iter().filter(|x| x.0 >= s - 1e-6 && x.0 < e + 1e-6) {
+            all += 1;
+            if let Some(r) = m.as_ref().and_then(|m| bounds(&m.px, m.w, m.h)) {
+                (region, kept) = (Some(union(region, r)), kept + 1);
+            }
         }
+        if let Some(r) = region.filter(|_| kept * 2 >= all) {
+            out.push((s, e, r));
+        }
+        s = e;
     }
-    g.region = region.unwrap_or(seed);
-    Ok(Some(g))
+    out
+}
+
+/// A mark followed through its shot (FP11b): each `win`-second window where EdgeTAM kept the thing, with the box
+/// around it there, and always the note's own window, which the mark itself labels; Ok(None) without raea-perceive
+pub fn through(media: &Path, t: f64, dur: f64, seed: [f32; 4], win: f64) -> Result<Option<Vec<(f64, f64, [f32; 4])>>> {
+    let Some(bin) = perceive() else { return Ok(None) };
+    let (a, b) = shot(&cuts(&bin, media), t, dur);
+    Ok(follow(media, t, a, b, seed, FPS)?.map(|seen| own(windows(&seen, a, b, win), t, a, b, win, seed)))
+}
+
+/// The windows with the note's own one put back, at the mark's region, where EdgeTAM kept too few of its frames
+fn own(mut w: Vec<(f64, f64, [f32; 4])>, t: f64, a: f64, b: f64, win: f64, seed: [f32; 4]) -> Vec<(f64, f64, [f32; 4])> {
+    if !w.iter().any(|x| (x.0..x.1).contains(&t)) {
+        let s = a + ((t - a) / win).floor() * win;
+        w.push((s, (s + win).min(b), seed));
+        w.sort_by(|x, y| x.0.total_cmp(&y.0));
+    }
+    w
 }
 
 /// The region a note's marks name: the box around its marks, boxes and lassos (a click as a small square around it).
@@ -187,6 +223,29 @@ mod tests {
     }
 
     #[test]
+    fn a_mark_labels_each_window_of_its_shot_it_stays_in() {
+        // cuts at 2 and 9 s: a note at 4 s is in the shot 2..9, and at 20 s in 9..28, cut to 8 s either side
+        assert_eq!(shot(&[2.0, 9.0], 4.0, 30.0), (2.0, 9.0));
+        assert_eq!(shot(&[2.0, 9.0], 20.0, 30.0), (12.0, 28.0));
+        let on = |x0: usize| {
+            let mut px = vec![0u8; 100];
+            (0..3).for_each(|i| px[50 + x0 + i] = 255);
+            Some(Matte { w: 10, h: 10, px })
+        };
+        // four frames a second over 2..6 s: kept in the first two seconds, lost in the last two but one frame
+        let seen: Vec<(f64, Option<Matte>)> = (0..16).map(|i| (2.0 + i as f64 * 0.25, if i < 8 { on(i % 2) } else if i == 9 { on(0) } else { None })).collect();
+        let w = windows(&seen, 2.0, 6.0, 2.0);
+        assert_eq!(w.len(), 1, "the window where it was lost on 7 of 8 frames is dropped");
+        assert_eq!((w[0].0, w[0].1), (2.0, 4.0));
+        let r = w[0].2;
+        assert!((r[0] - 0.0).abs() < 1e-6 && (r[2] - 0.4).abs() < 1e-6, "the box around both places it was: {r:?}");
+        // a note at 5 s keeps its own window, at the mark, though EdgeTAM lost the thing there
+        let o = own(w, 5.0, 2.0, 6.0, 2.0, [0.1, 0.1, 0.2, 0.2]);
+        assert_eq!(o.iter().map(|x| (x.0, x.1)).collect::<Vec<_>>(), vec![(2.0, 4.0), (4.0, 6.0)]);
+        assert_eq!(o[1].2, [0.1, 0.1, 0.2, 0.2]);
+    }
+
+    #[test]
     fn marks_name_a_region_and_arrows_dont() {
         use serde_json::json;
         let pin = json!({"kind": "place", "x": 0.5, "y": 0.5, "marks": [
@@ -204,15 +263,18 @@ mod tests {
 
 #[cfg(test)]
 mod real {
-    /// `RAEA_GROW_MEDIA=FILE cargo test -p raea-sys-fingerprint-use grows -- --ignored`: a box in the middle of FILE at 1 s,
-    /// grown over 0..2 s by raea-perceive
+    /// `RAEA_GROW_MEDIA=FILE RAEA_GROW_AT=T RAEA_GROW_BOX=x0,y0,x1,y1 cargo test -p raea-sys-fingerprint-use grows --
+    /// --ignored`: a thing's box at T s followed through its shot by raea-perceive (the box defaults to the middle, T to 1)
     #[test]
     #[ignore]
     fn grows_on_a_real_render() {
         let f = std::path::PathBuf::from(std::env::var("RAEA_GROW_MEDIA").expect("RAEA_GROW_MEDIA"));
-        let g = super::grow(&f, 1.0, 0.0, 2.0, [0.4, 0.4, 0.6, 0.6]).expect("grown").expect("raea-perceive");
-        eprintln!("{g:?}");
-        assert!(g.kept > 0, "EdgeTAM kept no frame");
-        assert!(g.region[2] > g.region[0] && g.region[3] > g.region[1]);
+        let t: f64 = std::env::var("RAEA_GROW_AT").ok().and_then(|v| v.parse().ok()).unwrap_or(1.0);
+        let b: Vec<f32> = std::env::var("RAEA_GROW_BOX").unwrap_or("0.4,0.4,0.6,0.6".into()).split(',').filter_map(|v| v.parse().ok()).collect();
+        let dur = raea_sys_columns::media::duration(&f).expect("duration");
+        let w = super::through(&f, t, dur, [b[0], b[1], b[2], b[3]], 2.0).expect("followed").expect("raea-perceive");
+        eprintln!("{w:?}");
+        assert!(w.iter().any(|(a, b, _)| *a <= t && t < *b), "the note's own window is kept");
+        assert!(w.iter().all(|(a, b, r)| b > a && r[2] > r[0] && r[3] > r[1]));
     }
 }
