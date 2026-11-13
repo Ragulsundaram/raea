@@ -621,4 +621,34 @@ mod tests {
         doc.resolve(0.0);
         assert_eq!(doc.projections.get(&card).copied(), want);
     }
+
+    /// raea: getBoundingClientRect through a perspective is the box of the four corners as drawn (layout-reads LR10:
+    /// snapcn's card-rail read every turned card at its flat size). Chrome 's numbers, for a 400x200 card at 300,400
+    /// under a 1000px perspective, turned rotateY(60deg): flat, and in a preserve-3d world turned rotateX(10deg).
+    #[test]
+    fn a_rect_under_a_perspective_is_its_corners_as_drawn() {
+        let rect = |world: Option<&str>| {
+            let mut doc = BaseDocument::new(DocumentConfig { viewport: Some(Viewport::new(1000, 1000, 1.0, ColorScheme::Light)), ..Default::default() });
+            let style = |v: &str| vec![Attribute { name: qual_name!("style"), value: v.to_string() }];
+            let root_id = doc.root_node().id;
+            let mut m = doc.mutate();
+            let root = m.create_element(qual_name!("div"), style("position:relative;width:1000px;height:1000px;perspective:1000px"));
+            let card = m.create_element(qual_name!("div"), style("position:absolute;left:300px;top:400px;width:400px;height:200px;transform:rotateY(60deg)"));
+            if let Some(w) = world {
+                let w = m.create_element(qual_name!("div"), style(&format!("position:absolute;inset:0;transform-style:preserve-3d;transform:{w}")));
+                m.append_children(w, &[card]);
+                m.append_children(root, &[w]);
+            } else {
+                m.append_children(root, &[card]);
+            }
+            m.append_children(root_id, &[root]);
+            drop(m);
+            doc.resolve(0.0);
+            let r = doc.get_client_bounding_rect(card).unwrap();
+            [r.x, r.y, r.width, r.height]
+        };
+        let near = |got: [f64; 4], want: [f64; 4]| assert!(got.iter().zip(want).all(|(g, w)| (g - w).abs() < 0.05), "{got:?}, Chrome {want:?}");
+        near(rect(None), [379.05, 379.05, 206.19, 241.90]);
+        near(rect(Some("rotateX(10deg)")), [376.86, 348.18, 209.86, 263.30]);
+    }
 }

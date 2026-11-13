@@ -2550,10 +2550,41 @@ impl BaseDocument {
     /// raea: the bounds of a node's border box in the viewport through every transform on its containing block chain,
     /// or None when there's none on it. Each node's transform is kept in device pixels (its translation scaled), so it
     /// is taken back to CSS pixels here.
+    ///
+    /// A perspective's projection is taken as the painter draws it (the node's Projection `h`), so the bounds are its
+    /// four corners' box on the page, as Chrome's are: snapcn's card-rail (cards turned under a perspective) read
+    /// every card at its flat size and place (layout-reads LR10).
     fn transformed_bounds(&self, node_id: NodeId) -> Option<BoundingRect> {
-        use kurbo::{Affine, Rect};
+        let size = self.nodes.get(node_id)?.unrounded_layout().size;
+        self.transformed_rect(node_id, [0.0, 0.0, size.width as f64, size.height as f64])
+    }
+
+    /// raea: a rect in a node's own box (x, y, w, h from its border box's corner, CSS px) on the page through every transform
+    /// on its containing block chain, projections included, as transformed_bounds takes its border box; None when
+    /// there's no transform on it (the render manifest's ink: the span of a line's letters on a turned card)
+    pub fn transformed_rect(&self, node_id: NodeId, rect: [f64; 4]) -> Option<BoundingRect> {
+        // a 3x3 on column vectors (x, y, w), row-major, in CSS px
+        type H = [f64; 9];
+        fn mul(a: &H, b: &H) -> H {
+            let mut m = [0.0; 9];
+            for r in 0..3 {
+                for c in 0..3 {
+                    m[r * 3 + c] = (0..3).map(|k| a[r * 3 + k] * b[k * 3 + c]).sum();
+                }
+            }
+            m
+        }
+        let translate = |x: f64, y: f64| -> H { [1.0, 0.0, x, 0.0, 1.0, y, 0.0, 0.0, 1.0] };
         let scale = self.viewport.scale_f64();
-        let mut m = Affine::IDENTITY;
+        // an affine kept in device pixels (its translation scaled), in CSS px
+        let affine = |t: &kurbo::Affine| -> H {
+            let [a, b, c, d, e, f] = t.as_coeffs();
+            [a, c, e / scale, b, d, f / scale, 0.0, 0.0, 1.0]
+        };
+        // a Projection's h is S * H * S^-1 with S = diag(scale, scale, 1): back to CSS px
+        let css = |h: &H| -> H { [h[0], h[1], h[2] / scale, h[3], h[4], h[5] / scale, h[6] * scale, h[7] * scale, h[8]] };
+        let preserves = |id: NodeId| self.nodes.get(id).and_then(|n| n.primary_styles()).is_some_and(|s| crate::stylo_to_kurbo::preserves_3d(&s));
+        let mut m: H = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
         let mut any = false;
         let mut current = Some(node_id);
         while let Some(id) = current {
@@ -2561,27 +2592,64 @@ impl BaseDocument {
             let Some(node) = self.nodes.get(id) else { break };
             if id != node_id {
                 let s = node.scroll_offset();
-                m = Affine::translate((-s.x, -s.y)) * m;
+                m = mul(&translate(-s.x, -s.y), &m);
             }
-            if let Some(t) = node.transform().as_deref() {
+            let projection = self.projections.get(&id);
+            if let Some(p) = projection.filter(|p| p.in_context) {
+                // in a 3D rendering context: h is from the context root's parent's space, the box's position included
+                let h = match (p.h, p.context) {
+                    (Some(h), _) => Some(css(&h)),
+                    (None, Some(a)) => Some(affine(&a)),
+                    (None, None) => None,
+                };
+                if let Some(h) = h {
+                    any = true;
+                    m = mul(&h, &m);
+                    // up to the context's root (the first ancestor whose parent doesn't preserve 3D), then on from its parent
+                    let mut root = node.containing_block();
+                    while let Some(r) = root {
+                        match self.nodes.get(r).and_then(|n| n.containing_block()) {
+                            Some(up) if preserves(up) => root = Some(up),
+                            _ => break,
+                        }
+                    }
+                    current = root.and_then(|r| self.nodes.get(r)).and_then(|n| n.containing_block());
+                    continue;
+                }
+            }
+            if let Some(h) = projection.and_then(|p| p.h) {
                 any = true;
-                let [a, b, c, d, e, f] = t.as_coeffs();
-                m = Affine::new([a, b, c, d, e / scale, f / scale]) * m;
+                m = mul(&css(&h), &m);
+            } else if let Some(t) = node.transform().as_deref() {
+                any = true;
+                m = mul(&affine(t), &m);
             }
             let loc = node.unrounded_layout().location;
-            m = Affine::translate((loc.x as f64, loc.y as f64)) * m;
+            m = mul(&translate(loc.x as f64, loc.y as f64), &m);
             current = node.containing_block();
         }
         if !any {
             return None;
         }
-        let size = self.nodes[node_id].unrounded_layout().size;
-        let r = m.transform_rect_bbox(Rect::new(0.0, 0.0, size.width as f64, size.height as f64));
+        let [rx, ry, w, h] = rect;
+        let (mut x0, mut y0, mut x1, mut y1) = (f64::MAX, f64::MAX, f64::MIN, f64::MIN);
+        for (x, y) in [(rx, ry), (rx + w, ry), (rx + w, ry + h), (rx, ry + h)] {
+            let q = m[6] * x + m[7] * y + m[8];
+            // a corner at or behind the viewer has no place on the page
+            if q <= 1e-9 {
+                continue;
+            }
+            let (px, py) = ((m[0] * x + m[1] * y + m[2]) / q, (m[3] * x + m[4] * y + m[5]) / q);
+            (x0, y0, x1, y1) = (x0.min(px), y0.min(py), x1.max(px), y1.max(py));
+        }
+        if x0 > x1 {
+            return Some(BoundingRect { x: 0.0, y: 0.0, width: 0.0, height: 0.0 });
+        }
         Some(BoundingRect {
-            x: snap_to_layout_unit(r.x0 - self.viewport_scroll().x),
-            y: snap_to_layout_unit(r.y0 - self.viewport_scroll().y),
-            width: snap_to_layout_unit(r.width()),
-            height: snap_to_layout_unit(r.height()),
+            x: snap_to_layout_unit(x0 - self.viewport_scroll().x),
+            y: snap_to_layout_unit(y0 - self.viewport_scroll().y),
+            width: snap_to_layout_unit(x1 - x0),
+            height: snap_to_layout_unit(y1 - y0),
         })
     }
 

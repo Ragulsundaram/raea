@@ -322,7 +322,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And a composition that measures every frame (karaoke-captions, 300 frames) has its cost per read and per frame
         measured and written here
       And sdk/raea/conformance covers the JS side, and Rust tests cover the call, the wait and the hang guard
-      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 with kerning and the manifest, 21 now):
+      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 with kerning and the manifest, 21 with the fonts, 23 now):
         - Kerning across spans. blitz-dom gave every composition span a border edge: with `border-style: none` (the
           initial style) a border's computed width is still `medium`, and inline_edges read the width alone, so each
           plain span got a zero-width spacer box at both ends and parley split its shaping there. "AVAWATAVAWAT" in a
@@ -352,9 +352,15 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           and Google's never came: raea drew 300, 400 and 500 alike (345.45 px at 100px for "snapcn"; Chrome 340.39,
           345.47, 350.45) and 600 as 700. Now 340.33, 345.45, 350.48, 355.38, 360.45. wordmark-cut (22 px narrow at 500),
           text-select and hero-launch pass; punch-lines 18.1 -> 0.9, text-rewrite 7.4 -> 0.2 (box; ink 1.9).
-        - Still off (12): announce-title (frame 0's runs), capture-reveal (3 runs only raea has), font-shuffle,
-          portal-intro, prompt-send, punch-lines and text-rewrite (their ink, 1.3 to 1.9 px past Chrome's, the boxes
-          within 1), search-typing (1.9), status-cycle, text-build (SF's trak), word-gather (1.2) and card-rail.
+        - getBoundingClientRect through a perspective is the box of the four corners as drawn (blitz-dom's
+          transformed_bounds took only the affine part, so a card turned under a perspective read at its flat size
+          and place); one in a preserve-3d context is mapped from its context root's parent. Chrome's numbers for a
+          400x200 card under a 1000px perspective, flat and in a turned world, are a blitz-dom test. A manifest text's
+          ink goes through the same transforms. card-rail 161.4 px off -> 0.6 (ink 1.7), announce-title 11504 -> 43.5;
+          punch-lines and text-rewrite pass.
+        - Still off (10): announce-title (frame 0's runs), capture-reveal (3 runs only raea has), font-shuffle,
+          portal-intro, prompt-send (ink 1.8), search-typing (1.5), status-cycle, text-build (SF's trak),
+          word-gather and card-rail (ink 1.7).
         - The cost, measured 11-12 on the M5 Pro (300 frames, 1280x720, 40 inline-blocks of Inter whose text changes
           every frame, rendered to hashes, median of 6): no reads 2.034 s, one getBoundingClientRect a frame 2.151 s,
           ten a frame 2.180 s. The first read in a frame costs about 0.39 ms (one layout synced); each further read in

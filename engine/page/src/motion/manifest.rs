@@ -143,8 +143,14 @@ impl BlitzPage {
                     }
                 }
                 if x1 > x0 {
-                    let left = b.x + ((fl.border.left + fl.padding.left) as f64 + x0 / scale) * fx;
-                    t["ink"] = json!([r(left), r(b.y), r((x1 - x0) / scale * fx), r(h)]);
+                    let lx = (fl.border.left + fl.padding.left) as f64 + x0 / scale;
+                    // through the element's transforms as its box is (a card turned under a perspective draws its line
+                    // narrower at the far end: a share of the box's width would put it where it isn't)
+                    let local_h = (fl.size.height as f64).max((fl.border.top + fl.padding.top) as f64 + l.layout.height() as f64 / scale);
+                    t["ink"] = match doc.transformed_rect(owner, [lx, 0.0, (x1 - x0) / scale, local_h]) {
+                        Some(q) => json!([r(q.x), r(q.y), r(q.width), r(q.height)]),
+                        None => json!([r(b.x + lx * fx), r(b.y), r((x1 - x0) / scale * fx), r(h)]),
+                    };
                 }
             }
             // its first named face and how many lines it was set on (docs/direction.feature DR1's Text)
