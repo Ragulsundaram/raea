@@ -1,4 +1,4 @@
-// raea part add statcard: a number and up to three lines beside it (*word* marks the accent), and up to two labelled bars
+// raea component add statcard: a number and up to three lines beside it (*word* marks the accent), and up to two labelled bars
 // that fill on the words that say them. Use it only when the footage says a real number; every claim comes from the
 // brand's own material or the take. *_say props are phrases from the transcript, word for word.
 import { Easing, Region, findPhrase, interpolate, useCurrentFrame, useWords } from "raea";

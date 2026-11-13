@@ -1,4 +1,4 @@
-// raea part add follow: the ask as a pill that hugs its text ("Follow for part 2", "Shop the stack"). Give it the moment the
+// raea component add follow: the ask as a pill that hugs its text ("Follow for part 2", "Shop the stack"). Give it the moment the
 // speaker asks, or the last seconds.
 import { Region, interpolate, useCurrentFrame } from "raea";
 

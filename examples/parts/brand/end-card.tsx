@@ -1,4 +1,4 @@
-// raea part add end-card: the closing card: the brand's name or logo, one line, and the ask (follow, shop, try). Give it the
+// raea component add end-card: the closing card: the brand's name or logo, one line, and the ask (follow, shop, try). Give it the
 // last 2 to 3 seconds in a <Sequence>; it fades in over the footage or a fill of the brand's background.
 import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "raea";
 

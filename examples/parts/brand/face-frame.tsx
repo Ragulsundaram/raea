@@ -1,4 +1,4 @@
-// raea part add face-frame: a talking take cropped around the face for the edit's shape. The engine finds the face
+// raea component add face-frame: a talking take cropped around the face for the edit's shape. The engine finds the face
 // itself (framing="face": raea-perceive's eye track, kept beside the take as TAKE.faces.json) and keeps the eyes 38%
 // down the frame as the speaker moves; punchIn tightens it (1.15 is a usual punch-in for emphasis). An objectPosition or
 // transform of your own on the Video turns the framing off, so this part sets neither.

@@ -1,4 +1,4 @@
-// raea part add captions: the spoken words, a few at a time, the word being said lit. Reads the edit's words itself
+// raea component add captions: the spoken words, a few at a time, the word being said lit. Reads the edit's words itself
 // (useWords(): `raea cut` writes them beside cuts.ts). Sits in the bottom band (parts take the top by default, so they
 // never share one), on the brand's surface with its own text colour, a pair the kit keeps readable on any footage.
 // Styled only from the brand's tokens (brand/brand.css); change anything here, it's yours.

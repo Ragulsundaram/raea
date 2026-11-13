@@ -11,7 +11,7 @@
   time shown at the clip's frame `f` is `(startFrom + f * playbackRate) / fps`. `trimBefore` and `trimAfter` are other
   names for the same two props: use one name or the other, never both.
 - Frame a talking head on its face. `raea frame TAKE` says whether the take is a talking take (`<FaceFrame>`, from
-  `raea part add face-frame`) or a wide screen recording (`<ScreenFit>`). `<FaceFrame src={take} />` (or
+  `raea component add face-frame`) or a wide screen recording (`<ScreenFit>`). `<FaceFrame src={take} />` (or
   `<Video framing="face">`) has the engine find the face and keep the eyes 38% down the frame as the speaker moves; an
   objectPosition or transform of your own on that Video turns the framing off. Zoom a clip for emphasis with
   `punchIn={1.15}`. Alternating punched and unpunched clips between cuts gives a talking head rhythm without a zoom

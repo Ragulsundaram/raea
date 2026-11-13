@@ -1,4 +1,4 @@
-// raea part add notthat: a lead statement, then the idea it rejects on a card, struck through when the speaker says
+// raea component add notthat: a lead statement, then the idea it rejects on a card, struck through when the speaker says
 // strikeSay ("not X, but Y"). strikeSay is a phrase from the transcript, word for word.
 import { Easing, Region, findPhrase, interpolate, useCurrentFrame, useWords } from "raea";
 

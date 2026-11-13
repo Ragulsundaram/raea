@@ -1,5 +1,5 @@
 // The edit: a React composition rendered by raea (`raea render`). The clips come from cuts.ts (`raea cut` writes it),
-// the parts from components/ (`raea part add` copies them in; they're yours to change), the look from brand/brand.css.
+// the parts from components/ (`raea component add` copies them in; they're yours to change), the look from brand/brand.css.
 // Change anything here: layout, timing, what plays when. `raea check` renders it and says what's wrong.
 import { AbsoluteFill, Audio, Composition, Series, Video, registerRoot } from "raea";
 import { cuts, edit, frames, total } from "./cuts";

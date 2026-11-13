@@ -4,7 +4,7 @@ A composition is a React component that is rendered once per frame. Every frame 
 alone, with nothing carried over between frames. The engine decodes the footage, paints the page, draws the 3D
 and mixes the sound, so your job is to say what each frame looks and sounds like.
 
-Write it in the object's own files: edit.tsx, cuts.ts (`raea cut` writes it) and components/ (`raea part add` copies
+Write it in the object's own files: edit.tsx, cuts.ts (`raea cut` writes it) and components/ (`raea component add` copies
 parts in). AGENTS.md lists the whole API. These files say how to use it well.
 
 ## Which file to read

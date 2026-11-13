@@ -1,12 +1,13 @@
 ---
 title: "raea part"
-summary: "Copy a ready-made part into the project's components/, to use and change as your own."
+summary: "The old name of raea component: copy a ready-made component into the project's components/, to use and change as your own."
 order: 28
 sources: ["engine/cli/src/index.ts", "engine/cli/src/registry.gen.ts"]
 ---
 
-Parts are ready-made components (captions, lower thirds, end cards and the like). `raea part list` shows them;
-`raea part add` copies one into `components/NAME/`, where it's yours: raea never updates or overwrites it unasked.
+`raea part` is the old name of [`raea component`](component.md), and still works the same. `raea part list` shows
+the ready-made components; `raea part add` copies one into `components/NAME/`, where it's yours: raea never updates
+or overwrites it unasked.
 
 ```sh
 raea part list

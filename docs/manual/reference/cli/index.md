@@ -52,7 +52,7 @@ The workspace, its projects and what a project holds.
 | [`raea controller`](controller.md) | Read and change the workspace's controllers: its settings and workflows, each a TypeScript file. |
 | [`raea spec`](spec.md) | Print a spec file's default export as JSON, checked against its schema: briefs, scripts, taste, plans and controllers. |
 | [`raea component`](component.md) | Copy a ready-made component or set into the project's components/, or the workspace's shared/components/, to use and change as your own. |
-| [`raea part`](part.md) | Copy a ready-made part into the project's components/, to use and change as your own. |
+| [`raea part`](part.md) | The old name of raea component: copy a ready-made component into the project's components/, to use and change as your own. |
 | [`raea add`](add.md) | Add, remove and install npm packages for a project, with no Node or npm: raea.lock and node_modules. |
 | [`raea brand`](brand.md) | Read a brand kit from a website on this machine: colours, fonts and logos into brand/ and BRAND.md. |
 | [`raea library`](library.md) | Search and manage the person's media libraries in the raea app: folders and drives indexed on this machine, searched by meaning. |

@@ -1,4 +1,4 @@
-// raea part add screen-fit: a landscape screen recording shown whole in a vertical frame, over a soft fill of itself, instead
+// raea component add screen-fit: a landscape screen recording shown whole in a vertical frame, over a soft fill of itself, instead
 // of a cover crop that cuts its sides off (every app render on 2026-10-16 lost Jetflow's UI that way). `raea frame`
 // says when a take wants this. Leaves the space above and below for a headline and captions.
 import { AbsoluteFill, Video, useVideoConfig } from "raea";

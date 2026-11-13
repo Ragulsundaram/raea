@@ -1,4 +1,4 @@
-// The reel's parts (an example: `raea part add reel` copies this folder into components/reel): designed parts for a talking take, each placed by one line and cued from the take's words
+// The reel's parts (an example: `raea component add reel` copies this folder into components/reel): designed parts for a talking take, each placed by one line and cued from the take's words
 // (docs/craft-system.md, phase 9). The look and the sound are the approved reel's (golden 10): heavy
 // condensed capitals with a three-layer shadow, a lime accent, dark cards, and SAO foley on each designed moment.
 //

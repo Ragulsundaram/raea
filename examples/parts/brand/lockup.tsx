@@ -1,4 +1,4 @@
-// raea part add lockup: a few lines stacked big, each landing as it's said. " / " splits the lines; *word* marks the accent.
+// raea component add lockup: a few lines stacked big, each landing as it's said. " / " splits the lines; *word* marks the accent.
 // Put it in a <Sequence> over the words it echoes; each line appears on its first word (or one by one, 8 frames apart,
 // when the line isn't said). Styled only from the brand's tokens.
 import { Easing, Region, findPhrase, interpolate, useCurrentFrame, useWords } from "raea";

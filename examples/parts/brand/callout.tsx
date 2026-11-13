@@ -1,4 +1,4 @@
-// raea part add callout: a short labelled card that slides in with the line it supports (a step, a claim, a stat), in the
+// raea component add callout: a short labelled card that slides in with the line it supports (a step, a claim, a stat), in the
 // band away from the face. Put it in a <Sequence from durationInFrames> timed to the words (word("phrase") finds them).
 import { Easing, Region, interpolate, useCurrentFrame } from "raea";
 
