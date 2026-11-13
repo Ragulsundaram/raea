@@ -6,7 +6,7 @@
 //! camera's path Vision's optical flow (raea-perceive flow), the shots raea-perceive cuts'. geometry.rs measures them.
 
 use crate::geometry::{self, Frame, Issue, Move, Seen};
-use crate::grow::{self, Matte, bounds, perceive};
+use raea_sys_fingerprint_use::grow::{self, Matte, bounds, perceive};
 use anyhow::{Result, anyhow};
 use raea_sys_columns::Encoders;
 use serde::{Deserialize, Serialize};
@@ -77,7 +77,7 @@ fn median(mut v: Vec<f32>) -> Option<f32> {
 }
 
 fn quantile(v: &[f32], q: f64) -> f32 {
-    crate::profile::pct(v, q as f32)
+    raea_sys_fingerprint_use::profile::pct(v, q as f32)
 }
 
 /// A frame's 1/depth over its 99th percentile, clamped to 0-1

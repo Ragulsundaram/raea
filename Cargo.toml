@@ -84,6 +84,7 @@ members = [
     "systems/columns",
     "systems/fingerprint",
     "systems/fingerprint-use",
+    "systems/fingerprint-things",
     "systems/song",
     "systems/perceive",
     "systems/footage",

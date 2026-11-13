@@ -28,7 +28,8 @@ fn mean(v: &[f32]) -> f32 {
     v.iter().sum::<f32>() / v.len().max(1) as f32
 }
 
-pub(crate) fn pct(v: &[f32], q: f32) -> f32 {
+/// The q-th quantile of v (0 when empty)
+pub fn pct(v: &[f32], q: f32) -> f32 {
     let mut s = v.to_vec();
     s.sort_by(f32::total_cmp);
     s.get(((s.len().max(1) - 1) as f32 * q) as usize).copied().unwrap_or(0.0)

@@ -1,0 +1,19 @@
+[package]
+name = "raea-sys-fingerprint-things"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "Fingerprint's things (docs/fingerprint.feature FP13a, FP13c): a piece's shots, its things with their depth and the ground under them, and the camera's path, from a render's layer and AOV passes or from marks followed by EdgeTAM and Depth Anything; and the geometry checks raea check reports from them"
+
+[dependencies]
+# a mark followed by EdgeTAM, raea-perceive found, the percentile (grow.rs, profile.rs)
+raea-sys-fingerprint-use = { path = "../fingerprint-use" }
+# frames, and SigLIP 2 on each thing's box
+raea-sys-columns = { path = "../columns" }
+# a render's layer pass read back: its things' masks with no model run
+raea-sys-layers = { path = "../layers" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+image = { version = "0.25", default-features = false, features = ["png"] }

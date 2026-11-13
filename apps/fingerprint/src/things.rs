@@ -1,12 +1,12 @@
 //! `raea fingerprint things FILE [--project P] [--json]` (docs/fingerprint.feature FP13a, FP13c): a piece's shots,
 //! their things (a render's layers, and every mark a person drew on a note of it in P's feed, P the folder it runs in
 //! by default) and the camera's path, with what floats, passes through, lurches or is empty
-//! (raea-sys-fingerprint-use things.rs and geometry.rs). `--json` prints it all for `raea check --things`.
+//! (raea-sys-fingerprint-things). `--json` prints it all for `raea check --things`.
 
 use crate::{flag, has};
 use anyhow::Result;
 use raea_sys_columns::Encoders;
-use raea_sys_fingerprint_use::things::{Mark, things};
+use raea_sys_fingerprint_things::things::{Mark, things};
 use std::path::{Path, PathBuf};
 
 pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path) -> Result<(String, i32)> {

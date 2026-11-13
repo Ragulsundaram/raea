@@ -59,6 +59,7 @@ raea-sys-vision = "systems"
 raea-sys-columns = "systems"
 raea-sys-fingerprint = "systems"
 raea-sys-fingerprint-use = "systems"
+raea-sys-fingerprint-things = "systems"
 raea-sys-song = "systems"
 raea-sys-perceive = "systems"
 raea-sys-footage = "systems"
@@ -232,6 +233,8 @@ raea-sys-vision = true
 raea-sys-columns = true
 # a fingerprint's taxonomy, evidence and heads (raea-sys-fingerprint-use scores, compares and picks with them)
 raea-sys-fingerprint = true
+# grow, profile and the heads' readings over a file (raea-sys-fingerprint-things reads things on them)
+raea-sys-fingerprint-use = true
 raea-sys-song = true
 raea-sys-k = true
 raea-sys-wear = true

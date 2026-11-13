@@ -594,7 +594,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         patch tokens pooled in its mask)
       And on raea's renders the same things come from the layer pass, the depth and motion passes and the scene's
         camera, with no model run
-      And 11-12, so far: `raea fingerprint things FILE [--json]` (raea-sys-fingerprint-use things.rs): the shots
+      And 11-12, so far: `raea fingerprint things FILE [--json]` (raea-sys-fingerprint-things things.rs): the shots
         (raea-perceive cuts), each thing's box, the median 1/depth of it, of its base and of the ground under it every
         half second, and one SigLIP 2 vector on its box where it's largest (the box pooled, until FP12a's patch tokens);
         and the camera's path (raea-perceive flow, Lucas-Kanade at 512: Vision's flow read a pan over plain ground at a
