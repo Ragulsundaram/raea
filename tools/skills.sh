@@ -184,7 +184,8 @@ gen_files() {
     echo "## A workspace and its project"
     echo
     echo "What \`raea workspace init Example\` and then \`raea project new Launch\` make, under raea.root (\`git config"
-    echo "--global raea.root\`, else ~/Studio). The workspace is one git repo; media/ and out/ go to LFS."
+    echo "--global raea.root\`; unset, ~/Studio where workspaces already are, else ~/Documents/raea, or ~/raea when iCloud"
+    echo "keeps Documents). The workspace is one git repo; media/ and out/ go to LFS."
     echo
     echo '```'
     (cd "$tmp/Studio" && find example -path '*/.git' -prune -o -print | grep -v '/\.git$' | LC_ALL=C sort | sed 's|[^/]*/|  |g')
