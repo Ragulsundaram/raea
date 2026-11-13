@@ -533,7 +533,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         notes' rows. `move [--fp CHILD] [--to PARENT] --axis/--source/--project` takes the child's own matching rows up
         into a fingerprint it extends and retrains both; rows on an axis the parent lacks or the child overrides stay
 
-    @needs:FP14c
+    @needs:FP14c @done
     Scenario: FP14e. Managing them in the app
       Then the fingerprint page lists the person's fingerprints as a tree by `extends`, each with its `about`, where it
         applies, its labels and what it knows; one is shown at a time, and a project's page names the one judging it
@@ -546,8 +546,10 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         Settings makes one the default and trains it; headless, the app made client-ads from me in 34 s and trained it
         from 12 renders in 3m54s (910 rows, 6 axes gating). Since: the switcher is a tree by `extends`, each saying
         which kinds and tags it judges; "New fingerprint" asks which it judges (`new --kinds --tags`); a project's header
-        names the one `raea fingerprint which` picks, why in its tooltip. Not yet: making one in a project's or
-        workspace's folder from the app (`share` does it from the CLI)
+        names the one `raea fingerprint which` picks, why in its tooltip. 11-13 (raea-feed #8): that name is a menu
+        saying who judges and why, with Keep with this project and Keep with the workspace listing the person's
+        fingerprints; the host runs `share` and `use` there and commits the folder in the repo that holds it.
+        Tests: host/fingerprint-keep.test.ts (the real raea in a throwaway home), e2e/fingerprint-keep.spec.ts
 
   Rule: FP9. Agents use it, and can't game it
     @needs:FP3a,FP4b,FP5c
