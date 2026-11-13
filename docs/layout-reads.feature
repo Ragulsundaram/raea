@@ -195,6 +195,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
 
   Rule: the composition has a document
 
+    @done
     Scenario: LR6. measureText measures with the real fonts
       Then `document.createElement("canvas").getContext("2d")` is @raea/ui's 2D context, the one canvas2d.ts installs
       And its measureText returns TextMetrics (width, actualBoundingBoxLeft, actualBoundingBoxRight,
@@ -205,6 +206,15 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And the 2D context has putImageData and getImageData that read back what it drew (orb-swarm throws without
         putImageData)
       And with the same font, the width is within 0.5 px of Chrome's
+      And 11-12, built:
+        - systems/canvas measure.rs: measureText is the text shaped by usvg as the canvas draws it (canvas.measure),
+          its advance and font box usvg's layout box, its ink the glyphs' outlines. getImageData draws the context's
+          list on a bitmap of its own and reads it back (canvas.read); putImageData writes its pixels as they are.
+          raea-runtime-canvas serves them as natives, reached through @raea/ui's wire (canvas2d.ts __ui_sync).
+        - raea's bundled faces (Inter and the rest) now reach usvg's font database too (systems/fonts), so a canvas
+          measures and draws in them, not a fallback: the probe's width had been 314.6 against Chrome's 368.8.
+        - probes/measure.tsx matches Chrome: the width exactly, ink and font box within 0.8 px, the pixels read back
+          equal. orb-swarm (putImageData) passes.
 
     @needs:LR1
     Scenario: LR7. document's other parts
