@@ -22,10 +22,18 @@ pub struct Grown {
 
 /// raea-perceive: $RAEA_PERCEIVE, else beside this raea, else on PATH
 pub fn perceive() -> Option<PathBuf> {
+    if let Some(p) = std::env::var_os("RAEA_PERCEIVE").filter(|v| !v.is_empty()) {
+        return Some(p.into());
+    }
     let name = if cfg!(windows) { "raea-perceive.exe" } else { "raea-perceive" };
-    let beside = std::env::current_exe().ok().and_then(|e| e.canonicalize().ok()).and_then(|e| Some(e.parent()?.join(name)));
-    let on_path = std::env::var_os("PATH").into_iter().flat_map(|p| std::env::split_paths(&p).collect::<Vec<_>>()).map(|d| d.join(name));
-    std::env::var_os("RAEA_PERCEIVE").filter(|v| !v.is_empty()).map(PathBuf::from).into_iter().chain(beside).chain(on_path).find(|p| p.is_file())
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    if let Ok(exe) = std::env::current_exe().and_then(|e| e.canonicalize()) {
+        dirs.extend(exe.parent().map(Path::to_path_buf));
+    }
+    if let Some(path) = std::env::var_os("PATH") {
+        dirs.extend(std::env::split_paths(&path));
+    }
+    dirs.into_iter().map(|d| d.join(name)).find(|p| p.is_file())
 }
 
 /// The box around a matte's pixels at 128 or more, x0,y0,x1,y1 in 0-1; None when too little of it is on

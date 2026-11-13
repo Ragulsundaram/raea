@@ -63,7 +63,7 @@ pub fn region(pin: &Value) -> Option<[f32; 4]> {
             let (Some(x), Some(y)) = (p[0].as_f64(), p[1].as_f64()) else { continue };
             let (x, y) = (x as f32, y as f32);
             let b = [(x - reach).max(0.0), (y - reach).max(0.0), (x + reach).min(1.0), (y + reach).min(1.0)];
-            r = Some(r.map_or(b, |a| [a[0].min(b[0]), a[1].min(b[1]), a[2].max(b[2]), a[3].max(b[3])]));
+            r = Some(raea_sys_fingerprint_use::grow::union(r, b));
         }
     }
     r.filter(|a| a[2] > a[0] && a[3] > a[1])
