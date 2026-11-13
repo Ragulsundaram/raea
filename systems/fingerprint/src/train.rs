@@ -88,6 +88,7 @@ fn limits(m: Modality) -> Vec<String> {
         Modality::Look => "whether a look was meant (a stylised grade reads as a defect)".into(),
         Modality::Change => "whether stillness or a cut was meant".into(),
         Modality::Sound | Modality::Events => "which sound in a mix it means, or whether it was meant".into(),
+        Modality::Text => "how the words play once they're read aloud or shot".into(),
     });
     v
 }

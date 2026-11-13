@@ -108,3 +108,25 @@ fn clap_bank_is_slaney() {
     let p = clap::padded(&[1.0; 96_000]);
     assert_eq!((p[383_999], p[384_000]), (1.0, 0.0), "four repeats of 2 s, then zeros (repeatpad)");
 }
+
+/// FP1b on the real models: a script's passages get EmbeddingGemma 2 rows (each nearest the query its words answer, and
+/// the same vectors transformers.js gives for the first), a still gets one SigLIP 2 frame
+#[test]
+#[ignore]
+fn a_script_and_a_still_get_rows() {
+    let mut e = Encoders::load().unwrap();
+    let dir = std::env::temp_dir().join(format!("raea-pieces-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let script = dir.join("ad.md");
+    std::fs::write(&script, "INT. KITCHEN - MORNING\n\nShe opens the fridge and it's empty.\n\nBuy Sunmelt today: 20% off your first box.\n").unwrap();
+    let c = e.columns(&script).unwrap();
+    assert_eq!((c.text.len() / crate::TEXT, c.dur, c.sig.len()), (3, 3.0, 0));
+    let q = e.words_text(&["a call to action".into(), "a scene heading".into()]).unwrap();
+    let dot = |r: usize, k: usize| c.text[r * crate::TEXT..(r + 1) * crate::TEXT].iter().zip(&q[k * crate::TEXT..(k + 1) * crate::TEXT]).map(|(a, b)| a * b).sum::<f32>();
+    assert!(dot(2, 0) > dot(0, 0) && dot(0, 1) > dot(2, 1), "cta {} {} heading {} {}", dot(2, 0), dot(0, 0), dot(0, 1), dot(2, 1));
+    let still = dir.join("board.png");
+    image::RgbImage::from_fn(64, 48, |x, _| image::Rgb([x as u8 * 4, 90, 200])).save(&still).unwrap();
+    let s = e.columns(&still).unwrap();
+    assert_eq!((s.sig.len(), s.dur, s.text.len()), (crate::SIG, 1.0, 0));
+    let _ = std::fs::remove_dir_all(&dir);
+}

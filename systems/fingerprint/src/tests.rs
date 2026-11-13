@@ -85,10 +85,11 @@ fn the_folder_keeps_heads_words_and_evidence() {
     dir.write_ledger(&l).unwrap();
     let back = dir.ledger().unwrap();
     assert_eq!(back.rows.len(), 60);
-    let w = Words { axes: vec![("noise".into(), Modality::Sound, vec![0.5; raea_sys_columns::CLAP])], sound_vocab: vec![vec![0.1; raea_sys_columns::CLAP]; 3], picture_vocab: vec![vec![0.2; raea_sys_columns::SIG]; 2], made_from: vec!["k".into()] };
+    let w = Words { axes: vec![("noise".into(), Modality::Sound, vec![0.5; raea_sys_columns::CLAP]), ("reads-buttons".into(), Modality::Text, vec![0.3; raea_sys_columns::TEXT])], sound_vocab: vec![vec![0.1; raea_sys_columns::CLAP]; 3], picture_vocab: vec![vec![0.2; raea_sys_columns::SIG]; 2], text_vocab: vec![vec![0.4; raea_sys_columns::TEXT]; 4], made_from: vec!["k".into()] };
     dir.write_words(&w).unwrap();
     let w2 = dir.words().unwrap();
-    assert_eq!((w2.axes.len(), w2.sound_vocab.len(), w2.picture_vocab.len(), w2.made_from.clone()), (1, 3, 2, vec!["k".to_string()]));
+    assert_eq!((w2.axes.len(), w2.sound_vocab.len(), w2.picture_vocab.len(), w2.text_vocab.len(), w2.made_from.clone()), (2, 3, 2, 4, vec!["k".to_string()]));
+    assert_eq!(w2.axes[1].2.len(), raea_sys_columns::TEXT, "a text axis's words keep EmbeddingGemma 2's width");
     let t = train(&fp, &back, &w2);
     let blur = t.heads.iter().find(|h| h.axis == "blur").unwrap();
     assert_eq!(blur.held_out, Some(1.0), "{}", blur.why);

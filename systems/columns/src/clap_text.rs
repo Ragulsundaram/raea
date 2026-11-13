@@ -3,7 +3,7 @@
 //! padding reaches the tower (its export takes no attention mask).
 
 use crate::siglip::{Input, run};
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Result, anyhow};
 use ort::session::Session;
 use std::path::Path;
 
@@ -14,8 +14,8 @@ pub struct Text {
 
 impl Text {
     pub fn load(file: &Path, tokenizer: &Path) -> Result<Text> {
-        let tok = tokenizers::Tokenizer::from_file(tokenizer).map_err(|e| anyhow!("CLAP's tokenizer: {e}"))?;
-        Ok(Text { s: raea_sys_ml::session(file).context("CLAP's text tower")?, tok })
+        let (s, tok) = crate::text_model(file, tokenizer, "CLAP's text tower")?;
+        Ok(Text { s, tok })
     }
 
     /// Each text's vector, L2-normalised: [texts][512]

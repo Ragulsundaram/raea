@@ -134,6 +134,15 @@ pub const SOUND_VOCAB: [&str; 40] = [
     "a clean studio recording", "a voiceover", "a kitchen", "an airplane",
 ];
 
+/// Ordinary passages of scripts, briefs and pages, the background a text axis's words are scored against (FP1b)
+pub const TEXT_VOCAB: [&str; 24] = [
+    "a line of dialogue", "a scene heading", "a description of what the camera sees", "a voiceover line",
+    "a call to action", "a product's features", "a brand's tone of voice", "a target audience", "a deadline and deliverables",
+    "a shot list", "a song's lyrics", "a joke", "a question to the viewer", "a price and an offer", "a list of steps",
+    "a page's headline", "a navigation menu", "a paragraph of an article", "a quote from a customer", "legal small print",
+    "a caption", "a title card", "an instruction to the editor", "a mood and references",
+];
+
 pub const PICTURE_VOCAB: [&str; 40] = [
     "a person talking to the camera", "a city street at night", "a forest", "an ocean", "a mountain landscape", "an office",
     "a kitchen", "a living room", "a car on a road", "a product on a table", "a phone screen", "a computer screen with an app",
@@ -147,6 +156,7 @@ pub const PICTURE_VOCAB: [&str; 40] = [
 pub fn prompt(m: Modality, words: &str) -> String {
     match m {
         Modality::Sound | Modality::Events => format!("This is a sound of {words}."),
+        Modality::Text => words.to_string(),
         _ => format!("a photo of {words}"),
     }
 }

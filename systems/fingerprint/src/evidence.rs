@@ -10,6 +10,16 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::path::Path;
 
+/// Rows written before the text modality (FP1b) are as wide as every other modality: each is given an empty text
+/// slice at its end, where Text sits in Modality::ALL
+pub fn widen(feats: Vec<f32>, rows: usize) -> Vec<f32> {
+    let (w, old) = (width(), width() - Modality::Text.dim());
+    if rows == 0 || feats.len() == rows * w || feats.len() != rows * old {
+        return feats;
+    }
+    feats.chunks(old).flat_map(|r| r.iter().copied().chain(std::iter::repeat_n(0.0, w - old))).collect()
+}
+
 /// Every modality's features, in Modality::ALL's order
 pub fn width() -> usize {
     Modality::ALL.iter().map(|m| m.dim()).sum()
@@ -97,7 +107,7 @@ impl Ledger {
         }
         let rows = std::fs::read_to_string(j)?.lines().filter(|l| !l.trim().is_empty()).map(serde_json::from_str).collect::<Result<Vec<Row>, _>>()?;
         let raw = std::fs::read(f).unwrap_or_default();
-        let feats = f32s(&raw);
+        let feats = widen(f32s(&raw), rows.len());
         Ok(Ledger { rows, feats })
     }
 

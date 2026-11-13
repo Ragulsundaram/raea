@@ -16,7 +16,7 @@ use crate::words::Words;
 use anyhow::{Context, Result, anyhow, bail};
 use raea_sys_columns::cache::{f16s, f32s};
 use raea_sys_columns::window::Modality;
-use raea_sys_columns::{CLAP, SIG};
+use raea_sys_columns::{CLAP, SIG, TEXT};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -39,6 +39,8 @@ struct WordsHead {
     axes: Vec<(String, Modality)>,
     sound_vocab: usize,
     picture_vocab: usize,
+    #[serde(default)]
+    text_vocab: usize,
     made_from: Vec<String>,
     /// the vocabulary's words in order, so a reader (the feed's fingerprint map) can name what a direction points at
     #[serde(default)]
@@ -110,12 +112,17 @@ impl Folder {
         };
         let mut axes = Vec::new();
         for (name, sp) in head.axes {
-            let dim = if sp == Modality::Sound { CLAP } else { SIG };
+            let dim = match sp {
+                Modality::Sound => CLAP,
+                Modality::Text => TEXT,
+                _ => SIG,
+            };
             axes.push((name, sp, take(dim)?));
         }
         let sound_vocab = (0..head.sound_vocab).map(|_| take(CLAP)).collect::<Option<Vec<_>>>()?;
         let picture_vocab = (0..head.picture_vocab).map(|_| take(SIG)).collect::<Option<Vec<_>>>()?;
-        Some(Words { axes, sound_vocab, picture_vocab, made_from: head.made_from })
+        let text_vocab = (0..head.text_vocab).map(|_| take(TEXT)).collect::<Option<Vec<_>>>()?;
+        Some(Words { axes, sound_vocab, picture_vocab, text_vocab, made_from: head.made_from })
     }
 
     pub fn write_words(&self, w: &Words) -> Result<()> {
@@ -123,11 +130,12 @@ impl Folder {
             axes: w.axes.iter().map(|(n, sp, _)| (n.clone(), *sp)).collect(),
             sound_vocab: w.sound_vocab.len(),
             picture_vocab: w.picture_vocab.len(),
+            text_vocab: w.text_vocab.len(),
             made_from: w.made_from.clone(),
             sound_words: crate::taxonomy::SOUND_VOCAB.iter().take(w.sound_vocab.len()).map(|s| s.to_string()).collect(),
             picture_words: crate::taxonomy::PICTURE_VOCAB.iter().take(w.picture_vocab.len()).map(|s| s.to_string()).collect(),
         };
-        let v: Vec<f32> = w.axes.iter().map(|a| &a.2).chain(&w.sound_vocab).chain(&w.picture_vocab).flatten().copied().collect();
+        let v: Vec<f32> = w.axes.iter().map(|a| &a.2).chain(&w.sound_vocab).chain(&w.picture_vocab).chain(&w.text_vocab).flatten().copied().collect();
         std::fs::write(self.dir.join("words.json"), serde_json::to_vec_pretty(&head)?)?;
         std::fs::write(self.dir.join("words.f16"), f16s(&v))?;
         Ok(())

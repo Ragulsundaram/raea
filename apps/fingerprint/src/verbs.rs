@@ -97,6 +97,10 @@ pub(crate) fn open(enc: &mut Encoders, args: &[String], eval: Eval, file: Option
     if raw.encoders.is_empty() {
         raw.encoders = here;
         dir.rewrite(&raw)?;
+    } else if here.iter().filter(|(k, v)| raw.encoders.get(*k) == Some(*v)).count() == raw.encoders.len() && raw.encoders != here {
+        // an encoder added since (EmbeddingGemma 2, FP1b) doesn't change the ones it was trained on
+        raw.encoders = here;
+        dir.rewrite(&raw)?;
     } else if raw.encoders != here {
         bail!(
             "{} was trained on other encoders ({:?}) than this machine has ({:?}); its heads refuse these columns. `raea fingerprint reembed FOLDER...` moves its evidence to these, re-embedding the rows whose media it finds",

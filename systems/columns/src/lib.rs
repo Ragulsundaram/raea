@@ -7,6 +7,7 @@
 //! - look: luminance histogram, contrast, saturation, local contrast and sharpness per frame (look.rs)
 //! - sound: CLAP htsat-unfused per 2 s window, 1 s hop (L2-normalised); YAMNet per 0.48 s when its model is here
 //! - level: the sound's RMS in dBFS per 0.1 s, for checks, the sheet and the timeline
+//! - text: EmbeddingGemma 2 per passage of a script, brief or page (FP1b), a passage a step; a still is one frame
 //!
 //! Every encoder is ONNX on ONNX Runtime's CPU kernels (raea-sys-ml): never Core ML's GPU, which computes SigLIP wrong
 //! on this Mac. The text towers (CLAP's, SigLIP's) only turn an axis's words into vectors (FP2e). Columns are cached by
@@ -16,6 +17,8 @@ pub mod cache;
 mod clap;
 mod clap_text;
 pub mod damage;
+mod gemma;
+pub mod pieces;
 pub mod look;
 pub mod media;
 pub mod models;
@@ -36,6 +39,7 @@ pub const YAM_HOP: f64 = 0.48;
 pub const SIG: usize = 768;
 pub const CLAP: usize = 512;
 pub const YAM: usize = 1024;
+pub const TEXT: usize = gemma::DIM;
 /// The column version: a change to how any column is made bumps it, and the cache makes them again
 pub const STEP: u32 = 1;
 
@@ -50,6 +54,8 @@ pub struct Columns {
     pub clap: Vec<f32>,
     pub yam: Vec<f32>,
     pub level: Vec<f32>,
+    /// one EmbeddingGemma 2 row per passage of a text piece (FP1b); empty for pictures and sound
+    pub text: Vec<f32>,
 }
 
 impl Columns {
@@ -66,6 +72,7 @@ pub struct Encoders {
     yam: Option<yamnet::Yamnet>,
     vision_text: Option<siglip::Text>,
     clap_text: Option<clap_text::Text>,
+    gemma: Option<gemma::Text>,
 }
 
 impl Encoders {
@@ -77,18 +84,38 @@ impl Encoders {
             Some(f) => Some(yamnet::Yamnet(raea_sys_ml::session(f).context("YAMNet")?)),
             None => None,
         };
-        Ok(Encoders { files, vision, clap, yam, vision_text: None, clap_text: None })
+        Ok(Encoders { files, vision, clap, yam, vision_text: None, clap_text: None, gemma: None })
     }
 
     /// Each encoder's id and its file's sha256: a fingerprint's heads are pinned to these
     pub fn pins(&self) -> std::collections::BTreeMap<String, String> {
-        self.files.pins().into_iter().collect()
+        let mut p: std::collections::BTreeMap<String, String> = self.files.pins().into_iter().collect();
+        // EmbeddingGemma 2 is pinned once it's on this machine: a fingerprint made before it keeps working (FP1b)
+        if let Some((m, _)) = models::gemma_here() {
+            p.insert("embeddinggemma-2/model_quantized.onnx_data".into(), models::pin(&m.with_extension("onnx_data")));
+        }
+        p
     }
 
     /// A file's columns, from the cache when it has them
     pub fn columns(&mut self, file: &Path) -> Result<Columns> {
         let media = media::sha256(file)?;
         if let Some(c) = cache::load(&media) {
+            return Ok(c);
+        }
+        // a script, brief or page is read as passages; a still is one frame (FP1b)
+        if let Some(passages) = pieces::passages(file)? {
+            let title = file.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+            let texts: Vec<String> = passages.iter().map(|p| gemma::as_document(p, &title)).collect();
+            let text = self.gemma()?.embed(&texts)?;
+            let c = Columns { media, dur: passages.len().max(1) as f64, text, ..Default::default() };
+            cache::save(&c)?;
+            return Ok(c);
+        }
+        if let Some(still) = pieces::still(file)? {
+            let (sig, look) = self.picture(&[still])?;
+            let c = Columns { media, dur: 1.0, sig, look, ..Default::default() };
+            cache::save(&c)?;
             return Ok(c);
         }
         let dur = media::duration(file)?;
@@ -104,7 +131,7 @@ impl Encoders {
     pub fn of(&mut self, frames: &[media::Rgb], pcm16: &[f32], pcm48: &[f32], dur: f64) -> Result<Columns> {
         let (sig, look) = self.picture(frames)?;
         let (clap, yam) = self.sound(pcm16, pcm48)?;
-        Ok(Columns { media: String::new(), dur, sig, look, clap, yam, level: media::levels(pcm16, 16_000) })
+        Ok(Columns { media: String::new(), dur, sig, look, clap, yam, level: media::levels(pcm16, 16_000), text: Vec::new() })
     }
 
     /// The picture columns of frames at FPS: SigLIP 2's pooled vectors and each frame's look
@@ -129,6 +156,21 @@ impl Encoders {
             None => Vec::new(),
         };
         Ok((clap, yam))
+    }
+
+    /// EmbeddingGemma 2's text model, loaded on first use (fetched once when the app's library hasn't it)
+    fn gemma(&mut self) -> Result<&mut gemma::Text> {
+        if self.gemma.is_none() {
+            let (m, t) = models::gemma()?;
+            self.gemma = Some(gemma::Text::load(&m, &t)?);
+        }
+        Ok(self.gemma.as_mut().unwrap())
+    }
+
+    /// Words as EmbeddingGemma 2 query vectors (text axes, FP1b), one row each
+    pub fn words_text(&mut self, texts: &[String]) -> Result<Vec<f32>> {
+        let q: Vec<String> = texts.iter().map(|t| gemma::as_query(t)).collect();
+        self.gemma()?.embed(&q)
     }
 
     /// Words as CLAP text vectors (sound axes), L2-normalised, one row each
@@ -160,6 +202,12 @@ impl Encoders {
 }
 
 /// `$var`, else `rel` under the home folder
+/// A text model's session and its tokenizer
+pub(crate) fn text_model(model: &Path, tokenizer: &Path, what: &str) -> Result<(ort::session::Session, tokenizers::Tokenizer)> {
+    let tok = tokenizers::Tokenizer::from_file(tokenizer).map_err(|e| anyhow::anyhow!("{what}'s tokenizer: {e}"))?;
+    Ok((raea_sys_ml::session(model).context(what.to_string())?, tok))
+}
+
 pub fn under(var: &str, rel: &str) -> PathBuf {
     match std::env::var_os(var) {
         Some(p) => p.into(),

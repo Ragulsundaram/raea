@@ -41,7 +41,7 @@ pub fn f32s(b: &[u8]) -> Vec<f32> {
 }
 
 pub fn save(c: &Columns) -> Result<()> {
-    let cols = [&c.sig, &c.look, &c.clap, &c.yam, &c.level];
+    let cols = [&c.sig, &c.look, &c.clap, &c.yam, &c.level, &c.text];
     let head = Head { media: c.media.clone(), dur: c.dur, step: STEP, lens: cols.iter().map(|v| v.len()).collect() };
     let mut b = serde_json::to_vec(&head)?;
     b.push(b'\n');
@@ -60,7 +60,8 @@ pub fn load(media: &str) -> Option<Columns> {
     let b = std::fs::read(path(media)).ok()?;
     let nl = b.iter().position(|&x| x == b'\n')?;
     let head: Head = serde_json::from_slice(&b[..nl]).ok()?;
-    if head.lens.len() != 5 || head.step != STEP {
+    // five columns before FP1b's text column, six since
+    if !(5..=6).contains(&head.lens.len()) || head.step != STEP {
         return None;
     }
     let mut at = nl + 1;
@@ -80,5 +81,6 @@ pub fn load(media: &str) -> Option<Columns> {
         clap: it.next()?,
         yam: it.next()?,
         level: it.next()?,
+        text: it.next().unwrap_or_default(),
     })
 }

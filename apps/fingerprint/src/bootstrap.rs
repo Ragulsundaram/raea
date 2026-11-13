@@ -139,7 +139,7 @@ pub fn rows(enc: &mut Encoders, who: &str, files: &[PathBuf], per: usize, l: &mu
             let (w16, w48) = (cut(&p16, 16_000.0), cut(&p48, 48_000.0));
             let (sig, look) = enc.picture(fr)?;
             let (clap, yam) = enc.sound(&w16, &w48)?;
-            let clean = Columns { media: sha.clone(), dur: WIN, sig, look, clap, yam, level: media::levels(&w16, 16_000) };
+            let clean = Columns { media: sha.clone(), dur: WIN, sig, look, clap, yam, level: media::levels(&w16, 16_000), text: Vec::new() };
             let push = |l: &mut Ledger, c: &Columns, axis: &str, kind: &str, source: &str| {
                 let r = Row {
                     media: sha.clone(),

@@ -148,6 +148,16 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
     Scenario: FP1b. Not only video
       Then scripts, briefs, storyboards, stills, pages and sounds get EmbeddingGemma 2 rows the same way, so a
         fingerprint can hold axes about them (a script that reads the buttons aloud, a board with wide empty shots)
+      And 11-12, so far: a script, brief or page (.md, .txt, .fountain, .html, .brief, .script.ts) is read as passages,
+        each an EmbeddingGemma 2 row (systems/columns gemma.rs, the q8 export the app's library keeps in ~/.raea/models,
+        fetched once otherwise; the Rust path gives transformers.js's vectors to the fifth decimal), a passage a step
+        on its timeline; an axis with modality "text" scores its words as EmbeddingGemma 2 queries against 24 ordinary
+        passages. A still or storyboard frame (.png, .jpg, .webp) is one frame through SigLIP 2 and a sound file goes
+        through CLAP and YAMNet, the encoders picture and sound axes already read, rather than EmbeddingGemma 2's own
+        image and audio encoders (a port of their preprocessing that buys nothing a head can use yet). Evidence rows
+        written before the text column read as the same rows with no text; a fingerprint pinned before EmbeddingGemma 2
+        was on the machine keeps working. a_script_and_a_still_get_rows (ignored, real models): the call to action is
+        nearest "a call to action", the scene heading nearest "a scene heading"
 
   Rule: FP2. The fingerprint is a folder, its taxonomy is TypeScript
     @needs:FP1a @done

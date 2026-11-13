@@ -4,7 +4,7 @@
 // default export (systems/fingerprint/src/taxonomy.rs), so these types follow its fields.
 
 /** What an axis's head reads: the frames (SigLIP 2), how they change, their look, the sound (CLAP) or its events (YAMNet). */
-export type Modality = "picture" | "change" | "look" | "sound" | "events";
+export type Modality = "picture" | "change" | "look" | "sound" | "events" | "text";
 
 export interface Axis {
   /** Its name, short and lowercase (blur, clip, barren): what reports, marks and `--axis` call it. */

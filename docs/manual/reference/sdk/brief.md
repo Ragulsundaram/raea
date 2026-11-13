@@ -228,7 +228,7 @@ type Mark = "todo" | "done" | "dropped"
 What an axis's head reads: the frames (SigLIP 2), how they change, their look, the sound (CLAP) or its events (YAMNet).
 
 ```ts
-type Modality = "picture" | "change" | "look" | "sound" | "events"
+type Modality = "picture" | "change" | "look" | "sound" | "events" | "text"
 ```
 
 ### `Part`

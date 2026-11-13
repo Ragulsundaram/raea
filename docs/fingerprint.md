@@ -84,7 +84,7 @@ what the person's device can run.
 
 An axis is declared in TypeScript beside `taste` (`fingerprint({...})` from "raea/brief"). It has:
 - a name and the words people use for it;
-- a modality: picture, change, look, sound or words;
+- a modality: picture, change, look, sound, events or text (a script's, brief's or page's words);
 - a scope: moment, shot or the whole piece;
 - a polarity;
 - optionally, the check it maps to.
@@ -95,8 +95,8 @@ garden door") are not axes. They go to the brief and the agent, never into a hea
 
 Each axis uses the best head it has earned:
 1. **A word head** (from day one): the similarity between the window and the axis's words, as a z-score against a
-   background vocabulary of about 40 ordinary descriptions. This is earshot's calibration. CLAP serves sound axes and
-   SigLIP 2's text tower serves picture axes. A word head is always advice: it never gates.
+   background vocabulary of about 40 ordinary descriptions. This is earshot's calibration. CLAP serves sound axes,
+   SigLIP 2's text tower serves picture axes and EmbeddingGemma 2 serves text axes. A word head is always advice: it never gates.
 2. **A learned head**: logistic on the axis's own modality columns, standardised with the encoder's shipped
    statistics, plus Bradley-Terry when the axis has pairs. It takes over from the word head once it beats it on
    held-out evidence.

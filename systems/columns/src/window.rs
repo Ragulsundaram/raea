@@ -6,9 +6,10 @@
 //! - look: the frames' mean look and its largest frame-to-frame step per value: 32
 //! - sound: the mean of the CLAP windows that start in the span (the nearest one when none does): 512
 //! - events: YAMNet's mean over the span: 1024
+//! - text: EmbeddingGemma 2's mean over the passages in the span, a passage a second (FP1b): 768
 
 use crate::look::LOOK;
-use crate::{CLAP, CLAP_HOP, Columns, FPS, SIG, YAM, YAM_HOP};
+use crate::{CLAP, CLAP_HOP, Columns, FPS, SIG, TEXT, YAM, YAM_HOP};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
@@ -19,10 +20,12 @@ pub enum Modality {
     Look,
     Sound,
     Events,
+    Text,
 }
 
 impl Modality {
-    pub const ALL: [Modality; 5] = [Modality::Picture, Modality::Change, Modality::Look, Modality::Sound, Modality::Events];
+    /// Text is last, so a row written before it is the same row with the text left empty (evidence.rs)
+    pub const ALL: [Modality; 6] = [Modality::Picture, Modality::Change, Modality::Look, Modality::Sound, Modality::Events, Modality::Text];
     pub fn dim(self) -> usize {
         match self {
             Modality::Picture => SIG + 3,
@@ -30,6 +33,7 @@ impl Modality {
             Modality::Look => 2 * LOOK,
             Modality::Sound => CLAP,
             Modality::Events => YAM,
+            Modality::Text => TEXT,
         }
     }
     pub fn name(self) -> &'static str {
@@ -39,6 +43,7 @@ impl Modality {
             Modality::Look => "look",
             Modality::Sound => "sound",
             Modality::Events => "events",
+            Modality::Text => "text",
         }
     }
 }
@@ -99,6 +104,7 @@ pub fn features(c: &Columns, a: f64, b: f64, m: Modality) -> Vec<f32> {
             mean(rows(&c.clap, CLAP, first, last), CLAP)
         }
         Modality::Events => mean(rows(&c.yam, YAM, (a / YAM_HOP) as usize, (b / YAM_HOP).ceil() as usize), YAM),
+        Modality::Text => mean(rows(&c.text, TEXT, a.floor() as usize, b.ceil() as usize), TEXT),
     };
     if v.len() == m.dim() { v } else { vec![0.0; m.dim()] }
 }

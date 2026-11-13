@@ -36,6 +36,35 @@ const SIGLIP: Spec = Spec {
     ],
 };
 
+/// EmbeddingGemma 2's text model (FP1b): the q8 export the app's library also runs
+const GEMMA: Spec = Spec {
+    name: "embeddinggemma-2",
+    files: &[
+        ("onnx-community/embeddinggemma-2-ONNX", "onnx/model_quantized.onnx", "model_quantized.onnx"),
+        ("onnx-community/embeddinggemma-2-ONNX", "onnx/model_quantized.onnx_data", "model_quantized.onnx_data"),
+        ("onnx-community/embeddinggemma-2-ONNX", "tokenizer.json", "tokenizer.json"),
+    ],
+};
+
+/// EmbeddingGemma 2's model and tokenizer where they already are: the app's library's copy (~/.raea/models), else
+/// raea's model cache
+pub fn gemma_here() -> Option<(PathBuf, PathBuf)> {
+    let lib = crate::under("RAEA_LIBRARY_MODELS", ".raea/models").join("onnx-community/embeddinggemma-2-ONNX");
+    let lib = (lib.join("onnx/model_quantized.onnx"), lib.join("tokenizer.json"));
+    let cached = raea_sys_ml::models::root().join(GEMMA.name);
+    let cached = (cached.join("model_quantized.onnx"), cached.join("tokenizer.json"));
+    [lib, cached].into_iter().find(|(m, t)| m.is_file() && m.with_extension("onnx_data").is_file() && t.is_file())
+}
+
+/// EmbeddingGemma 2's model and tokenizer, fetched once (850 MB) when neither copy is here
+pub fn gemma() -> Result<(PathBuf, PathBuf)> {
+    if let Some(h) = gemma_here() {
+        return Ok(h);
+    }
+    let d = ensure(&GEMMA, &mut say).context("EmbeddingGemma 2")?;
+    Ok((d.join("model_quantized.onnx"), d.join("tokenizer.json")))
+}
+
 /// The encoders' files on this machine
 #[derive(Clone, Debug)]
 pub struct Files {
