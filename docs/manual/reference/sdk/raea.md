@@ -52,7 +52,7 @@ A box over the whole of its parent, laid out as a flex column; `style` is merged
 | `className` | `string` | Tailwind or CSS classes |
 | `children` | `ReactNode` | what fills it |
 
-Used in: [ui/images/image_node](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node.tsx), [ui/images/ui_texture_slice_flip_and_tile](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice_flip_and_tile.tsx), [ui/images/image_node_resizing](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node_resizing.tsx), [ui/images/ui_texture_atlas_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas_slice.tsx), [ui/images/ui_texture_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice.tsx), [ui/images/ui_texture_atlas](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas.tsx), [ui/layout/grid](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/grid.tsx), [ui/layout/ghost_nodes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/ghost_nodes.tsx), and 95 more.
+Used in: [ui/images/image_node](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node.tsx), [ui/images/ui_texture_slice_flip_and_tile](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice_flip_and_tile.tsx), [ui/images/image_node_resizing](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node_resizing.tsx), [ui/images/ui_texture_atlas_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas_slice.tsx), [ui/images/ui_texture_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice.tsx), [ui/images/ui_texture_atlas](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas.tsx), [ui/layout/grid](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/grid.tsx), [ui/layout/ghost_nodes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/ghost_nodes.tsx), and 98 more.
 
 ### `Animate`
 
@@ -108,7 +108,7 @@ Declares a composition inside the root. It draws nothing itself; a renderer find
 | `defaultProps` | `P` | the props it's rendered with (JSON-like values only) |
 | `edit` | `Edit` | a hand edit laid over the composition (docs/craft-system.md, L): written back by the app's timeline |
 
-Used in: [ui/images/image_node](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node.tsx), [ui/images/ui_texture_slice_flip_and_tile](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice_flip_and_tile.tsx), [ui/images/image_node_resizing](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node_resizing.tsx), [ui/images/ui_texture_atlas_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas_slice.tsx), [ui/images/ui_texture_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice.tsx), [ui/images/ui_texture_atlas](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas.tsx), [ui/layout/grid](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/grid.tsx), [ui/layout/ghost_nodes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/ghost_nodes.tsx), and 148 more.
+Used in: [ui/images/image_node](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node.tsx), [ui/images/ui_texture_slice_flip_and_tile](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice_flip_and_tile.tsx), [ui/images/image_node_resizing](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node_resizing.tsx), [ui/images/ui_texture_atlas_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas_slice.tsx), [ui/images/ui_texture_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice.tsx), [ui/images/ui_texture_atlas](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas.tsx), [ui/layout/grid](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/grid.tsx), [ui/layout/ghost_nodes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/ghost_nodes.tsx), and 152 more.
 
 ### `Freeze`
 
@@ -216,6 +216,8 @@ Shifts time by `from` and shows its children only for `durationInFrames` frames.
 | `className` | `string` | the wrapping box's classes |
 | `children` | `ReactNode` | what plays in it, at its own local time |
 
+Used in: [manual: hello](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/hello.tsx).
+
 ### `Series`
 
 Plays its Series.Sequence children back to back, each shifted by its own offset.
@@ -264,7 +266,7 @@ The frame being rendered, counted from the start of the nearest enclosing Sequen
 function useCurrentFrame(): number
 ```
 
-Used in: [ui/scroll_and_overflow/overflow_transform](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/scroll_and_overflow/overflow_transform.tsx), [ui/render_ui_to_texture](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/render_ui_to_texture.tsx), [ui/ui_material](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/ui_material.tsx), [ui/styling/gradients](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/styling/gradients.tsx), [ui/text/text_debug](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/text/text_debug.tsx), [ui/text/text](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/text/text.tsx), [ui/text/font_atlas_debug](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/text/font_atlas_debug.tsx), [3d/fog_volumes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/fog_volumes.tsx), and 43 more.
+Used in: [ui/scroll_and_overflow/overflow_transform](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/scroll_and_overflow/overflow_transform.tsx), [ui/render_ui_to_texture](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/render_ui_to_texture.tsx), [ui/ui_material](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/ui_material.tsx), [ui/styling/gradients](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/styling/gradients.tsx), [ui/text/text_debug](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/text/text_debug.tsx), [ui/text/text](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/text/text.tsx), [ui/text/font_atlas_debug](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/text/font_atlas_debug.tsx), [3d/fog_volumes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/fog_volumes.tsx), and 46 more.
 
 ### `useGameEvents`
 
@@ -287,7 +289,7 @@ in order. Frames count from the nearest enclosing Sequence, so a game starts whe
 function useGameState<S>(initial: S, step: Step<S>): S
 ```
 
-Used in: [shader/shader_prepass](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/shader/shader_prepass.tsx), [shader/sprite_material](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/shader/sprite_material.tsx).
+Used in: [shader/shader_prepass](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/shader/shader_prepass.tsx), [shader/sprite_material](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/shader/sprite_material.tsx), [manual: squash](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/squash.tsx).
 
 ### `useInput`
 
@@ -326,6 +328,8 @@ The settings of the composition being rendered (a Sequence's width and height wi
 ```ts
 function useVideoConfig(): VideoConfig
 ```
+
+Used in: [manual: title](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/title.tsx), [manual: turntable](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/turntable.tsx).
 
 ### `useWords`
 
@@ -469,6 +473,8 @@ range (`extend`, the default, carries on; `clamp` holds the end value; `identity
 function interpolate(x: number, input: readonly number[], output: readonly number[], options?: InterpolateOptions): number
 ```
 
+Used in: [manual: turntable](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/turntable.tsx), [manual: hello](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/hello.tsx).
+
 ### `isGeneratedAsset`
 
 Whether a value is a generated asset (what sao, tokensynthNote and lyria return), not a file path.
@@ -588,7 +594,7 @@ Names the root component the renderer starts from, and records its compositions.
 function registerRoot(given: ReactElement<unknown, string | JSXElementConstructor<any>> | ComponentType): void
 ```
 
-Used in: [ui/images/image_node](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node.tsx), [ui/images/ui_texture_slice_flip_and_tile](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice_flip_and_tile.tsx), [ui/images/image_node_resizing](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node_resizing.tsx), [ui/images/ui_texture_atlas_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas_slice.tsx), [ui/images/ui_texture_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice.tsx), [ui/images/ui_texture_atlas](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas.tsx), [ui/layout/grid](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/grid.tsx), [ui/layout/ghost_nodes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/ghost_nodes.tsx), and 148 more.
+Used in: [ui/images/image_node](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node.tsx), [ui/images/ui_texture_slice_flip_and_tile](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice_flip_and_tile.tsx), [ui/images/image_node_resizing](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/image_node_resizing.tsx), [ui/images/ui_texture_atlas_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas_slice.tsx), [ui/images/ui_texture_slice](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_slice.tsx), [ui/images/ui_texture_atlas](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/images/ui_texture_atlas.tsx), [ui/layout/grid](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/grid.tsx), [ui/layout/ghost_nodes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/layout/ghost_nodes.tsx), and 152 more.
 
 ### `replayDecider`
 
@@ -690,6 +696,8 @@ stretches it to end at that frame. `measureSpring` says how long one takes to se
 ```ts
 function spring(opts: SpringOptions): number
 ```
+
+Used in: [manual: title](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/title.tsx).
 
 ### `stagger`
 
@@ -818,6 +826,8 @@ Curve helpers: `curve.bezier(0.05, 0.7, 0.1, 1)`, `curve.spring({ damping: 15, s
 The easing curves, each a function of progress 0..1: `linear`, `quad`, `cubic`, `poly(n)`, `sin`, `circle`, `exp`,
 `back`, `elastic`, `bounce` and `bezier(x1, y1, x2, y2)`, eased in as they are; `Easing.out(f)` and `Easing.inOut(f)`
 turn one round. Pass one as `interpolate`'s `easing`.
+
+Used in: [manual: turntable](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/turntable.tsx).
 
 ### `FEED_KEY`
 

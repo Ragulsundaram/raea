@@ -44,7 +44,7 @@ Bevy: `bevy_light::ambient_light::AmbientLight`.
 
 Takes [`AmbientLightProps`](#ambientlightprops)'s props.
 
-Used in: [defaults/parts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/defaults/parts.tsx), [shader_advanced/deferred_raymarch](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/shader_advanced/deferred_raymarch.tsx).
+Used in: [defaults/parts](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/defaults/parts.tsx), [shader_advanced/deferred_raymarch](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/shader_advanced/deferred_raymarch.tsx), [manual: turntable](https://github.com/shinyobjectz/raea/blob/main/docs/manual/examples/turntable.tsx).
 
 ### `Atmosphere`
 
@@ -83,7 +83,7 @@ Bevy: `bevy_light::directional_light::DirectionalLight`.
 
 Also takes the props of `LightCommon` (`color`, `name`, `visibility`, `transform`, `shadow_depth_bias`, `shadow_normal_bias`, `volumetric`).
 
-Used in: [ui/render_ui_to_texture](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/render_ui_to_texture.tsx), [3d/fog_volumes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/fog_volumes.tsx), [3d/shadow_caster_receiver](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/shadow_caster_receiver.tsx), [3d/split_screen](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/split_screen.tsx), [3d/pbr](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/pbr.tsx), [3d/mesh_ray_cast](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/mesh_ray_cast.tsx), [3d/atmospheric_fog](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/atmospheric_fog.tsx), [3d/3d_viewport_to_world](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/3d_viewport_to_world.tsx), and 15 more.
+Used in: [ui/render_ui_to_texture](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/ui/render_ui_to_texture.tsx), [3d/fog_volumes](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/fog_volumes.tsx), [3d/shadow_caster_receiver](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/shadow_caster_receiver.tsx), [3d/split_screen](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/split_screen.tsx), [3d/pbr](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/pbr.tsx), [3d/mesh_ray_cast](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/mesh_ray_cast.tsx), [3d/atmospheric_fog](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/atmospheric_fog.tsx), [3d/3d_viewport_to_world](https://github.com/shinyobjectz/raea/blob/main/sdk/raea/bench/bevy-parity/3d/3d_viewport_to_world.tsx), and 16 more.
 
 ### `Environment`
 

@@ -10,8 +10,9 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT" || exit 2
 ALLOW=tools/names.allow
 RETIRED='@raea/motion|sdk/motion|raea[-_]motion\b|raea[-_]react\b|raea_react::|\bkgpu\b|raea[-_]kgpu|motiondb|bevy[-_]tsx|raea[-_]brief'
-# records and the overhaul's own docs name them on purpose; vendored and generated text isn't ours
-SKIP=(':!docs/overhaul.md' ':!docs/overhaul/*' ':!docs/names.md' ':!docs/handoff/*' ':!tools/names.sh' ':!tools/names.allow' ':!tools/layers.allow'
+# records and the overhaul's own docs name them on purpose (a release's notes are kept as they were published:
+# docs/manual/whats-new); vendored and generated text isn't ours
+SKIP=(':!docs/overhaul.md' ':!docs/overhaul/*' ':!docs/names.md' ':!docs/handoff/*' ':!docs/manual/whats-new/*' ':!tools/names.sh' ':!tools/names.allow' ':!tools/layers.allow'
   ':!*.lock' ':!*pnpm-lock.yaml' ':!*package-lock.json' ':!*bun.lock' ':!vendor/*' ':!*/vendor/*' ':!**/node_modules/**'
   ':!bench/p26-baseline/manifest.jsonl' ':!*.png' ':!*.jpg' ':!*.mp4' ':!*.woff2' ':!*.glb' ':!*.wasm')
 
