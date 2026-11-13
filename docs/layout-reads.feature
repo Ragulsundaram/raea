@@ -216,7 +216,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         - probes/measure.tsx matches Chrome: the width exactly, ink and font box within 0.8 px, the pixels read back
           equal. orb-swarm (putImageData) passes.
 
-    @needs:LR1
+    @needs:LR1 @done
     Scenario: LR7. document's other parts
       Then document.fonts has ready, load(font) and check(font). ready and load resolve once the faces the composition
         asked for (loadFont, @font-face, packaged fonts) are in the page
@@ -226,6 +226,28 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And an element made with createElement and appended into the composition is laid out and measurable, then
         drawn or removed as in Chrome. Components measure that way: they append a hidden copy, read it, and remove it
       And window has innerWidth, innerHeight and devicePixelRatio for the composition's size, and getComputedStyle
+      And 11-12, built:
+        - sdk/raea/src/dom-document.ts. document.body is the composition's surface, the element the page draws from
+          (React's root container sits above it, and a node appended there was never laid out). createElement makes a
+          node of the page: appended it's laid out and measured, removed it's despawned, appended again it's made
+          again. A canvas made there is an OffscreenCanvas.
+        - document.fonts.load and a family-named FontFace load a family the composition asked for (fonts.load). A
+          FontFace given by URL is fetched through raea's cache into the faces an svg's and a canvas's text are set
+          in (fonts.face); one that doesn't load rejects, so the text falls back, as in Chrome. ready is settled: the
+          page's own text has its faces before the frame is taken.
+        - dom-range.ts. A Range over a text node is its characters laid out in the parent's computed font, placed
+          where the parent's line starts (an inline parent's box, or a block's content box as its text-align sets
+          the line). One line only: a range across wrapped lines gets one rect, the width of its characters. A range
+          over elements is their boxes.
+        - dom-svgtext.ts. An svg <text> has getComputedTextLength, getNumberOfChars, getStartPositionOfChar,
+          getEndPositionOfChar and getSubStringLength. Components read them off hidden text (an opacity-0 group),
+          which the page's svg never lays out, so the words are laid out on their own by usvg (canvas.svgText), in
+          the element's computed font, letter- and word-spacing and font-variation-settings included. Chrome's length
+          tracks the last character too; usvg's box doesn't, so the tracking is added back.
+        - probes/document.tsx matches Chrome within 1 px: an svg text's length (tracked and not) and a character's
+          start, a Range's width and a prefix's, a node made, measured and removed, and lines set with word- and
+          letter-spacing. capture-reveal and font-shuffle (svg text in URL faces) and search-typing (a Range) no
+          longer throw or hang.
 
     Scenario: LR8. Observers, from the same layout
       Then ResizeObserver calls back after a layout in which an observed element's size changed, with
