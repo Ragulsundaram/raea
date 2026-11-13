@@ -50,14 +50,29 @@ pub fn enabled() -> bool {
     every() || !WANTED.lock().unwrap().is_empty()
 }
 
-/// Gives `doc` the faces of each family its elements name that it has none of and Google Fonts has; true when one
-/// was given (its text is laid out again).
+/// Gives `doc` the faces of each family its elements name that it has none of and Google Fonts has, and once each
+/// family raea/text's loadFont asked for even where raea bundles faces of that name (as a linked stylesheet's
+/// @font-face shadows a local font in Chrome: raea's static Inter 400 and 700 drew loadFont's Inter 500 as 400 and 600
+/// as 700); true when one was given (its text is laid out again).
 pub fn load_missing(doc: &mut BaseDocument) -> bool {
-    let mut loaded = false;
-    for family in doc.missing_font_families() {
-        if !wanted(&family) {
-            continue;
+    // (document, family) each asked-for family went to
+    static GIVEN: Mutex<Vec<(usize, String)>> = Mutex::new(Vec::new());
+    let mut families = doc.missing_font_families();
+    families.retain(|f| wanted(f));
+    {
+        let mut given = GIVEN.lock().unwrap();
+        for family in WANTED.lock().unwrap().iter() {
+            let key = (doc.id(), family.to_lowercase());
+            if !given.contains(&key) {
+                given.push(key);
+                if !families.iter().any(|f| f.eq_ignore_ascii_case(family)) {
+                    families.push(family.clone());
+                }
+            }
         }
+    }
+    let mut loaded = false;
+    for family in families {
         let faces = FAMILIES.lock().unwrap().get_or_insert_default().get(&family).cloned();
         let faces = faces.unwrap_or_else(|| {
             let found = Arc::new(fetch(&family));

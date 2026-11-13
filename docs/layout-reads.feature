@@ -322,7 +322,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
       And a composition that measures every frame (karaoke-captions, 300 frames) has its cost per read and per frame
         measured and written here
       And sdk/raea/conformance covers the JS side, and Rust tests cover the call, the wait and the hang guard
-      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 with kerning and the manifest, 18 now):
+      And 11-12, in progress (snapcn: 3 of 33 before LR work, 7 after LR1-LR9, 12 after the usvg and font fixes, 17 with kerning and the manifest, 21 now):
         - Kerning across spans. blitz-dom gave every composition span a border edge: with `border-style: none` (the
           initial style) a border's computed width is still `medium`, and inline_edges read the width alone, so each
           plain span got a zero-width spacer box at both ends and parley split its shaping there. "AVAWATAVAWAT" in a
@@ -347,10 +347,21 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           Figtree's "scene" at 600 64px measured 145.72 against Chrome's 171.25, now 171.26. An app-bundled face of a
           family the page already gave is left out (Geist fetched at import came before the bundled Geist).
           bloom-lockup passes (40.8 px off before), word-gather is 1.2 px off (25.5 before).
-        - Still off (15), not yet traced: announce-title (frame 0's runs), capture-reveal (3 runs only raea has),
-          font-shuffle, portal-intro, prompt-send, punch-lines, search-typing, status-cycle, text-build (SF's trak),
-          text-rewrite, text-select, word-gather, card-rail, hero-launch (a video's frame, not text) and
-          wordmark-cut.
+        - A loadFont family's faces are the page's even where raea bundles faces of that name, as a linked
+          stylesheet's @font-face shadows a local font. Inter is bundled (static 400 and 700), so it was never missing
+          and Google's never came: raea drew 300, 400 and 500 alike (345.45 px at 100px for "snapcn"; Chrome 340.39,
+          345.47, 350.45) and 600 as 700. Now 340.33, 345.45, 350.48, 355.38, 360.45. wordmark-cut (22 px narrow at 500),
+          text-select and hero-launch pass; punch-lines 18.1 -> 0.9, text-rewrite 7.4 -> 0.2 (box; ink 1.9).
+        - Still off (12): announce-title (frame 0's runs), capture-reveal (3 runs only raea has), font-shuffle,
+          portal-intro, prompt-send, punch-lines and text-rewrite (their ink, 1.3 to 1.9 px past Chrome's, the boxes
+          within 1), search-typing (1.9), status-cycle, text-build (SF's trak), word-gather (1.2) and card-rail.
+        - The cost, measured 11-12 on the M5 Pro (300 frames, 1280x720, 40 inline-blocks of Inter whose text changes
+          every frame, rendered to hashes, median of 6): no reads 2.034 s, one getBoundingClientRect a frame 2.151 s,
+          ten a frame 2.180 s. The first read in a frame costs about 0.39 ms (one layout synced); each further read in
+          that frame about 0.01 ms (the answer is cached until the next flush). snapcn's karaoke-captions (150 frames at
+          its defaults) reads two rects when a card mounts and once more when Montserrat is ready, not every frame:
+          0.74 s with its reads, 0.75 to 0.77 s with them replaced by 0, the same frames, so its reads cost less than
+          the run's noise.
         - P26 with these: 185 of 215 frames at the bar, the same frames at the same SSIM (to six places) as a binary
           before them. The 12 compositions under it are all 3D (classbg, datamaps, paint, planes, texmaps, the four
           volumetric benches, box3d, arena3d) plus css/edit.tsx, which throws before its first commit; the volumetric
