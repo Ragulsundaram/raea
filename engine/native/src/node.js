@@ -76,7 +76,12 @@
       if (encoding === "base64") return toB64(u);
       if (encoding === "base64url") return toB64(u).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
       if (encoding === "hex") return Array.from(u, (b) => b.toString(16).padStart(2, "0")).join("");
-      if (encoding === "latin1" || encoding === "binary") return String.fromCharCode(...u);
+      if (encoding === "latin1" || encoding === "binary") {
+        // a slice at a time: a spread of a whole buffer passes each byte as an argument and overflows the stack (#124)
+        let s = "";
+        for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+        return s;
+      }
       return dec.decode(u);
     }
     toJSON() { return { type: "Buffer", data: Array.from(this) }; }

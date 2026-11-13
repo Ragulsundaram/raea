@@ -1,6 +1,6 @@
 // Headers, Request, Response and fetch.
 import { call } from "../wire";
-import { AbortSignal_, Blob_, File_, FormData_, URLSearchParams_, URL_, b64bytes, blobs, btoa_, bytesOf, fromUtf8, g, named, put, streamOf, tag, utf8, uuid } from "./all";
+import { AbortSignal_, Blob_, File_, FormData_, URLSearchParams_, URL_, b64bytes, blobs, btoa_, bytesOf, fromUtf8, g, latin1, named, put, streamOf, tag, utf8, uuid } from "./all";
 
 // ---------------------------------------------------------------- Headers, Request, Response, fetch
 
@@ -328,7 +328,7 @@ function fetch_(input: unknown, init?: any): Promise<Response_> {
   }
   if (u.protocol !== "http:" && u.protocol !== "https:") return Promise.reject(new TypeError("Failed to fetch"));
   const headers: [string, string][] = [...req.headers];
-  const body = req._body ? btoa_(String.fromCharCode(...req._body)) : null;
+  const body = req._body ? btoa_(latin1(req._body)) : null;
   return abortable(
     call<{ status: number; statusText?: string; headers: [string, string][]; body: string; url: string; redirected?: boolean }>("net.fetch", { url: req.url, method: req.method, headers, body, redirect: req.redirect }).then(
       (a) => {

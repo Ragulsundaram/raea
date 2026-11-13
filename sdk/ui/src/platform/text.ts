@@ -157,6 +157,14 @@ put("TextDecoder", named(TextDecoder_, "TextDecoder"));
 
 export const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+/** Bytes as a binary string, one char per byte, 0x8000 bytes at a time: `String.fromCharCode(...bytes)` passes each
+ *  byte as an argument, which overflows the stack on a blob of a few hundred KB (#124, Windows). */
+export function latin1(b: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000) as unknown as number[]);
+  return s;
+}
+
 export function btoa_(s: string) {
   s = String(s);
   let out = "";

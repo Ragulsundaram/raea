@@ -1,5 +1,5 @@
 // crypto (not cryptographic), performance, Blob, File, FileReader, FormData and ReadableStream.
-import { DOMEx, EventTarget_, TextDecoder_, at, btoa_, bytesOf, entries, event, fromUtf8, g, named, put, tag, utf8 } from "./all";
+import { DOMEx, EventTarget_, TextDecoder_, at, btoa_, bytesOf, entries, event, fromUtf8, g, latin1, named, put, tag, utf8 } from "./all";
 
 // ---------------------------------------------------------------- crypto (not cryptographic: no secure source here)
 
@@ -164,10 +164,10 @@ class FileReader_ extends EventTarget_ {
     this._read(b, (x) => x.slice().buffer);
   }
   readAsBinaryString(b: Blob_) {
-    this._read(b, (x) => String.fromCharCode(...x));
+    this._read(b, (x) => latin1(x));
   }
   readAsDataURL(b: Blob_) {
-    this._read(b, (x) => `data:${b.type || "application/octet-stream"};base64,${btoa_(String.fromCharCode(...x))}`);
+    this._read(b, (x) => `data:${b.type || "application/octet-stream"};base64,${btoa_(latin1(x))}`);
   }
   abort() {
     if (this.readyState !== 1) return;

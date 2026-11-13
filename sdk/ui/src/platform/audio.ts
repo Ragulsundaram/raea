@@ -1,6 +1,6 @@
 // Web Audio (AudioBuffer, OfflineAudioContext.decodeAudioData) and WebSocket (the host's sockets).
 import { call, on } from "../wire";
-import { B64, Blob_, DOMEx, DOMException_, EventTarget_, TOKEN, URL_, b64bytes, baseHref, btoa_, bytesOf, event, g, named, put, tag, utf8 } from "./all";
+import { B64, Blob_, DOMEx, DOMException_, EventTarget_, TOKEN, URL_, b64bytes, baseHref, btoa_, bytesOf, event, g, latin1, named, put, tag, utf8 } from "./all";
 
 // ---------------------------------------------------------------- Web Audio: AudioBuffer, OfflineAudioContext.decodeAudioData
 // The part of Web Audio a page reads a file's sound through (a waveform's peaks): decodeAudioData, decoded by the host
@@ -26,11 +26,7 @@ const b64decode = (s: string) => {
   return out;
 };
 
-const b64encode = (x: Uint8Array) => {
-  let s = "";
-  for (let i = 0; i < x.length; i += 0x8000) s += String.fromCharCode.apply(null, x.subarray(i, i + 0x8000) as unknown as number[]);
-  return btoa_(s);
-};
+const b64encode = (x: Uint8Array) => btoa_(latin1(x));
 
 class AudioBuffer_ {
   readonly sampleRate: number;
@@ -195,7 +191,7 @@ class WebSocket_ extends EventTarget_ {
     if (typeof data === "string") call("net.ws.send", { id: this._id, data }).catch(() => {});
     else {
       const b = data instanceof Blob_ ? data._b : bytesOf(data);
-      call("net.ws.send", { id: this._id, data: btoa_(String.fromCharCode(...b)), binary: true }).catch(() => {});
+      call("net.ws.send", { id: this._id, data: b64encode(b), binary: true }).catch(() => {});
     }
   }
   close(code?: number, reason = "") {
