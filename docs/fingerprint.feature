@@ -144,7 +144,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         worst cosine 1.00000, CLAP text on 40 descriptions 1.00000, SigLIP 2 against Python onnxruntime on 16 frames
         1.000000
 
-    @needs:FP1a
+    @needs:FP1a @done
     Scenario: FP1b. Not only video
       Then scripts, briefs, storyboards, stills, pages and sounds get EmbeddingGemma 2 rows the same way, so a
         fingerprint can hold axes about them (a script that reads the buttons aloud, a board with wide empty shots)
@@ -524,7 +524,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         for `applies`; a piece's kind is .raea/project's `kind =`, else its file type, its tags `tags =`; score prints
         "judged by NAME: why". Tests: which_one_judges_a_piece, a_new_fingerprint_says_what_its_for_and_what_it_builds_on
 
-    @needs:FP14b,FP5a
+    @needs:FP14b,FP5a @done
     Scenario: FP14d. A note teaches the one that judged
       Then a note or mark on a piece is evidence in the fingerprint that judged that piece, so labels land where the
         taste they express applies, and a parent sees them only if the person moves them up (`raea fingerprint move`)
@@ -694,7 +694,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         where the model sees the gap
 
   Rule: FP10. A fine-tuned or other device-sized encoder, only on evidence
-    @needs:FP4b
+    @needs:FP4b @done
     Scenario: FP10a. When an axis stays stuck
       Then an axis under its bar with 300 labels or more, after its own columns were added, may try a LoRA adapter on
         SigLIP 2's last blocks trained on the device through raea-sys-mlx with a heatmap loss as well as the axis's own
