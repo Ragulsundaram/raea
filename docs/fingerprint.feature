@@ -287,6 +287,9 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         no gating flag either and fewer advice moments than the approved reel from the same footage (4 against 9),
         though raea check finds more in it (4 findings against 1). What makes that cut bad isn't a mechanical defect, so
         this waits on taste axes trained from Shane's notes (FP5) before it can pass
+      And decided 11-12 for 0.1.2: FP3b closes on its first clause, which holds; its second moves to FP5c, the proof
+        on his own notes, because no mechanical axis can tell that cut apart and none should be tuned until it does.
+        Until FP5c passes, `score` makes no claim to rank a cut's taste, and nothing gates on taste axes with only words
 
   Rule: FP4. Damage variants bootstrap the axes
     @needs:FP2c @done
@@ -346,12 +349,21 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
     Scenario: FP5b. The reading is checked against the person
       Then on 50 of Shane's real notes read by the Director, he agrees with the kind (defect, direction, praise) on 45
         or more and with the axis on 40 or more, before notes train any head
+      And decided 11-12 for 0.1.2: the check is built and the gate stays where it is. `raea fingerprint read` has a
+        fresh session read a project's pinned notes, `readings --ask 50` puts them to the person in the app,
+        `readings --tally` counts the answers, and `learn-notes` refuses until 50 are checked with 45 kinds and 40 axes
+        agreed. On 11-12 no readings exist yet and none is checked, so notes train nothing in 0.1.2. Reading starts
+        when Shane runs `read` himself, since it sends his note texts to an outside model; his answers are the
+        measure, so none is assumed
 
     @needs:FP5b,FP6a
     Scenario: FP5c. The proof that matters
       Then a fingerprint built from Shane's evidence on Stay assemblies 18-22 ranks the moments he noted on assembly 23
         above the rest by AUC 0.70 or better on its gating axes, held out by film as well as by version, and beats the
         previous version's note times as a predictor (0.60 in FP0)
+      And decided 11-12 for 0.1.2: not measured. Its evidence is FP5b's checked readings, and there are none yet; a
+        number from unchecked readings would measure the reader, not the fingerprint. It is measured once FP5b's
+        gate passes, and FP3b's second clause (the bad cut ranked below its approved reel) is measured with it
 
   Rule: FP6. Positives and pairs come from what the person already does
     @needs:FP2c @done
@@ -571,8 +583,12 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         box, and tracking through the whole shot rather than the label's span
 
   Rule: FP12. Heatmaps: a picture axis says where, not only whether
-    @needs:FP11b,FP2c
+    @needs:FP11b,FP2c @done
     Scenario: FP12a. Patch heads
+      Given the plan
+        | crate                        | file                                     | lines | job                                                                    |
+        | raea-sys-fingerprint-use     | systems/fingerprint-use/src/patch.rs     | 260   | patch heads: fit from region labels, pointing held out by source, the region and its place in words |
+        | raea-sys-fingerprint-things  | systems/fingerprint-things/src/located.rs | 180   | the bootstrap's frames with local defects, and a scored moment placed in the frame and its layers |
       Then each picture axis also has a patch head on SigLIP 2's patch tokens, trained from region labels (marked
         patches positive, clean frames' patches and a box's outside negative), and `raea fingerprint score` gives a
         heatmap for each flagged moment
@@ -580,11 +596,29 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         mesh, the text or the component
       And on FP0f's local defects, pointing is 0.85 or better from 8 marked frames for blur, holes, flat surfaces and
         noise, held out by source, and glow gates only once the look columns lift it to 0.8
+      And 11-12: `raea fingerprint bootstrap` also makes patch heads (located.rs, patch.rs). From up to 6 frames of each
+        source it makes FP0f's five local defects in a random 64-80 px box (columns damage.rs LOCAL): a blurred patch for
+        blur, a black hole and heavy grain for glitch, a flat grey surface for barren, a local glow for glow. A defect
+        that changes its box by under 6 levels in 255 (blur on a clear sky) is left out, since it isn't one. Each head
+        is a logistic over the 196 patch tokens (siglip.rs patches, last_hidden_state): the box's cells positive (a
+        cell half inside or more), the rest and every other frame negative. Held out by source, trained on 8 of the
+        axis's frames from the other sources and tested on the held-out source's, on 27 of the "me" fingerprint's
+        renders: barren (flat) 0.92, glitch 0.90 (grain 0.91, hole 0.89), blur 0.88, glow 0.49. Without the visible
+        rule blur was 0.79. A head says where only at 0.85 or better (POINTS), so glow doesn't
+      And `score` gives each flagged moment on an axis whose head points a box, the top patch and the patches joined
+        to it within 1 of it in log-odds, at the moment's middle frame. It's printed as its place ("top right") and,
+        when NAME.layers is beside the piece, the layers under a tenth of the box or more, by name ("on Floor"), in
+        --json as `at` {t, region, layers}. The sheet boxes it in amber. On a render with a black hole drawn top
+        right, glitch said "top right on Floor"
+      And not yet: a heatmap image (the region is a box), and the person's marks training patch heads (FP12b)
 
     @needs:FP12a
     Scenario: FP12b. Pointing on real marks
       Then once Shane has made 50 marks on defect notes, a patch head trained on the other projects' marks puts his mark
         in its top 10% of patches on half of them or more, against his own centre prior, held out by project
+      And decided 11-12 for 0.1.2: waits on his marks. Patch heads train only on local defects (FP12a), and a mark on
+        a note doesn't train one yet. Marks join them once he has made 50, when this is measured, so nothing claims
+        to point at his marks before it has been tested on them
 
   Rule: FP13. Things, not only pixels: depth, masks and words for footage raea didn't make
     @needs:FP11b
@@ -610,6 +644,9 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         Florence-2 base, measured first; nothing AGPL) finds a defect note's nouns within 20% of the frame of its pin
       And on 30 of Shane's defect notes that he also marks (FP11a), the grown region covers his mark on 24 or more;
         below that, notes stay frame labels and the detector isn't shipped
+      And decided 11-12 for 0.1.2: not shipped. The test needs 30 of Shane's own defect notes with his marks on them,
+        and they don't exist yet, so 0.1.2 has no grounder: a note stays a label on its frame, and its thing comes only
+        from a mark drawn on it (FP13a)
 
     @needs:FP13a
     Scenario: FP13c. Geometry axes are checks, not heads
