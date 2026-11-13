@@ -6,6 +6,24 @@
 use serde_json::{json, Value};
 use usvg::fontdb::{Family, Query, Style, Weight, ID};
 
+/// The system UI face's family where the faces have it: macOS's SF (SFNS.ttf, "System Font"), variable in weight and
+/// optical size, which usvg sets from the size as Chrome does.
+const SYSTEM_UI: &str = "System Font";
+
+/// A CSS family list with the names Chrome's canvas takes for the system UI face (`system-ui`, `BlinkMacSystemFont`)
+/// given as that face's own family, when the faces have it: fontdb knows them as no family, so a list headed by them
+/// fell through to sans-serif (Helvetica, about 10% wider than SF at 72px: snapcn's text-build spread its words).
+/// Chrome's canvas finds no face for `-apple-system` alone, so it stays as it is.
+pub(crate) fn system_ui(family: &str, db: &usvg::fontdb::Database) -> String {
+    let has = || db.faces().any(|f| f.families.iter().any(|(n, _)| n == SYSTEM_UI));
+    let names: Vec<&str> = family.split(',').map(str::trim).collect();
+    let ui = |n: &str| matches!(n.trim_matches(['\'', '"']).to_ascii_lowercase().as_str(), "system-ui" | "blinkmacsystemfont");
+    if !names.iter().any(|n| ui(n)) || !has() {
+        return family.to_string();
+    }
+    names.iter().map(|n| if ui(n) { format!("'{SYSTEM_UI}'") } else { n.to_string() }).collect::<Vec<_>>().join(", ")
+}
+
 /// A 2D context's text call as the SVG usvg shapes: `text` at `at` in `font` ({family, size, weight, style}), on the
 /// context's (textAlign, textBaseline), painted by `paint` (attributes), on a `size` document.
 pub(crate) fn text_doc(opt: &usvg::Options, font: &Value, text: &str, at: (f32, f32), (align, baseline): (&Value, &Value), paint: &str, (w, h): (u32, u32)) -> String {
@@ -23,7 +41,7 @@ pub(crate) fn text_doc(opt: &usvg::Options, font: &Value, text: &str, at: (f32, 
         _ => "alphabetic",
     };
     let escape = |s: &str| s.replace('&', "&amp;").replace('<', "&lt;");
-    let fam = font["family"].as_str().unwrap_or("sans-serif").replace('"', "'");
+    let fam = system_ui(font["family"].as_str().unwrap_or("sans-serif"), &opt.fontdb).replace('"', "'");
     // a family split across files by unicode-range: each run names the file that has its glyphs (subsets.rs)
     let split = crate::split_families(&opt.fontdb).and_then(|s| crate::subsets::runs(&opt.fontdb, &s, &fam, text));
     let esc = match split {
@@ -90,7 +108,7 @@ pub fn advances(opt: &usvg::Options, args: &Value) -> Value {
     let font = &args["font"];
     let weight = font["weight"].as_str().and_then(|w| w.parse().ok()).unwrap_or(400u16);
     let style = if font["style"].as_str() == Some("italic") { Style::Italic } else { Style::Normal };
-    let names: Vec<String> = font["family"].as_str().unwrap_or("sans-serif").split(',').map(|s| s.trim().trim_matches(['\'', '"']).to_string()).filter(|s| !s.is_empty()).collect();
+    let names: Vec<String> = system_ui(font["family"].as_str().unwrap_or("sans-serif"), db).split(',').map(|s| s.trim().trim_matches(['\'', '"']).to_string()).filter(|s| !s.is_empty()).collect();
     let face_of = |name: &str| -> Option<ID> {
         let family = match name.to_lowercase().as_str() {
             "serif" => Family::Serif,
@@ -137,6 +155,17 @@ pub fn advances(opt: &usvg::Options, args: &Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn system_ui_names_are_the_system_face_where_there_is_one() {
+        let list = "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif";
+        let mut db = usvg::fontdb::Database::new();
+        assert_eq!(system_ui(list, &db), list, "no system face: the list as it was");
+        db.load_font_data(std::fs::read("/System/Library/Fonts/SFNS.ttf").unwrap());
+        assert_eq!(system_ui(list, &db), "-apple-system, 'System Font', \"Segoe UI\", Roboto, sans-serif");
+        assert_eq!(system_ui("system-ui", &db), "'System Font'");
+        assert_eq!(system_ui("-apple-system", &db), "-apple-system", "Chrome's canvas finds no face for it alone");
+    }
 
     #[test]
     fn advances_are_the_faces_and_say_whose() {

@@ -337,9 +337,14 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         - A manifest text's ink spans its glyph runs and inline-blocks, not the line's whole advance: an inline
           element's padding at a line's end (a caption's word pill) isn't ink. karaoke-captions and word-captions
           pass.
+        - A canvas's `system-ui` and `BlinkMacSystemFont` are macOS's SF ("System Font", variable in weight and optical
+          size), as Chrome's canvas takes them: fontdb knew neither, so a list headed by them was measured in
+          Helvetica, about 10% wider at 72px. text-build, which places its words from measureText, went from 9 px off
+          to 1.3: what's left is SF's `trak` table (CoreText tracks SF about 0.12 px a letter at 72px; usvg doesn't).
         - Still off (16), not yet traced: announce-title (frame 0's runs), bloom-lockup, capture-reveal (3 runs only
-          raea has), font-shuffle, portal-intro, prompt-send, punch-lines, search-typing, status-cycle, text-build,
-          text-rewrite, text-select, word-gather, card-rail, hero-launch (a video's frame, not text) and wordmark-cut.
+          raea has), font-shuffle, portal-intro, prompt-send, punch-lines, search-typing, status-cycle, text-build
+          (SF's trak), text-rewrite, text-select, word-gather, card-rail, hero-launch (a video's frame, not text) and
+          wordmark-cut.
         - P26 with these: 185 of 215 frames at the bar, the same frames at the same SSIM (to six places) as a binary
           before them. The 12 compositions under it are all 3D (classbg, datamaps, paint, planes, texmaps, the four
           volumetric benches, box3d, arena3d) plus css/edit.tsx, which throws before its first commit; the volumetric
