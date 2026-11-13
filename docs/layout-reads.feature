@@ -75,6 +75,9 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
         | hold only, pass            | channel-thread, logo-collapse, pulsing-border                               |
       And "drifts" with no number means raea's words have no box of their own and fall to an ancestor's (check-cycle's
         all go to the frame's), or are missing from raea's frame
+      And 11-12, after LR1-LR10, 23 of 33 pass. The gap left, each with its cause, is LR10's "Still off" list:
+        announce-title, capture-reveal, font-shuffle, portal-intro, prompt-send, search-typing, status-cycle,
+        text-build, word-gather and card-rail
 
   Rule: a read gets the layout that draws the frame, synchronously
 
@@ -314,7 +317,7 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
 
   Rule: it's finished when the harness passes, nothing got slower, and users can read about it
 
-    @needs:LR3,LR4,LR5,LR6,LR7,LR8,LR9
+    @needs:LR3,LR4,LR5,LR6,LR7,LR8,LR9 @done
     Scenario: LR10. The harness passes, and no render got slower
       Then LR0's harness passes, with any remaining gap listed in LR0
       And a composition that doesn't read layout renders exactly as before: identical frames on the P26 set, and no
@@ -373,17 +376,18 @@ Feature: Layout reads: a composition measures its text and layout as Chrome does
           volumetric benches, box3d, arena3d) plus css/edit.tsx, which throws before its first commit; the volumetric
           three draw no page text, so the shared tree's 3D work moved them, not this.
 
-    @needs:LR10
+    @needs:LR10 @done
     Scenario: LR11. Docs, skills, and the issues
       Then the manual and the skills' sdk reference say what a composition's DOM has, and what it lacks
       And #54 is answered with the harness's before and after, and closed
       And #13 is answered with what now matches Chrome
-      And 11-12, in progress:
+      And 11-12, done:
         - docs/manual/guides/web-components.md: measuring then letting the frame be taken (delayRender, loadFont),
           what a ref, document and window answer, and what's missing (MutationObserver and IntersectionObserver never
           call back, an img's onError never fires, a wrapped Range is one rect, a pass with no page reads 0, no
           innerHTML or outerHTML).
         - The skills: the motion router's rule 2 names the web APIs and the modules that install them (raea-skills
-          #50). It merges when 0.1.3 is published, because raea-skills main is what the Claude plugin serves to
-          people on 0.1.1.
-        - Open: #54 and #13, once LR10's corpus numbers are final.
+          #50). It merges into raea-skills main when 0.1.2 is published (it is on fingerprint-docs, the skills
+          0.1.2 pins), because raea-skills main is what the Claude plugin serves to people on 0.1.1.
+        - #54 is closed with the harness's 3 of 33 before and 23 of 33 after, and the cost per read; #13 is answered
+          with what now matches Chrome and what's left.
