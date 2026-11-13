@@ -207,7 +207,8 @@ pub fn marked(pin: &serde_json::Value) -> Option<[f32; 4]> {
 /// The pitch band of a box drawn on the sound's spectrogram (FP11c), low and high in 0-1 of the mel scale: its points are
 /// [time, pitch], and its time is the pin's own t..to
 pub fn sound_band(pin: &serde_json::Value) -> Option<[f32; 2]> {
-    let m = pin["marks"].as_array()?.iter().find(|m| m["on"] == "sound" && m["kind"] == "box")?;
+    let mut boxes = pin["marks"].as_array()?.iter().filter(|m| m["kind"] == "box");
+    let m = boxes.find(|m| m["on"].as_str() == Some("sound"))?;
     let p: Vec<f32> = m["points"].as_array()?.iter().filter_map(|p| p[1].as_f64()).map(|v| v.clamp(0.0, 1.0) as f32).collect();
     let (lo, hi) = (p.iter().copied().fold(f32::INFINITY, f32::min), p.iter().copied().fold(f32::NEG_INFINITY, f32::max));
     (p.len() == 2 && hi > lo).then_some([lo, hi])

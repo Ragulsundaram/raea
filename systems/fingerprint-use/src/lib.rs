@@ -8,12 +8,14 @@
 //! - fixed.rs: a fix checked against the flag it claims to fix, and against the axis's disguises (FP9a)
 //! - postmortem.rs: a project looked back on, its least sure moments asked as yes/no questions (FP7a)
 //! - grow.rs: a note's mark grown into its thing and tracked over its label by EdgeTAM (FP11b)
+//! - reading.rs: a note's reading, its check, and the span and band a label takes from it (FP5b, FP11c)
 
 pub mod diff;
 pub mod fixed;
 pub mod grow;
 pub mod patch;
 pub mod postmortem;
+pub mod reading;
 pub mod profile;
 pub mod realness;
 pub mod score;
