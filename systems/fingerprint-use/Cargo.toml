@@ -11,6 +11,8 @@ description = "Using a fingerprint (docs/fingerprint.feature FP3, FP6e, FP8b, FP
 raea-sys-fingerprint = { path = "../fingerprint" }
 # a piece's columns, and the frames and sound the sheet draws
 raea-sys-columns = { path = "../columns" }
+# a render's layer pass read back: its things' masks with no model run (things.rs)
+raea-sys-layers = { path = "../layers" }
 serde = { version = "1", features = ["derive"] }
 anyhow = "1"
 # a postmortem's asks kept beside the fingerprint, and the answers read from the inbox (postmortem.rs)

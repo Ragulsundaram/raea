@@ -30,6 +30,7 @@ pub(crate) fn run(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, s
         "learn-notes" => learned(enc, rest, cwd, eval),
         "move" => moved(enc, rest, eval),
         "postmortem" => crate::postmortem::run(enc, rest, cwd, eval),
+        "things" => crate::things::run(enc, rest, cwd),
         "profile" => {
             let dir = crate::pick::chosen(rest, None).0;
             crate::profiles::make(enc, &dir, rest, cwd).map(|o| (o, 0))

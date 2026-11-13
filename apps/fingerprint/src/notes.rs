@@ -46,28 +46,6 @@ pub struct Reading {
     pub region: Option<[f32; 4]>,
 }
 
-/// How far a click reaches around its point, as a region, until a click is grown into its thing (FP11b, EdgeTAM)
-const CLICK: f32 = 0.05;
-
-/// The region a note's marks name: the box around its marks, boxes and lassos (a click as a small square around it).
-/// Arrows and strikes are instructions for the agent, never a region
-pub fn region(pin: &Value) -> Option<[f32; 4]> {
-    let mut r: Option<[f32; 4]> = None;
-    for m in pin["marks"].as_array().into_iter().flatten() {
-        let reach = match m["kind"].as_str() {
-            Some("mark") => CLICK,
-            Some("box" | "lasso") => 0.0,
-            _ => continue,
-        };
-        for p in m["points"].as_array().into_iter().flatten() {
-            let (Some(x), Some(y)) = (p[0].as_f64(), p[1].as_f64()) else { continue };
-            let (x, y) = (x as f32, y as f32);
-            let b = [(x - reach).max(0.0), (y - reach).max(0.0), (x + reach).min(1.0), (y + reach).min(1.0)];
-            r = Some(raea_sys_fingerprint_use::grow::union(r, b));
-        }
-    }
-    r.filter(|a| a[2] > a[0] && a[3] > a[1])
-}
 
 /// A post's video on this machine: the renders library, else the project's own folder
 fn media(project: &Path, m: &Value) -> Option<PathBuf> {
@@ -104,7 +82,7 @@ pub fn pinned(project: &Path) -> Vec<Reading> {
                 continue;
             }
             let to = n["pin"]["to"].as_f64().filter(|&to| to > t);
-            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: region(&n["pin"]), ..Default::default() });
+            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: raea_sys_fingerprint_use::grow::marked(&n["pin"]), ..Default::default() });
         }
     }
     out
@@ -344,19 +322,6 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
 mod tests {
     use super::*;
 
-    #[test]
-    fn marks_name_a_region_and_arrows_dont() {
-        let pin = json!({"kind": "place", "x": 0.5, "y": 0.5, "marks": [
-            {"kind": "box", "points": [[0.6, 0.7], [0.2, 0.3]]},
-            {"kind": "mark", "points": [[0.9, 0.1]]},
-            {"kind": "arrow", "points": [[0.0, 0.0], [1.0, 1.0]]}
-        ]});
-        let r = region(&pin).unwrap();
-        let near = |a: f32, b: f32| (a - b).abs() < 1e-5;
-        assert!(near(r[0], 0.2) && near(r[1], 0.05) && near(r[2], 0.95) && near(r[3], 0.7), "{r:?}");
-        assert_eq!(region(&json!({"marks": [{"kind": "strike", "points": [[0.1, 0.1], [0.9, 0.9]]}]})), None, "a strike is for the agent");
-        assert_eq!(region(&json!({"kind": "place", "x": 0.5, "y": 0.5})), None, "a pin is never a mark");
-    }
 
     #[test]
     fn a_reading_keeps_only_kinds_and_axes_it_knows() {

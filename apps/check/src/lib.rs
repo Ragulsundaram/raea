@@ -1,4 +1,4 @@
-//! `raea check VIDEO.mp4 [--manifest render.json] [--words W.json] [--perception P.json] [--shape 9:16]
+//! `raea check VIDEO.mp4 [--manifest render.json] [--words W.json] [--perception P.json] [--things T.json] [--shape 9:16]
 //! [--platform tiktok|reels|shorts] [-o check.json]`: the floor's measurable lines on an export (docs/craft-system.md, I; sdk/guides/craft/floor.md).
 //! Each issue is ranked P0 (breaks the piece) to P3 (polish), with where it is and what to do. Rules on the file alone:
 //! loudness and true peak, a steady sound that stops dead (a source run out, a cut with no fade), stretches where nothing
@@ -70,7 +70,7 @@ fn flag<'a>(args: &'a [String], name: &str) -> Option<&'a str> {
     args.iter().position(|a| a == name).and_then(|i| args.get(i + 1)).map(String::as_str)
 }
 
-pub const USAGE: &str = "raea check VIDEO.mp4 [--manifest render.json] [--words W.json] [--perception P.json] [--shape 16:9|9:16|4:5|1:1] [--platform tiktok|reels|shorts] [--taste taste.ts|DIR] [-o check.json]   (an export against the floor: clipped text, contrast, safe areas, freezes, flashing, cues, loudness, blotching, a placeholder brand kit; its findings errors, warns and notes)";
+pub const USAGE: &str = "raea check VIDEO.mp4 [--manifest render.json] [--words W.json] [--perception P.json] [--things T.json] [--shape 16:9|9:16|4:5|1:1] [--platform tiktok|reels|shorts] [--taste taste.ts|DIR] [-o check.json]   (an export against the floor: clipped text, contrast, safe areas, freezes, flashing, cues, loudness, blotching, a placeholder brand kit, and with --things what `raea fingerprint things --json` found: a thing floating or passing through another, the camera lurching mid-move, an empty frame; its findings errors, warns and notes)";
 
 /// A rule from the person's taste: a form raea can measure, its value, and the taste line it stands for.
 #[derive(Clone, Debug, PartialEq)]
@@ -119,7 +119,7 @@ fn taste_text(rules: &[Taste], runs: &[Run], w: f64, h: f64, issues: &mut Vec<Is
 }
 
 /// the flags `raea check` takes, each with a value
-const TAKES: [&str; 7] = ["--manifest", "--words", "--perception", "--shape", "--platform", "--taste", "-o"];
+const TAKES: [&str; 8] = ["--manifest", "--words", "--perception", "--things", "--shape", "--platform", "--taste", "-o"];
 
 fn run(args: &[String], tastes: Vec<raea_core_brief::Taste>) -> R<(String, bool)> {
     let (video, issues, passed, fps) = measured(args, taste_rules(&tastes))?;
@@ -161,6 +161,9 @@ fn measured(args: &[String], taste: Vec<Taste>) -> R<(String, Vec<Issue>, Vec<St
     flash_frame_rule(&video, &mut issues, &mut passed)?;
     blotching(&video, &probe, &mut issues, &mut passed)?;
     brand_kit(&[flag(args, "--manifest").unwrap_or(""), video.as_str()], &mut issues, &mut passed);
+    if let Some(p) = flag(args, "--things") {
+        things(p, &mut issues, &mut passed)?;
+    }
     if let Some(manifest) = &manifest {
         let runs = text_runs(manifest);
         let (w, h) = (manifest["width"].as_f64().unwrap_or(probe.w), manifest["height"].as_f64().unwrap_or(probe.h));
@@ -176,6 +179,22 @@ fn measured(args: &[String], taste: Vec<Taste>) -> R<(String, Vec<Issue>, Vec<St
         }
     }
     Ok((video, issues, passed, fps))
+}
+
+/// What `raea fingerprint things FILE --json` found (docs/fingerprint.feature FP13c): a thing floating, two passing
+/// through each other, the camera lurching mid-move, an empty frame; measured there, from depth, masks and the camera's
+/// path, never by a head
+fn things(p: &str, issues: &mut Vec<Issue>, passed: &mut Vec<String>) -> R<()> {
+    let v: Value = serde_json::from_str(&std::fs::read_to_string(p).map_err(|e| format!("{p}: {e}"))?).map_err(|e| format!("{p}: {e}"))?;
+    let before = issues.len();
+    for i in v["issues"].as_array().into_iter().flatten() {
+        let Some(rule) = ["floating", "passing-through", "camera-speed", "empty-frame"].into_iter().find(|r| i["rule"] == *r) else { continue };
+        issues.push(Issue { rule, p: i["p"].as_u64().unwrap_or(2).min(3) as u8, at: i["at"].as_f64(), says: i["says"].as_str().unwrap_or_default().into() });
+    }
+    if issues.len() == before {
+        passed.push("things: nothing floats, passes through, lurches or is empty".into());
+    }
+    Ok(())
 }
 
 /// The issues as Findings (docs/direction.feature DR3: P0 and P1 errors, P2 a warn, P3 a note; a time is its frame at

@@ -22,7 +22,6 @@ raea-sys-measure = { path = "../../systems/measure" }
 raea-io-media = { path = "../../io/media", default-features = false, features = ["apple"] }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 raea-sys-vision = { path = "../../systems/vision" }
-flate2 = "1"
 bevy = { version = "=0.20.0", default-features = false, features = ["std", "default_app"] }
 serde_json = "1"
 # a clip's file's identity (its SHA-256, as raea's asset store names files)

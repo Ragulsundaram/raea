@@ -73,7 +73,7 @@ last change is still joined, with a note that what it measured may have moved.
 ```sh
 raea check EDIT.tsx --quick [--shape S] [--platform P] [--taste T] [-o check.json]   (three stills of a composition checked for text: clipped, cramped, safe areas, sizes; about a second)
 raea check [PROJECT|EDIT.tsx] [--composition ID] [--only ID] [--taste T] [--render OUT | --no-render] [--json]   (every check that applies to each composition, over its frames: raea's floor on its newest render, the person's taste, the workspace's and the project's rules (a controller's rule fields: one of raea's checks by name, or a project's .ts check); what needs a render and has none waits, and says so)
-raea check VIDEO.mp4 [--manifest render.json] [--words W.json] [--perception P.json] [--shape 16:9|9:16|4:5|1:1] [--platform tiktok|reels|shorts] [--taste taste.ts|DIR] [-o check.json]   (an export against the floor: clipped text, contrast, safe areas, freezes, flashing, cues, loudness, blotching, a placeholder brand kit; its findings errors, warns and notes)
+raea check VIDEO.mp4 [--manifest render.json] [--words W.json] [--perception P.json] [--things T.json] [--shape 16:9|9:16|4:5|1:1] [--platform tiktok|reels|shorts] [--taste taste.ts|DIR] [-o check.json]   (an export against the floor: clipped text, contrast, safe areas, freezes, flashing, cues, loudness, blotching, a placeholder brand kit, and with --things what `raea fingerprint things --json` found: a thing floating or passing through another, the camera lurching mid-move, an empty frame; its findings errors, warns and notes)
 ```
 
 Headless: it needs nothing running and opens no window. Takes up to 1 argument besides its flags.
@@ -93,6 +93,7 @@ Headless: it needs nothing running and opens no window. Takes up to 1 argument b
 | `--render` | `OUT` | Join this render instead of the composition's newest in the project's record. |
 | `--shape` | `S` | The delivery's aspect ratio, for its safe areas. |
 | `--taste` | `T` | The person's taste files: the rules in them that carry a `check` are applied too. |
+| `--things` | `T.json` | what `raea fingerprint things FILE --json` found in the video (a thing floating or passing through another, the camera lurching mid-move, an empty frame), as findings |
 | `--words` | `W.json` | The transcript, to check cues against their words and the voice against the music. |
 | `-o` | `check.json` | Write the findings as JSON, for a later review or for `raea next`. |
 

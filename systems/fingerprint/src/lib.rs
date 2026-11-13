@@ -65,6 +65,23 @@ pub fn retrain(dir: &Folder, fp: &Fingerprint, w: &Words, l: &Ledger, bootstrap:
     Ok(t)
 }
 
+/// An axis this many labels deep and still under the held-out bar is stuck (FP10a)
+pub const STUCK_LABELS: usize = 300;
+
+/// The axes stuck under their bar with STUCK_LABELS or more labels on their own columns (docs/fingerprint.feature
+/// FP10a): only these may try an adapter on SigLIP 2 or another encoder, kept only if it lifts held out by 0.05
+pub fn stuck(t: &Trained) -> Vec<(String, usize, f64)> {
+    t.heads
+        .iter()
+        .filter_map(|h| {
+            // a cheat is a test of the head, not a label of its axis
+            let n: usize = h.labels.iter().filter(|(s, _)| s.as_str() != "cheat").map(|(_, [a, b])| a + b).sum();
+            let auc = h.held_out?;
+            (n >= STUCK_LABELS && auc < GATE_AUC).then(|| (h.axis.clone(), n, auc))
+        })
+        .collect()
+}
+
 /// report.json (FP2d): every head's held-out score, labels by source, cheat catch rates, gate state and limits
 pub fn report(fp: &Fingerprint, t: &Trained, l: &Ledger, bootstrap: Option<serde_json::Value>) -> serde_json::Value {
     let mut by_source: BTreeMap<&str, usize> = BTreeMap::new();
@@ -82,6 +99,7 @@ pub fn report(fp: &Fingerprint, t: &Trained, l: &Ledger, bootstrap: Option<serde
         "heads": t.heads,
         "gating": t.heads.iter().filter(|h| h.state == "gating").map(|h| h.axis.as_str()).collect::<Vec<_>>(),
         "weighting": t.weighting.is_some(),
+        "stuck": stuck(t).into_iter().map(|(axis, labels, held_out)| json!({"axis": axis, "labels": labels, "held_out": held_out})).collect::<Vec<_>>(),
         "bootstrap": bootstrap,
         "cannot_judge": LIMITS,
     })
@@ -105,6 +123,14 @@ pub fn report_text(r: &serde_json::Value) -> String {
             h["why"].as_str().unwrap_or("")
         );
     }
+    let stuck = r["stuck"].as_array().cloned().unwrap_or_default();
+    out += &match stuck.is_empty() {
+        true => format!("stuck: none (an axis {STUCK_LABELS} labels deep under held out {GATE_AUC} may try an adapter or another encoder)\n"),
+        false => format!(
+            "stuck, so each may try an adapter on SigLIP 2 or another encoder, kept only at 0.05 better held out: {}\n",
+            stuck.iter().map(|x| format!("{} ({} labels, held out {})", x["axis"].as_str().unwrap_or(""), x["labels"], f(&x["held_out"]))).collect::<Vec<_>>().join(", ")
+        ),
+    };
     if let Some(b) = r["bootstrap"].as_object() {
         out += "bootstrap, held out by source (AUC at k = 4 / 16 / 32, FP0b's k = 32):\n";
         for c in b.get("curves").and_then(|c| c.as_array()).into_iter().flatten() {

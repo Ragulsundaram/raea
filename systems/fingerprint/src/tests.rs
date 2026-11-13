@@ -291,3 +291,29 @@ fn pairs_alone_rank() {
     let head = h.head.unwrap();
     assert!(head.score(&feats(1.0, 999)[crate::evidence::slice(raea_sys_columns::window::Modality::Picture)]) > head.score(&feats(-1.0, 998)[crate::evidence::slice(raea_sys_columns::window::Modality::Picture)]));
 }
+
+#[test]
+fn an_axis_is_stuck_only_deep_in_labels_and_under_its_bar() {
+    use crate::train::AxisHead;
+    let head = |axis: &str, n: usize, auc: Option<f64>| AxisHead { axis: axis.into(), labels: [("note".to_string(), [n / 2, n - n / 2]), ("cheat".to_string(), [500, 0])].into(), held_out: auc, ..Default::default() };
+    let t = crate::train::Trained { heads: vec![head("pace", 320, Some(0.7)), head("glow", 120, Some(0.6)), head("blur", 400, Some(0.9)), head("cut", 350, None)], weighting: None };
+    assert_eq!(crate::stuck(&t), [("pace".to_string(), 320, 0.7)], "glow is too few labels in, blur is over its bar, cut has no held-out score; cheats aren't labels");
+}
+
+/// FP10a's first try on a stuck axis, on this machine's "me" fingerprint (ignored: real evidence): glow, stuck on its
+/// look columns, trained on the same labels through SigLIP 2's picture columns instead, held out by project as ever
+#[test]
+#[ignore]
+fn a_stuck_axis_on_another_encoder() {
+    let dir = Folder::named("me");
+    let (mut fp, l) = (dir.read(None).unwrap(), dir.ledger().unwrap());
+    let w = dir.words().unwrap();
+    let auc = |fp: &crate::taxonomy::Fingerprint| crate::train::train(fp, &l, &w).heads.into_iter().find(|h| h.axis == "glow").and_then(|h| h.held_out);
+    let was = auc(&fp);
+    let mut out = format!("glow on look {was:?}");
+    for m in [Modality::Picture, Modality::Change] {
+        fp.axes.iter_mut().filter(|a| a.name == "glow").for_each(|a| a.modality = m);
+        out += &format!(", on {} {:?}", m.name(), auc(&fp));
+    }
+    eprintln!("{out}");
+}

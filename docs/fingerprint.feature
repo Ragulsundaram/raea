@@ -584,6 +584,15 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         patch tokens pooled in its mask)
       And on raea's renders the same things come from the layer pass, the depth and motion passes and the scene's
         camera, with no model run
+      And 11-12, so far: `raea fingerprint things FILE [--json]` (raea-sys-fingerprint-use things.rs): the shots
+        (raea-perceive cuts), each thing's box, the median 1/depth of it, of its base and of the ground under it every
+        half second, and one SigLIP 2 vector on its box where it's largest (the box pooled, until FP12a's patch tokens);
+        and the camera's path (raea-perceive flow, Lucas-Kanade at 512: Vision's flow read a pan over plain ground at a
+        quarter of its speed). A thing comes from each mark drawn on the piece's notes, followed by EdgeTAM (grow.rs
+        follow), or on a render from NAME.layers beside it (the reader moved from runtime/world into raea-sys-layers
+        read.rs, both use it). Depth is the render's own reverse Z when NAME.aov (`raea render EDIT --aov -o NAME.aov`)
+        is beside it, else Depth Anything 3 Small (depth-values now takes many frames to one model load). The scene's
+        camera isn't read yet: a render's path is the flow's too
 
     @needs:FP13a,FP5a
     Scenario: FP13b. A note's words find its thing (the test that decides whether a grounder ships)
@@ -597,6 +606,16 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
       Then floating (a gap under a thing that should rest), passing through (two things' masks and depths crossing),
         a camera that changes speed mid-move, and a frame with nothing on it are measured from depth, masks and the
         camera's path as `raea check` findings, each with red-team cases, and never trained as heads
+      And 11-12, so far: geometry.rs measures the four on things.rs's output and `raea check --things T.json` reports
+        them (floating and a camera that changes speed as warns, passing through and an empty frame as errors); each has
+        red-team cases offline (a resting thing, a base out of frame, one bad depth; one thing walking in front of
+        another, two that part and come back; a steady pan, an ease, a start; a fade at either end, a dark frame with
+        something in it), and on four renders made for it (scratch geom.tsx, 960 x 540, 3 s each) passing through,
+        the camera tripling its speed at 1.5 s and a blank second are found where they are, with nothing found on the
+        clean things in those scenes; with the floating scene's AOV pass beside it, the hanging box floats from 0 s and
+        neither the resting box nor the 12 posts do. Floating needs true depth: on Depth Anything's the hanging box's
+        base and the floor under it read 0.71 and 0.73 (the floor is about 30% farther), so on footage it's found only
+        where the model sees the gap
 
   Rule: FP10. A fine-tuned or other device-sized encoder, only on evidence
     @needs:FP4b
@@ -609,3 +628,7 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         either, since a head is a logistic fit by L-BFGS in plain Rust (head.rs) in milliseconds
       And either is kept only if it raises that axis's held-out by project AUC by 0.05 or more, at a cost the person's
         device can pay, and the result is recorded here with the date
+      And 11-12, so far: report.json and `raea fingerprint report` name the stuck axes (raea-sys-fingerprint
+        `stuck`: 300 labels or more, cheats not counted, and a held-out score under the gate's 0.8), the only axes that
+        may try an adapter or another encoder. On this machine's fingerprints one is: glow in "me" (580 labels, all
+        bootstrap damage; held out 0.79)

@@ -5,72 +5,21 @@
 //! what the page hides of a part the file doesn't keep (only the frontmost layer of each pixel), so no part is covered.
 
 use std::collections::HashMap;
-use std::io::Read;
-use std::path::Path;
 
 use raea_core_facts::{Covered, Covers, Facts, Source};
-use serde_json::Value;
 
-/// NAME.layers read: the mask's size and each frame's runs, the table's keys, kinds and parents, and which frame
-/// each recorded mask is.
-pub(crate) struct Masks {
-    w: usize,
-    h: usize,
-    keys: Vec<String>,
-    kinds: Vec<String>,
-    parents: Vec<Option<usize>>,
-    frames: HashMap<i64, Vec<(u16, u16)>>,
+pub(crate) use raea_sys_layers::read::{Masks, read};
+
+/// What covers what, on a layers file read back
+pub(crate) trait Over {
+    fn over(&self, f: i64, key: &str, bx: [f64; 4], order: &HashMap<String, usize>) -> Vec<(String, f64)>;
 }
 
-pub(crate) fn read(path: &Path) -> Result<Masks, String> {
-    let mut b = Vec::new();
-    flate2::read::GzDecoder::new(std::fs::File::open(path).map_err(|e| format!("{}: {e}", path.display()))?).read_to_end(&mut b).map_err(|e| format!("{}: {e}", path.display()))?;
-    let bad = || format!("{}: not a layers file", path.display());
-    let u32_at = |i: usize| b.get(i..i + 4).map(|x| u32::from_le_bytes([x[0], x[1], x[2], x[3]]) as usize);
-    if !b.starts_with(b"RAEALAYR") {
-        return Err(bad());
-    }
-    let n = u32_at(8).ok_or_else(bad)?;
-    let head: Value = serde_json::from_slice(b.get(12..12 + n).ok_or_else(bad)?).map_err(|_| bad())?;
-    let layers = head["layers"].as_array().cloned().unwrap_or_default();
-    let field = |name: &str| -> Vec<String> { layers.iter().map(|l| l[name].as_str().unwrap_or_default().to_string()).collect() };
-    let (keys, kinds) = (field("key"), field("kind"));
-    let at: HashMap<&str, usize> = keys.iter().enumerate().map(|(i, k)| (k.as_str(), i)).collect();
-    let parents = field("parent").iter().map(|p| at.get(p.as_str()).copied()).collect();
-    let count = head["frames"].as_u64().unwrap_or(0) as i64;
-    let which: Vec<i64> = head["at"].as_array().map(|a| a.iter().filter_map(Value::as_i64).collect()).unwrap_or_else(|| (0..count).collect());
-    let (mut frames, mut i, mut before) = (HashMap::new(), 12 + n, Vec::new());
-    for f in which {
-        let runs = u32_at(i).ok_or_else(bad)?;
-        i += 4;
-        if runs > 0 {
-            let body = b.get(i..i + runs * 4).ok_or_else(bad)?;
-            before = body.chunks_exact(4).map(|r| (u16::from_le_bytes([r[0], r[1]]), u16::from_le_bytes([r[2], r[3]]))).collect();
-            i += runs * 4;
-        }
-        frames.insert(f, before.clone());
-    }
-    Ok(Masks { w: head["mask"]["w"].as_u64().unwrap_or(0) as usize, h: head["mask"]["h"].as_u64().unwrap_or(0) as usize, keys, kinds, parents, frames })
-}
-
-impl Masks {
-    /// Whether layer `a` is `b` or inside it.
-    fn within(&self, mut a: usize, b: usize) -> bool {
-        for _ in 0..self.keys.len() {
-            if a == b {
-                return true;
-            }
-            let Some(p) = self.parents[a] else { return false };
-            a = p;
-        }
-        false
-    }
-
+impl Over for Masks {
     /// Frame `f`'s layers drawn over the one keyed `key` inside `bx` (x0, y0, x1, y1, each 0 to 1), each with the
     /// share of the box it covers, by `order` (each key's place in the page's document order).
-    pub(crate) fn over(&self, f: i64, key: &str, bx: [f64; 4], order: &HashMap<String, usize>) -> Vec<(String, f64)> {
-        let (Some(runs), Some(me), Some(&mine)) = (self.frames.get(&f), self.keys.iter().position(|k| k == key), order.get(key)) else { return Vec::new() };
-        let mask: Vec<u16> = runs.iter().flat_map(|(v, n)| std::iter::repeat_n(*v, *n as usize)).collect();
+    fn over(&self, f: i64, key: &str, bx: [f64; 4], order: &HashMap<String, usize>) -> Vec<(String, f64)> {
+        let (Some(mask), Some(me), Some(&mine)) = (self.mask(f), self.keys.iter().position(|k| k == key), order.get(key)) else { return Vec::new() };
         let span = |a: f64, b: f64, n: usize| ((a * n as f64).floor().max(0.0) as usize, ((b * n as f64).ceil() as usize).min(n));
         let ((x0, x1), (y0, y1)) = (span(bx[0], bx[2], self.w), span(bx[1], bx[3], self.h));
         let mut seen: HashMap<u16, usize> = HashMap::new();

@@ -398,3 +398,17 @@ fn a_flash_frame_is_found_and_a_cut_or_a_fade_isnt() {
     white[10] = 1.0;
     assert_eq!(flash_frames(&white, 30.0)[0].0, 10.0 / 30.0);
 }
+
+#[test]
+fn things_found_are_findings_and_an_unknown_rule_is_not() {
+    let p = std::env::temp_dir().join(format!("raea-check-things-{}.json", std::process::id()));
+    let found = r#"{"issues": [{"rule": "floating", "p": 2, "at": 1.5, "to": 3.0, "says": "cup floats"}, {"rule": "made-up", "p": 0, "at": 0.0, "says": "x"}]}"#;
+    std::fs::write(&p, found).unwrap();
+    let (mut issues, mut passed) = (Vec::new(), Vec::new());
+    things(p.to_str().unwrap(), &mut issues, &mut passed).unwrap();
+    assert_eq!(issues.iter().map(|i| (i.rule, i.p, i.at)).collect::<Vec<_>>(), [("floating", 2, Some(1.5))]);
+    std::fs::write(&p, r#"{"issues": []}"#).unwrap();
+    things(p.to_str().unwrap(), &mut Vec::new(), &mut passed).unwrap();
+    let _ = std::fs::remove_file(&p);
+    assert_eq!(passed.len(), 1, "nothing found is a pass");
+}

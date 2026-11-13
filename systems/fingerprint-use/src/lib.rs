@@ -11,11 +11,13 @@
 
 pub mod diff;
 pub mod fixed;
+pub mod geometry;
 pub mod grow;
 pub mod postmortem;
 pub mod profile;
 pub mod score;
 pub mod sheet;
+pub mod things;
 pub mod which;
 
 #[cfg(test)]

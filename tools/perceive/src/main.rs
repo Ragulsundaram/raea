@@ -29,7 +29,7 @@
 //!   raea-perceive flow VIDEO [--fps 8] [--side 256]             optical flow per frame pair (Vision): a 3x3 grid, pan, zoom
 //!   raea-perceive track OUTDIR X,Y,W,H IMAGE...               an object tracked from a box (EdgeTAM): a matte per frame
 //!   raea-perceive hands IMAGE...                               each picture's hands through Core ML, one JSON line each
-//!   raea-perceive depth-values IMAGE OUT.f32                    1/depth through Core ML, as `ugc-perceive depth-values` writes it
+//!   raea-perceive depth-values IMAGE OUT.f32 [IMAGE OUT.f32...] 1/depth through Core ML, as `ugc-perceive depth-values` writes it
 //!   raea-perceive performance INPUTS.json                       Looks from the logged meshes, and the performance, from
 //!                                                               `ugc-perceive performance VIDEO --inputs`
 
@@ -113,12 +113,19 @@ fn main() {
             }
             #[cfg(target_vendor = "apple")]
             Some("depth-values") => {
-                let (img, out) = (args.get(1).ok_or("depth-values IMAGE OUT.f32")?, args.get(2).ok_or("depth-values IMAGE OUT.f32")?);
-                let rgba = image::open(img).map_err(|e| format!("{img}: {e}"))?.to_rgba8();
-                let (w, h) = (rgba.width() as usize, rgba.height() as usize);
-                let (v, ww, hh) = raea_sys_vision::depth::inverse_depth(&raea_sys_vision::depth::model()?, rgba.as_raw(), w, h)?;
-                std::fs::write(out, v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>()).map_err(|e| e.to_string())?;
-                println!("{}", json!({"width": ww, "height": hh}));
+                // IMAGE OUT.f32 [IMAGE OUT.f32...]: the model loaded once for every pair, a size line each
+                let pairs = &args[1..];
+                if pairs.is_empty() || pairs.len() % 2 != 0 {
+                    return Err("depth-values IMAGE OUT.f32 [IMAGE OUT.f32...]".into());
+                }
+                let m = raea_sys_vision::depth::model()?;
+                for p in pairs.chunks(2) {
+                    let rgba = image::open(&p[0]).map_err(|e| format!("{}: {e}", p[0]))?.to_rgba8();
+                    let (w, h) = (rgba.width() as usize, rgba.height() as usize);
+                    let (v, ww, hh) = raea_sys_vision::depth::inverse_depth(&m, rgba.as_raw(), w, h)?;
+                    std::fs::write(&p[1], v.iter().flat_map(|x| x.to_le_bytes()).collect::<Vec<u8>>()).map_err(|e| e.to_string())?;
+                    println!("{}", json!({"width": ww, "height": hh}));
+                }
                 Ok(())
             }
             #[cfg(target_vendor = "apple")]

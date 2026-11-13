@@ -15305,7 +15305,6 @@ name = "raea-runtime-world"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "flate2",
  "image",
  "raea-core-facts",
  "raea-core-scene",
@@ -15486,6 +15485,7 @@ dependencies = [
  "image",
  "raea-sys-columns",
  "raea-sys-fingerprint",
+ "raea-sys-layers",
  "serde",
  "serde_json",
 ]

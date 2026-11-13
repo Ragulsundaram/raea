@@ -8,6 +8,7 @@ mod file;
 mod hide;
 mod names;
 mod raster;
+pub mod read;
 #[cfg(feature = "page")]
 mod page;
 #[cfg(feature = "page")]
