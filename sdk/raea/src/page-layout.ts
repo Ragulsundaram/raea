@@ -5,6 +5,7 @@
 // so a burst of reads costs one layout. A host that lays nothing out says so, and the read throws that.
 
 import { native } from "@raea/app/native";
+import { continueRender } from "./hold";
 
 /** Numbers per element in the snapshot's `n` (raea-sys-page's STRIDE) and in its `o`. */
 const STRIDE = 18;
@@ -28,21 +29,26 @@ export type Box = {
   inline: boolean;
 };
 
-type Snapshot = { vw: number; vh: number; n: number[]; o?: number[] };
+type Snapshot = { vw: number; vh: number; n: number[]; o?: number[]; s?: Record<string, Record<string, string>> };
 
 let boxes: Map<number, Box> | null = null;
+/** Computed styles asked for since the last commit, by element (LR5). */
+const styles = new Map<number, Record<string, string>>();
 let viewport: [number, number] = [0, 0];
 const HOST = (globalThis as any).__bevyHost;
 
 /** The layout read last is stale: something committed, or a new frame started. */
 export function stale(): void {
   boxes = null;
+  styles.clear();
 }
 
 function read(): Map<number, Box> {
   if (boxes) return boxes;
   // the page answers its snapshot as one JSON string (made in Rust as text, not a value to re-encode)
   const s = JSON.parse(native("page.layout", {})) as Snapshot;
+  // a pass that draws no page answers a 0 x 0 viewport: its holds can't wait on a measure (hold.ts)
+  if (!s.vw && !s.vh) noPage();
   const m = new Map<number, Box>();
   for (let i = 0; i + STRIDE <= s.n.length; i += STRIDE) {
     const v = s.n;
@@ -73,6 +79,18 @@ export function boxOf(id: number): Box | undefined {
   return read().get(id);
 }
 
+/** Element `id`'s computed style as the page has it now ({property: value}, as Chrome serializes it: px lengths,
+ *  rgb() colours); undefined when it isn't on the page. One read lays the page out and answers its boxes too. */
+export function computedOf(id: number): Record<string, string> | undefined {
+  const had = styles.get(id);
+  if (had) return had;
+  const s = JSON.parse(native("page.layout", { styles: [id] })) as Snapshot;
+  if (!s.vw && !s.vh) noPage();
+  const got = s.s?.[String(id)];
+  if (got) styles.set(id, got);
+  return got;
+}
+
 /** The page's size, as the last read gave it. */
 export function viewportSize(): [number, number] {
   read();
@@ -87,8 +105,20 @@ export function layoutReads(): void {
   const flush = HOST.op_flush;
   HOST.op_flush = (json: string, devtools: boolean) => {
     boxes = null;
+    styles.clear();
     return flush(json, devtools);
   };
 }
 
 layoutReads();
+
+/** A pass that draws no page (the sound pass, the 3D rows' pre-pass) answers every read with a 0 x 0 page, so a hold
+ *  waiting on a measure (a size a ResizeObserver reports, say) could never end there: on that answer its holds are
+ *  released, and delayRender holds nothing after it (hold.ts). Its frames are for sound and 3D, which a measure
+ *  doesn't change. */
+function noPage(): void {
+  const g = globalThis as { __raeaNoPage?: boolean; __raeaHold?: { open?: Map<number, string> } };
+  if (g.__raeaNoPage) return;
+  g.__raeaNoPage = true;
+  for (const h of [...(g.__raeaHold?.open?.keys() ?? [])]) continueRender(h);
+}

@@ -73,6 +73,26 @@ pub fn load_missing(doc: &mut BaseDocument) -> bool {
     loaded
 }
 
+/// The family's faces for a canvas and SVG text now (document.fonts.load, layout-reads LR7): a family the composition
+/// asked for, fetched as load_missing would and given to usvg's font database at once, where the page would only
+/// fetch it once an element names it. How many faces it has; 0 for one not asked for or not on Google Fonts.
+pub fn load_now(family: &str) -> usize {
+    if !wanted(family) {
+        return 0;
+    }
+    let mut known = FAMILIES.lock().unwrap();
+    let known = known.get_or_insert_default();
+    if let Some(faces) = known.get(family) {
+        return faces.len();
+    }
+    let faces = Arc::new(fetch(family));
+    for (ttf, _, _) in faces.iter() {
+        blitz_dom::util::add_svg_font(ttf.to_vec(), Some(family));
+    }
+    known.insert(family.to_string(), faces.clone());
+    faces.len()
+}
+
 /// A family's Latin faces from Google Fonts, or none
 fn fetch(family: &str) -> Vec<(Bytes, f32, bool)> {
     let url = format!("https://fonts.googleapis.com/css?family={}:{WEIGHTS}", family.replace(' ', "+"));
@@ -98,4 +118,21 @@ fn fetch(family: &str) -> Vec<(Bytes, f32, bool)> {
         .collect();
     bevy::log::info!("raea-page: Google Fonts {family:?}, {} faces", faces.len());
     faces
+}
+
+/// A face a composition loads by URL (`new FontFace(family, "url(…)")`, docs/layout-reads.feature LR7), fetched now
+/// through raea's cache and given to a canvas's and an svg's text as `family`; woff2 is unpacked, TrueType and OpenType
+/// are taken as they are. How many faces that gave (0 when it doesn't load). A URL already loaded is not fetched again.
+pub fn face_now(family: &str, url: &str) -> usize {
+    static LOADED: Mutex<Vec<(String, String)>> = Mutex::new(Vec::new());
+    let key = (family.to_string(), url.to_string());
+    if LOADED.lock().unwrap().contains(&key) {
+        return 1;
+    }
+    let Ok(bytes) = raea_io_net::cache::read(url) else { return 0 };
+    let ttf = if bytes.starts_with(b"wOF2") { wuff::decompress_woff2(&bytes).ok() } else { Some(bytes) };
+    let Some(ttf) = ttf else { return 0 };
+    blitz_dom::util::add_svg_font(ttf, Some(family));
+    LOADED.lock().unwrap().push(key);
+    1
 }

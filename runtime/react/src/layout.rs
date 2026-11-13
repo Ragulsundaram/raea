@@ -14,14 +14,17 @@ use bevy::prelude::{Resource, World};
 use crate::scene::HANG_SECS;
 
 /// A host's answer to a layout read: the page laid out as the React World has it now, its snapshot (raea-sys-page's,
-/// with offsets, keyed by React id) as JSON; or why it can't.
-pub type Answer<'a> = dyn FnMut(&mut World) -> Result<String, String> + 'a;
+/// with offsets, keyed by React id) as JSON; or why it can't. The read's request comes with it (page.layout's argument as
+/// JSON: `styles`, the elements whose computed style it wants, LR5).
+pub type Answer<'a> = dyn FnMut(&mut World, &str) -> Result<String, String> + 'a;
 
 /// One runtime's layout read: asked by its JS thread, answered by its settle.
 #[derive(Default)]
 pub struct Ask {
     /// the JS thread is waiting on a read
     asked: AtomicBool,
+    /// what the read asks for (page.layout's argument)
+    request: Mutex<String>,
     /// the read's answer, once settle has made it
     answer: Mutex<Option<Result<String, String>>>,
     told: Condvar,
@@ -49,7 +52,8 @@ pub(crate) fn answer_if_asked(ask: &Ask, world: &mut World, answer: &mut Answer)
         return;
     }
     let t0 = Instant::now();
-    let r = answer(world);
+    let q = std::mem::take(&mut *ask.request.lock().unwrap());
+    let r = answer(world, &q);
     READS.fetch_add(1, Ordering::Relaxed);
     READ_NS.fetch_add(t0.elapsed().as_nanos() as u64, Ordering::Relaxed);
     *ask.answer.lock().unwrap() = Some(r);
@@ -61,8 +65,9 @@ pub static READS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::n
 pub static READ_NS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 /// The JS thread's side (`page.layout`): ask, wake settle's wait, and block until the answer comes.
-fn read() -> Result<String, String> {
+fn read(request: String) -> Result<String, String> {
     let ask = ASK.with(|a| a.borrow().clone()).ok_or("page.layout: this thread runs no composition")?;
+    *ask.request.lock().unwrap() = request;
     let mut g = ask.answer.lock().unwrap();
     *g = None;
     ask.asked.store(true, Ordering::SeqCst);
@@ -84,10 +89,10 @@ fn read() -> Result<String, String> {
 pub(crate) fn register() {
     raea_native::register(
         "page.layout",
-        "{}",
+        "{ styles?: number[] }",
         "string",
-        "every element's boxes as the page that draws the frame lays it out now (docs/layout-reads.feature LR1): JSON {vw, vh, n: [id, x, y, w, h, scroll x y w h, padding l t r b, border l t r b, z per element], o: [id, offsetLeft, offsetTop, offsetWidth, offsetHeight, offsetParent, inline per element]}, keyed by React id; the composition's thread waits for it",
-        |_| read().map(serde_json::Value::String),
+        "every element's boxes as the page that draws the frame lays it out now (docs/layout-reads.feature LR1): JSON {vw, vh, n: [id, x, y, w, h, scroll x y w h, padding l t r b, border l t r b, z per element], o: [id, offsetLeft, offsetTop, offsetWidth, offsetHeight, offsetParent, inline per element]}, keyed by React id, and s: {id: {property: computed value}} for the elements in `styles` (LR5); the composition's thread waits for it",
+        |a| read(a.to_string()).map(serde_json::Value::String),
     );
 }
 
@@ -96,11 +101,11 @@ pub(crate) fn register() {
 pub const NOTHING_DRAWN: &str = "{\"vw\":0,\"vh\":0,\"dpr\":1,\"n\":[],\"o\":[]}";
 
 /// [`NOTHING_DRAWN`] as a pass's answer.
-pub fn nothing_drawn() -> impl FnMut(&mut World) -> Result<String, String> {
-    |_| Ok(NOTHING_DRAWN.into())
+pub fn nothing_drawn() -> impl FnMut(&mut World, &str) -> Result<String, String> {
+    |_, _| Ok(NOTHING_DRAWN.into())
 }
 
 /// A host's answer when it has no page to lay out.
-pub fn no_page(host: &'static str) -> impl FnMut(&mut World) -> Result<String, String> {
-    move |_| Err(format!("{host} lays no page out, so a composition can't read its layout here (getBoundingClientRect, offsetWidth and the rest)"))
+pub fn no_page(host: &'static str) -> impl FnMut(&mut World, &str) -> Result<String, String> {
+    move |_, _| Err(format!("{host} lays no page out, so a composition can't read its layout here (getBoundingClientRect, offsetWidth and the rest)"))
 }

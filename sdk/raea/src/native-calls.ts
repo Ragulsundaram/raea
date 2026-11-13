@@ -34,6 +34,8 @@ export interface NativeCalls {
   "canvas.measure": { args: { font: { family: string; size: number; weight: string; style: string }; text: string; align?: string; baseline?: string }; answer: { width: number; actualBoundingBoxLeft: number; actualBoundingBoxRight: number; actualBoundingBoxAscent: number; actualBoundingBoxDescent: number; fontBoundingBoxAscent: number; fontBoundingBoxDescent: number } };
   /** getImageData: a canvas's display list drawn on a bitmap of its own, and a rectangle of it read off as base64 RGBA */
   "canvas.read": { args: { width: number; height: number; __canvas2d: unknown; x: number; y: number; w: number; h: number }; answer: { data: string } };
+  /** an svg <text>'s getComputedTextLength and getStartPositionOfChar: its words laid out by usvg, as the page draws an svg, in its computed font (font-*, letter-spacing, word-spacing); x from the text's own (docs/layout-reads.feature LR7) */
+  "canvas.svgText": { args: { text: string; style: Record<string, string> }; answer: { length: number; starts: number[] } };
   /** raea's command line (render, play, guide, bundle, types; the media verbs: raea media, raea ffmpeg), run in process in cwd */
   "cli.raea": { args: { args: string[]; cwd: string }; answer: { exit: number; stdout: string; stderr: string } };
   /** a headless run ends with this exit code */
@@ -84,10 +86,14 @@ export interface NativeCalls {
   "ecs.spawn": { args: { world: number; kind?: string; cols?: Record<string, number | string | boolean>; components?: Record<string, unknown>; parent?: number }; answer: { id: number } };
   /** bevy_text's glyph atlases for a text in a font file at a size px, each page a PNG data: URL, as Bevy's FontAtlasSet holds them */
   "fonts.atlases": { args: { font: string; size: number; text: string }; answer: { width: number; height: number; src: string }[] };
+  /** FontFace.load for a face given by URL: fetched now, through raea's cache, into the faces an svg's and a canvas's text are set in, as `family` (docs/layout-reads.feature LR7); 0 faces when it doesn't load */
+  "fonts.face": { args: { family: string; url: string }; answer: { faces: number } };
   /** the system's font families by name, sorted, as fontique (bevy_text's FontCx) lists them */
   "fonts.families": { args: {}; answer: string[] };
   /** a Google Fonts family the page loads (its Latin faces, every weight and style, fetched once through raea's URL cache), as a stylesheet link loads it in Chrome (raea/text loadFont) */
   "fonts.google": { args: { family: string }; answer: { family: string } };
+  /** document.fonts.load: a family the composition asked for (loadFont), its faces given to a canvas's text now, where the page fetches it only once an element names it (docs/layout-reads.feature LR7); how many faces it has */
+  "fonts.load": { args: { family: string }; answer: { faces: number } };
   /** drop an engine frame */
   "frame.free": { args: { frame: number }; answer: null };
   /** an engine frame's size */
@@ -190,8 +196,8 @@ export interface NativeCalls {
   "net.fetch": { args: { policy: number; url: string; method?: string; headers?: Record<string, string>; body?: string; followRedirects?: boolean; maxRedirects?: number; timeoutMs?: number }; answer: { status: number; statusText: string; headers: Record<string, string>; body: string; url: string; redirectChain: { status: number; statusText: string; headers: Record<string, string> }[] } };
   /** a network policy (allowed URL prefixes and methods; headers injected at the boundary, secrets from the host's environment) */
   "net.policy": { args: { allow: { prefix: string; methods?: string[]; headers?: Record<string, string>; secretHeaders?: Record<string, string> }[]; timeoutMs?: number; maxRedirects?: number; maxBytes?: number }; answer: { id: number } };
-  /** every element's boxes as the page that draws the frame lays it out now (docs/layout-reads.feature LR1): JSON {vw, vh, n: [id, x, y, w, h, scroll x y w h, padding l t r b, border l t r b, z per element], o: [id, offsetLeft, offsetTop, offsetWidth, offsetHeight, offsetParent, inline per element]}, keyed by React id; the composition's thread waits for it */
-  "page.layout": { args: {}; answer: string };
+  /** every element's boxes as the page that draws the frame lays it out now (docs/layout-reads.feature LR1): JSON {vw, vh, n: [id, x, y, w, h, scroll x y w h, padding l t r b, border l t r b, z per element], o: [id, offsetLeft, offsetTop, offsetWidth, offsetHeight, offsetParent, inline per element]}, keyed by React id, and s: {id: {property: computed value}} for the elements in `styles` (LR5); the composition's thread waits for it */
+  "page.layout": { args: { styles?: number[] }; answer: string };
   /** the box (x, y, w, h in frame px) a camera in a page element draws its view in, as last laid out; null when it draws under the whole frame (3D picking in the box, docs/sdk.feature S3a) */
   "page.viewBox": { args: {}; answer: [number, number, number, number] | null };
   /** rigid bodies stepped by Rapier, deterministic, made once per request and kept: each body's rigid motion from rest per frame */

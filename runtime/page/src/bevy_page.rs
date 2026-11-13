@@ -178,8 +178,13 @@ impl BevyPage {
 
     /// Every React element's boxes as the page lays them out now (`page.layout`, docs/layout-reads.feature LR1), keyed by
     /// React id: the page's own elements (the body, holders' parts) left out. Lay the page out first.
-    pub fn layout_snapshot(&self) -> String {
-        self.page.layout_snapshot(|id| (id >= REACT_IDS && id & TEXT_BIT == 0).then(|| id - REACT_IDS))
+    pub fn layout_snapshot(&self, request: &str) -> String {
+        // the elements whose computed style the read asks for (React ids; op ids here)
+        let styles: Vec<u64> = serde_json::from_str::<serde_json::Value>(request)
+            .ok()
+            .and_then(|v| v["styles"].as_array().map(|a| a.iter().filter_map(serde_json::Value::as_u64).map(|r| r + REACT_IDS).collect()))
+            .unwrap_or_default();
+        self.page.layout_snapshot(|id| (id >= REACT_IDS && id & TEXT_BIT == 0).then(|| id - REACT_IDS), &styles)
     }
 
     /// The React element topmost at the point (page px): its React id (none over the page's own body).

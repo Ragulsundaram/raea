@@ -11,6 +11,8 @@ description = "A composition's 2D context's host calls as native calls: measureT
 raea-native = { path = "../../engine/native", default-features = false }
 # the canvas's replay, its text shaping and its read-back
 raea-sys-canvas = { path = "../../systems/canvas" }
+# a Google family's faces fetched for a canvas now (fonts.load)
+raea-sys-fonts = { path = "../../systems/fonts" }
 # the page's font database (every face the composition loaded), which a canvas draws its text in
 blitz-dom = { version = "=0.3.0-beta.4", default-features = false, features = ["svg"] }
 serde_json = "1"

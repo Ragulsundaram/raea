@@ -5,6 +5,11 @@
 // offset* doesn't (and is whole px, from the offsetParent's padding edge), client* is the padding box, scroll* the
 // scrolled content.
 
+import { domDocument } from "./dom-document";
+import { domLoad } from "./dom-load";
+import { domStyle } from "./dom-style";
+import { domSvgText } from "./dom-svgtext";
+import { domObservers } from "./dom-observers";
 import { domTree } from "./dom-tree";
 import { boxOf, type Box } from "./page-layout";
 
@@ -56,11 +61,17 @@ function ancestor(el: El, id: number): El | null {
 /** An inline element (a span in a line) has no padding box: its client* and scroll* are 0. */
 const inline = (b: Box) => b.inline;
 
-/** A ref's DOM, from the entry, given bevy-react's exports: LR3's geometry and LR4's tree on its BevyElement and BevyTextNode
- * (raea's patch; a bridge without it has neither, and refs stay plain handles). */
-export function domReads(bevy: { BevyElement?: { prototype: object }; BevyTextNode?: { prototype: object } }): void {
+/** A ref's DOM, from the entry, given bevy-react's exports: LR3's geometry, LR4's tree and LR5's style on its BevyElement and
+ * BevyTextNode, and LR7's document and window (raea's patch; a bridge without it has none, and refs stay plain handles). */
+export function domReads(bevy: { BevyElement?: { prototype: object }; BevyTextNode?: { prototype: object }; containerNode?: unknown }): void {
   geometry(bevy.BevyElement);
   domTree(bevy.BevyElement, bevy.BevyTextNode);
+  domStyle(bevy.BevyElement);
+  domDocument(bevy as never);
+  domLoad();
+  domSvgText(bevy.BevyElement);
+  domObservers();
+  (globalThis as { DOMRect?: unknown }).DOMRect ??= DOMRect;
 }
 
 /** LR3's reads, on `Element`'s prototype. */

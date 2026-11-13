@@ -15,6 +15,33 @@ pub fn register() {
         |a| raea_sys_canvas::metrics(a),
     );
     raea_native::register(
+        "fonts.load",
+        "{ family: string }",
+        "{ faces: number }",
+        "document.fonts.load: a family the composition asked for (loadFont), its faces given to a canvas's text now, where the page fetches it only once an element names it (docs/layout-reads.feature LR7); how many faces it has",
+        |a| {
+            let family = a["family"].as_str().ok_or("fonts.load: no family")?;
+            Ok(serde_json::json!({ "faces": raea_sys_fonts::google::load_now(family) }))
+        },
+    );
+    raea_native::register(
+        "fonts.face",
+        "{ family: string; url: string }",
+        "{ faces: number }",
+        "FontFace.load for a face given by URL: fetched now, through raea's cache, into the faces an svg's and a canvas's text are set in, as `family` (docs/layout-reads.feature LR7); 0 faces when it doesn't load",
+        |a| {
+            let (Some(family), Some(url)) = (a["family"].as_str(), a["url"].as_str()) else { return Err("fonts.face: a family and a url".into()) };
+            Ok(serde_json::json!({ "faces": raea_sys_fonts::google::face_now(family, url) }))
+        },
+    );
+    raea_native::register(
+        "canvas.svgText",
+        "{ text: string; style: Record<string, string> }",
+        "{ length: number; starts: number[] }",
+        "an svg <text>'s getComputedTextLength and getStartPositionOfChar: its words laid out by usvg, as the page draws an svg, in its computed font (font-*, letter-spacing, word-spacing); x from the text's own (docs/layout-reads.feature LR7)",
+        |a| raea_sys_canvas::svg_text(a),
+    );
+    raea_native::register(
         "canvas.advances",
         "{ font: { family: string; weight: string; style: string }; chars: string }",
         "{ adv: (number | null)[]; own: boolean[] }",

@@ -28,6 +28,8 @@ use tiny_skia as sk;
 mod draw;
 mod measure;
 pub use measure::{advances, metrics};
+mod svgtext;
+pub use svgtext::svg_text;
 mod filter;
 mod paint;
 mod subsets;

@@ -225,7 +225,7 @@ pub(crate) fn render_fed(app: &mut App, js: &Path, w: u32, h: u32, fps: f64, tot
             if asked != Some(f) {
                 app.world().resource::<ReactOutbox>().send(json!({"t": "event", "name": "raea-frame", "value": f}));
             }
-            settle_with(app, Some(f), 20.0, &mut |w| layout_answer(w, bevy, cx, f, fps))?;
+            settle_with(app, Some(f), 20.0, &mut |w, q| layout_answer(w, bevy, cx, f, fps, q))?;
             cx.now = f;
             // the next frame asked for now, so React renders it on its own thread while this one's 3D and page are
             // drawn here: its commits wait in the inbox until the next settle applies them, so nothing this frame

@@ -140,11 +140,22 @@ impl BlitzPage {
     }
 
     /// The page's layout as a composition's script reads it (`page.layout`, docs/layout-reads.feature LR1): raea-sys-page's
-    /// snapshot with offsets, each element under the id `id` gives it (None leaves it out). Lay the page out first.
-    pub fn layout_snapshot(&self, id: impl Fn(u64) -> Option<u64>) -> String {
+    /// snapshot with offsets, each element under the id `id` gives it (None leaves it out), and `s`, the computed style
+    /// of the elements in `styles` (op ids; getComputedStyle, LR5). Lay the page out first.
+    pub fn layout_snapshot(&self, id: impl Fn(u64) -> Option<u64>, styles: &[u64]) -> String {
         let docs = self.app.world().non_send::<Docs>();
         let Some(doc) = docs.0.get(&self.page) else { return "{\"vw\":0,\"vh\":0,\"n\":[],\"o\":[]}".into() };
-        raea_sys_page::snapshot_by(doc, &self.nodes, id, true)
+        let snap = raea_sys_page::snapshot_by(doc, &self.nodes, &id, true);
+        if styles.is_empty() {
+            return snap;
+        }
+        let mut s = serde_json::Map::new();
+        for &op in styles {
+            let (Some(&n), Some(key)) = (self.nodes.by_id.get(&op), id(op)) else { continue };
+            let Some(cs) = doc.get_node(n).and_then(|n| n.primary_styles()) else { continue };
+            s.insert(key.to_string(), computed_style(&cs));
+        }
+        format!("{},\"s\":{}}}", &snap[..snap.len() - 1], serde_json::Value::Object(s))
     }
 
     /// The element the ops made that's topmost at the point (page px), as Blitz's hit test finds it (transforms and
@@ -209,4 +220,26 @@ impl BlitzPage {
         let (px, layers) = raea_sys_layers::page_ids(doc, scale, w, h);
         raea_sys_layers::with(|r| r.frame((now * fps).round() as i64, w, h, &px, &layers));
     }
+}
+
+/// What getComputedStyle answers (LR5): these properties' computed values, as stylo serializes them (Chrome's spelling:
+/// px lengths, rgb() colours, a font list as written).
+const COMPUTED: &[&str] = &[
+    "display", "position", "visibility", "opacity", "color", "background-color", "font-family", "font-size", "font-weight", "font-style", "font-stretch",
+    "line-height", "letter-spacing", "word-spacing", "text-align", "text-transform", "text-indent", "white-space", "font-feature-settings", "font-variation-settings",
+    "width", "height", "top", "right", "bottom", "left", "margin-top", "margin-right", "margin-bottom", "margin-left", "padding-top", "padding-right",
+    "padding-bottom", "padding-left", "border-top-width", "border-right-width", "border-bottom-width", "border-left-width", "box-sizing", "transform",
+    "transform-origin", "z-index", "overflow-x", "overflow-y", "flex-direction", "justify-content", "align-items", "gap", "filter",
+];
+
+/// An element's computed style as {property: value} for [`COMPUTED`].
+fn computed_style(cs: &style::properties::ComputedValues) -> serde_json::Value {
+    use style::properties::{PropertyDeclarationId, PropertyId};
+    let mut out = serde_json::Map::new();
+    for name in COMPUTED {
+        if let Some(id) = PropertyId::parse_enabled_for_all_content(name).ok().and_then(|p| p.longhand_id()) {
+            out.insert((*name).into(), cs.computed_value_to_string(PropertyDeclarationId::Longhand(id)).into());
+        }
+    }
+    serde_json::Value::Object(out)
 }

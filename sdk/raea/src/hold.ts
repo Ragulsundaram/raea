@@ -26,6 +26,9 @@ export function cancelRender(err: unknown): void {
 /** Hold the frame until `continueRender(handle)`. `label` names it if it's still open when its time runs out. */
 export function delayRender(label?: string, options?: { timeoutInMilliseconds?: number }): number {
   const handle = next++;
+  // a pass that draws no page (the sound pass, the 3D rows' pre-pass) holds nothing: page-layout.ts sets this once a
+  // read says so, and releases what was open, since a hold waiting on a measure could never end there
+  if ((globalThis as { __raeaNoPage?: boolean }).__raeaNoPage) return handle;
   const name = label ?? `delayRender() #${handle}`;
   OPEN.set(handle, name);
   HOLD.n++;
