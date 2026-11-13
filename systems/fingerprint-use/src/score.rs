@@ -110,9 +110,10 @@ pub fn score(fp: &Fingerprint, words: Option<&Words>, trained: Option<&Trained>,
     loop {
         let b = (a + WIN).min(c.dur.max(0.25));
         let row = features(c, a, b);
-        let nearest = |m: Modality| words.and_then(|w| w.nearest(&row, m));
+        let nearest = |m: Modality| words.filter(|_| m.in_file(c)).and_then(|w| w.nearest(&row, m));
         let head = |name: &str| trained.and_then(|t| t.heads.iter().find(|h| h.axis == name));
-        let axes: Vec<AxisScore> = fp.axes.iter().filter_map(|ax| one(head(&ax.name), words, &ax.name, ax.modality, &row)).collect();
+        // an axis judges only what the file has: a script's windows hold no picture to call blurry
+        let axes: Vec<AxisScore> = fp.axes.iter().filter(|ax| ax.modality.in_file(c)).filter_map(|ax| one(head(&ax.name), words, &ax.name, ax.modality, &row)).collect();
         let (l0, l1) = ((a * 10.0) as usize, ((b * 10.0) as usize).max((a * 10.0) as usize + 1));
         let lv = c.level.get(l0.min(c.level.len())..l1.min(c.level.len())).unwrap_or(&[]);
         let level = if lv.is_empty() { -100.0 } else { lv.iter().sum::<f32>() / lv.len() as f32 };

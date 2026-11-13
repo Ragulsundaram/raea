@@ -107,3 +107,18 @@ fn a_profile_critiques_a_piece() {
     assert_eq!(out.len(), 1);
     assert_eq!((out[0].measure.as_str(), out[0].move_.as_str(), out[0].at), ("brightness", "raise", Some((4.0, 8.0))));
 }
+
+/// A script has no picture: score judges it on text axes only, never calls its windows blurry, and a video's picture
+/// axes still score
+#[test]
+fn an_axis_judges_only_what_the_file_has() {
+    use raea_sys_columns::{CLAP, Columns, SIG, TEXT, window::Modality};
+    let fp = base("t");
+    let w = Words { axes: vec![("blur".into(), Modality::Picture, vec![0.3; SIG])], sound_vocab: vec![vec![0.1; CLAP]; 2], picture_vocab: vec![vec![0.2; SIG], vec![-0.2; SIG]], text_vocab: vec![], made_from: vec![] };
+    let script = Columns { dur: 3.0, text: vec![0.1; TEXT * 2], ..Default::default() };
+    let s = crate::score::score(&fp, Some(&w), None, &script, "script.md");
+    assert!(!s.windows.is_empty() && s.windows.iter().all(|x| x.axes.is_empty() && x.seen.is_none()), "{:?}", s.windows.iter().map(|x| x.axes.iter().map(|a| a.axis.clone()).collect::<Vec<_>>()).collect::<Vec<_>>());
+    let video = Columns { dur: 3.0, sig: vec![0.1; SIG * 24], ..Default::default() };
+    let v = crate::score::score(&fp, Some(&w), None, &video, "cut.mp4");
+    assert!(v.windows.iter().all(|x| x.axes.iter().any(|a| a.axis == "blur")));
+}

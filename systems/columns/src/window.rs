@@ -46,6 +46,17 @@ impl Modality {
             Modality::Text => "text",
         }
     }
+    /// Whether a file's columns have rows this modality reads: a script has no picture, a video no text
+    pub fn in_file(self, c: &Columns) -> bool {
+        !match self {
+            Modality::Picture | Modality::Change => &c.sig,
+            Modality::Look => &c.look,
+            Modality::Sound => &c.clap,
+            Modality::Events => &c.yam,
+            Modality::Text => &c.text,
+        }
+        .is_empty()
+    }
 }
 
 fn rows(v: &[f32], dim: usize, a: usize, b: usize) -> &[f32] {
