@@ -53,6 +53,8 @@ raea-app-check = { path = "../../apps/check" }
 raea-app-direction = { path = "../../apps/direction" }
 # `raea notes`: a person's notes as files the work is held to (docs/direction.feature DR5)
 raea-app-notes = { path = "../../apps/notes" }
+# `raea fingerprint`: axes with small heads over on-device encoders, and the service that keeps them loaded (docs/fingerprint.feature FP3a)
+raea-app-fingerprint = { path = "../../apps/fingerprint" }
 raea-app-sound = { path = "../../apps/sound" }
 raea-app-ci = { path = "../../apps/ci" }
 raea-app-tools = { path = "../../apps/tools" }

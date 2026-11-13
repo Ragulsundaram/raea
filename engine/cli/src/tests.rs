@@ -70,6 +70,8 @@ fn a_verb_refuses_what_it_doesnt_take() {
         &["part", "add", "captions", "face-frame", "--force"],
         &["component", "add", "reel", "--shared", "--force"],
         &["mezz", "--check", "a.mov", "b.mov"],
+        &["fingerprint", "bootstrap", "--fp", "client-ads", "a.mp4", "b.mp4", "c.mp4"],
+        &["fingerprint", "new", "client-ads", "--about", "Short ads for one brand", "--extends", "me"],
         &["traces", "show", "last"],
         &["media", "ffmpeg", "-i", "x", "--anything"],
         &["physics", "bake", "r.json", "--whatever"],

@@ -1,0 +1,24 @@
+[package]
+name = "raea-sys-columns"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "Fingerprint's columns (docs/fingerprint.feature FP1a): a file's frames and sound read once by frozen on-device encoders (SigLIP 2, CLAP and YAMNet on ONNX Runtime) with change and look columns, cached by content hash; and the damage that makes labels by construction (FP4a)"
+
+[dependencies]
+# every encoder is an ONNX model on ONNX Runtime's CPU kernels (raea-sys-ml), never Core ML's GPU
+raea-sys-ml = { path = "../ml" }
+ort = { version = "=2.0.0-rc.13", features = ["half"] }
+# frames from the media plane (VideoToolbox on Apple), sound through Symphonia
+raea-io-media = { path = "../../io/media", default-features = false, features = ["apple", "soft-audio"] }
+tokenizers = { version = "0.23", default-features = false, features = ["onig"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+rustfft = "6"
+sha2 = "0.10"
+# the seeded noise the bootstrap puts in sound (damage.rs)
+fastrand = "2"
+half = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"

@@ -13669,6 +13669,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-app-fingerprint"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fastrand",
+ "raea-app-check",
+ "raea-sys-columns",
+ "raea-sys-fingerprint",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "raea-app-game"
 version = "0.1.0"
 dependencies = [
@@ -14036,6 +14049,7 @@ dependencies = [
  "raea-app-ci",
  "raea-app-direction",
  "raea-app-engines",
+ "raea-app-fingerprint",
  "raea-app-game",
  "raea-app-judge",
  "raea-app-media",
@@ -15377,6 +15391,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "raea-sys-columns"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "fastrand",
+ "half",
+ "image",
+ "ort",
+ "raea-io-media",
+ "raea-sys-ml",
+ "rustfft",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tokenizers",
+]
+
+[[package]]
 name = "raea-sys-compose"
 version = "0.1.0"
 dependencies = [
@@ -15433,6 +15465,18 @@ dependencies = [
  "rustc-hash 2.1.3",
  "vello",
  "wgpu",
+]
+
+[[package]]
+name = "raea-sys-fingerprint"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "half",
+ "image",
+ "raea-sys-columns",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

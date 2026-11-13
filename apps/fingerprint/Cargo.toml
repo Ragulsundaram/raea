@@ -1,0 +1,20 @@
+[package]
+name = "raea-app-fingerprint"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "`raea fingerprint` (docs/fingerprint.feature FP3a): new, bootstrap, teach, score and report, run by a resident service on localhost that keeps the encoders loaded"
+
+[dependencies]
+# the taxonomy, evidence, heads, bootstrap, scoring and sheet
+raea-sys-fingerprint = { path = "../../systems/fingerprint" }
+# the encoders and the columns they make
+raea-sys-columns = { path = "../../systems/columns" }
+# raea check's floor on the file: its findings go in the summary, and a check wins over a head (FP4c)
+raea-app-check = { path = "../check" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+# the draws of FP0b's few-shot curves, seeded (bootstrap.rs)
+fastrand = "2"

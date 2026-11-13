@@ -351,3 +351,50 @@ fn a_card_sharing_one_word_with_another_line_isnt_held_to_it() {
     cues(&[run("a Sora campaign", 39.7)], &words, &mut issues, &mut passed);
     assert_eq!(issues.len(), 1, "{:?}", issues.iter().map(|i| &i.says).collect::<Vec<_>>());
 }
+
+#[test]
+fn clipping_is_found_and_a_loud_clean_tone_isnt() {
+    // a clean tone near full scale, then the same tone clamped (a limiter's flat tops), then pushed past full scale
+    let loud = tone(3.0, &[(0.0, 3.0, -1.0)]);
+    assert!(clipped(&loud).is_empty(), "{:?}", clipped(&loud));
+    let clamped: Vec<f32> = loud.iter().map(|v| (v * 10.0).clamp(-0.3, 0.3)).collect();
+    assert_eq!(clipped(&clamped).len(), 1);
+    let over: Vec<f32> = loud.iter().map(|v| (v * 2.0).clamp(-1.0, 1.0)).collect();
+    assert_eq!(clipped(&over).len(), 1);
+    // one transient hitting full scale once isn't clipping
+    let mut once = tone(3.0, &[(0.0, 3.0, -20.0)]);
+    once[SR] = 1.0;
+    assert!(clipped(&once).is_empty());
+}
+
+#[test]
+fn a_dropout_is_found_and_a_faded_pause_isnt() {
+    // a bed at -20 dBFS with 0.6 s cut out of it, as the bootstrap's dropout does
+    let mut cut = tone(4.0, &[(0.0, 4.0, -20.0)]);
+    cut[(1.7 * SR as f64) as usize..(2.3 * SR as f64) as usize].iter_mut().for_each(|v| *v = 0.0);
+    let found = dropouts(&cut);
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert!((found[0].0 - 1.7).abs() < 0.02, "{found:?}");
+    // a pause that fades out over 300 ms and back in isn't one, nor a sound that stops and stays stopped
+    let gain = |t: f32| ((1.7 - t) / 0.3).max((t - 2.3) / 0.3).clamp(0.0, 1.0);
+    let paused: Vec<f32> = tone(4.0, &[(0.0, 4.0, -20.0)]).into_iter().enumerate().map(|(i, v)| v * gain(i as f32 / SR as f32)).collect();
+    assert!(dropouts(&paused).is_empty(), "{:?}", dropouts(&paused));
+    assert!(dropouts(&tone(4.0, &[(0.0, 2.0, -20.0)])).is_empty());
+}
+
+#[test]
+fn a_flash_frame_is_found_and_a_cut_or_a_fade_isnt() {
+    let mut shot = vec![0.5f32; 60];
+    shot[30] = 0.0;
+    assert_eq!(flash_frames(&shot, 30.0).len(), 1);
+    shot[31] = 0.0;
+    assert_eq!(flash_frames(&shot, 30.0).len(), 1, "two frames are one flash");
+    let cut: Vec<f32> = (0..60).map(|i| if i < 30 { 0.6 } else { 0.1 }).collect();
+    assert!(flash_frames(&cut, 30.0).is_empty());
+    let fade: Vec<f32> = (0..60).map(|i| 0.6 * (1.0 - i as f32 / 59.0)).collect();
+    assert!(flash_frames(&fade, 30.0).is_empty());
+    // a white frame, too
+    let mut white = vec![0.3f32; 20];
+    white[10] = 1.0;
+    assert_eq!(flash_frames(&white, 30.0)[0].0, 10.0 / 30.0);
+}

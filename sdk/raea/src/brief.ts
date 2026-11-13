@@ -10,6 +10,8 @@
 import type { Brief, Controller, Field, Group, Plan, Script, Taste } from "./brief.gen";
 
 export type * from "./brief.gen";
+export { fingerprint } from "./fingerprint";
+export type { Applies, Axis, Fingerprint, Modality } from "./fingerprint";
 
 /** A field as written: its id is filled in from its label when left out. */
 export type FieldInput = Field extends infer F ? (F extends Field ? Omit<F, "id"> & { id?: string } : never) : never;

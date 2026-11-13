@@ -163,6 +163,7 @@ pub(crate) fn sound(video: &str, words: Option<&[Word]>, issues: &mut Vec<Issue>
     }
     let x: Vec<f32> = out.stdout.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
     let (rms, bands) = levels(&x);
+    sound_defects(&x, issues, passed);
     let found = |list: Vec<(f64, String)>, p: u8| list.into_iter().map(move |(at, says)| Issue { rule: "sound", p, at: Some(at), says });
     let stops = dead_stops(&rms, &bands);
     if stops.is_empty() {

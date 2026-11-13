@@ -1,0 +1,18 @@
+[package]
+name = "raea-sys-fingerprint"
+version = "0.1.0"
+edition = "2024"
+license = "FSL-1.1-ALv2"
+publish = false
+description = "Fingerprint (docs/fingerprint.feature FP2-FP4): a taxonomy of axes with small heads over frozen on-device encoders' columns, trained on the device in milliseconds from evidence rows, gated, scored per moment, drawn as a sheet"
+
+[dependencies]
+# the columns every head reads, the encoders that make them, and the damage the bootstrap puts in
+raea-sys-columns = { path = "../columns" }
+# evidence rows and word vectors are kept as fp16
+half = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+# the sheet (sheet.rs) is a PNG
+image = { version = "0.25", default-features = false, features = ["png"] }
