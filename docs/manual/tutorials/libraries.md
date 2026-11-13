@@ -3,6 +3,7 @@ title: "Libraries: keep, find and share your media"
 summary: "Make a library on this Mac or in raea's cloud, find any shot or sound by what's in it, mark where each file stands, share from it, and keep a project's media beside its code."
 order: 9.5
 sources: ["docs/libraries.feature", "docs/review.feature", "apps/app/src/library", "apps/app/host/library"]
+tutorial: "libraries"
 ---
 
 A library is a set of folders raea reads, so you can find footage, stills and sounds by what's in them. This tutorial

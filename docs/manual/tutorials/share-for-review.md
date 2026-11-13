@@ -3,6 +3,7 @@ title: "Share work for review"
 summary: "Send a cut, a still or a sound on a review link: anyone with it watches and comments on the picture without an account, their notes come back to the agent, and the next version goes out on the same link."
 order: 4.5
 sources: ["docs/review.feature", "apps/app/src/share", "apps/app/src/library/ShareBar.tsx", "apps/site/api/src/review.ts", "apps/site/api/src/review-sets.ts", "apps/site/src/review"]
+tutorial: "share-for-review"
 ---
 
 Not everyone who needs to see your work uses raea. This tutorial shares a cut on a link, follows a reviewer's notes
