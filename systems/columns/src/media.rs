@@ -26,7 +26,8 @@ pub fn sha256(file: &Path) -> Result<String> {
     Ok(h.finalize().iter().map(|b| format!("{b:02x}")).collect())
 }
 
-fn video(file: &Path) -> Result<Box<dyn raea_io_media::VideoDecoder>> {
+/// The file's picture, opened by the first backend that can (also how a mark is grown into its thing, FP11b)
+pub fn video(file: &Path) -> Result<Box<dyn raea_io_media::VideoDecoder>> {
     let mut why = Vec::new();
     for b in raea_io_media::preferred() {
         match b.open_video(file) {

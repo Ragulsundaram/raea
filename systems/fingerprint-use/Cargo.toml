@@ -13,5 +13,5 @@ raea-sys-fingerprint = { path = "../fingerprint" }
 raea-sys-columns = { path = "../columns" }
 serde = { version = "1", features = ["derive"] }
 anyhow = "1"
-# the sheet (sheet.rs) is a PNG
+# the sheet (sheet.rs) is a PNG; a mark grown by EdgeTAM writes its frames and reads its mattes (grow.rs)
 image = { version = "0.25", default-features = false, features = ["png"] }

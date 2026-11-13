@@ -522,6 +522,10 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
       And each mark is stored with the note, in the frame's 0-1 coordinates, with its frame or span and the layer keys
         under it from the layer pass when the video has one
       And a note without a mark keeps its pin, which is never read as a mark (FP0f)
+      And so far (11-12, raea-feed fingerprint-page 2265d91): a pin dropped on the picture opens its composer with mark,
+        box, lasso, arrow and strike tools; the next drag draws one, kept in pin.marks in 0-1 with its frame (`t`) and
+        the layer keys under it on a render with a layer pass, and an opened note draws them again (e2e/marks.spec.ts).
+        A span is the time pin's `to` (MomentComposer). Not yet: a box on a spectrogram, which the player doesn't show
 
     @needs:FP11a
     Scenario: FP11b. What each mark teaches
@@ -530,6 +534,11 @@ Feature: Fingerprint: a person's or a team's sense of good work, learned on thei
         the agent; a span sets the label's time; a spectrogram box is a time and frequency label on the sound
       And a click is grown into a region by EdgeTAM and tracked through its shot, so one mark labels every frame of it,
         with the frames EdgeTAM loses dropped
+      And so far (11-12): the agent reads arrows, strikes and the marked thing as lines in the note's prompt and on a
+        poster's line (raea-feed 02fc49a, model/pin.ts marksLines); `learn-notes` makes a defect note's mark, box and
+        lasso its row's region, grown and tracked over the label's span by EdgeTAM (raea-perceive track, frames it
+        loses dropped; on an app render a blind seed kept 3 frames of 10) and a span pin its time. Not yet: the spectrogram
+        box, and tracking through the whole shot rather than the label's span
 
   Rule: FP12. Heatmaps: a picture axis says where, not only whether
     @needs:FP11b,FP2c

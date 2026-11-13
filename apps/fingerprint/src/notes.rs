@@ -5,7 +5,8 @@
 //! --question`, answers to the "fingerprint" inbox), `readings --tally` counts how often the person agreed, and only
 //! once the kind is right 45 times in 50 and the axis 40 (FP5b) does `raea fingerprint learn-notes` make each defect
 //! or praise an evidence row over its span (1.5 s before the pin to 0.5 s after). A direction goes to the brief and the
-//! agent, never into a head.
+//! agent, never into a head. A note's marks (FP11b) make its row a region label: the box around its marks, boxes and
+//! lassos; a span pin sets the row's time.
 
 use crate::{flag, has, words};
 use raea_sys_fingerprint::folder::Folder;
@@ -37,6 +38,35 @@ pub struct Reading {
     pub kind_ok: Option<bool>,
     #[serde(default)]
     pub axis_ok: Option<bool>,
+    /// a span pin's end: the label covers t..to (FP11b)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub to: Option<f64>,
+    /// where in the frame the note's marks say the thing is, x0,y0,x1,y1 in 0-1 (FP11b)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub region: Option<[f32; 4]>,
+}
+
+/// How far a click reaches around its point, as a region, until a click is grown into its thing (FP11b, EdgeTAM)
+const CLICK: f32 = 0.05;
+
+/// The region a note's marks name: the box around its marks, boxes and lassos (a click as a small square around it).
+/// Arrows and strikes are instructions for the agent, never a region
+pub fn region(pin: &Value) -> Option<[f32; 4]> {
+    let mut r: Option<[f32; 4]> = None;
+    for m in pin["marks"].as_array().into_iter().flatten() {
+        let reach = match m["kind"].as_str() {
+            Some("mark") => CLICK,
+            Some("box" | "lasso") => 0.0,
+            _ => continue,
+        };
+        for p in m["points"].as_array().into_iter().flatten() {
+            let (Some(x), Some(y)) = (p[0].as_f64(), p[1].as_f64()) else { continue };
+            let (x, y) = (x as f32, y as f32);
+            let b = [(x - reach).max(0.0), (y - reach).max(0.0), (x + reach).min(1.0), (y + reach).min(1.0)];
+            r = Some(r.map_or(b, |a| [a[0].min(b[0]), a[1].min(b[1]), a[2].max(b[2]), a[3].max(b[3])]));
+        }
+    }
+    r.filter(|a| a[2] > a[0] && a[3] > a[1])
 }
 
 /// A post's video on this machine: the renders library, else the project's own folder
@@ -58,7 +88,8 @@ pub fn pinned(project: &Path) -> Vec<Reading> {
             if n["author"]["kind"] != "person" {
                 continue;
             }
-            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), ..Default::default() });
+            let to = n["pin"]["to"].as_f64().filter(|&to| to > t);
+            out.push(Reading { note: n["id"].as_str().unwrap_or("").into(), text: text.into(), who: n["author"]["name"].as_str().unwrap_or("me").into(), media: video.clone(), t, project: name.clone(), to, region: region(&n["pin"]), ..Default::default() });
         }
     }
     out
@@ -265,10 +296,13 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
             (None, true) => continue,
         };
         let c = enc.columns(&x.media)?;
-        let (a, b) = ((x.t - 1.5).max(0.0), (x.t + 0.5).min(c.dur));
+        // a span is the label's time; a moment, 1.5 s before the pin to 0.5 s after (FP11b)
+        let (a, b) = x.to.map_or(((x.t - 1.5).max(0.0), (x.t + 0.5).min(c.dur)), |to| (x.t.max(0.0), to.min(c.dur)));
         if b - a < 0.5 {
             continue;
         }
+        // a defect's marks, grown into the thing and tracked over the label by EdgeTAM where raea-perceive is (grow.rs)
+        let region = x.region.filter(|_| bad).map(|seed| raea_sys_fingerprint_use::grow::grow(&x.media, x.t, a, b, seed).ok().flatten().map_or(seed, |g| g.region));
         let row = raea_sys_fingerprint::evidence::Row {
             media: c.media.clone(),
             a,
@@ -280,7 +314,7 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
             source: "note".into(),
             project: x.project.clone(),
             kind: Some(x.note.clone()),
-            region: None,
+            region,
             words: Some(x.text.clone()),
             at: 0,
             pin: None,
@@ -294,6 +328,20 @@ pub(crate) fn learn(enc: &mut raea_sys_columns::Encoders, dir: &Folder, l: &mut 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn marks_name_a_region_and_arrows_dont() {
+        let pin = json!({"kind": "place", "x": 0.5, "y": 0.5, "marks": [
+            {"kind": "box", "points": [[0.6, 0.7], [0.2, 0.3]]},
+            {"kind": "mark", "points": [[0.9, 0.1]]},
+            {"kind": "arrow", "points": [[0.0, 0.0], [1.0, 1.0]]}
+        ]});
+        let r = region(&pin).unwrap();
+        let near = |a: f32, b: f32| (a - b).abs() < 1e-5;
+        assert!(near(r[0], 0.2) && near(r[1], 0.05) && near(r[2], 0.95) && near(r[3], 0.7), "{r:?}");
+        assert_eq!(region(&json!({"marks": [{"kind": "strike", "points": [[0.1, 0.1], [0.9, 0.9]]}]})), None, "a strike is for the agent");
+        assert_eq!(region(&json!({"kind": "place", "x": 0.5, "y": 0.5})), None, "a pin is never a mark");
+    }
 
     #[test]
     fn a_reading_keeps_only_kinds_and_axes_it_knows() {

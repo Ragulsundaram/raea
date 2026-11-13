@@ -5,8 +5,10 @@
 //! - which.rs: which fingerprint judges a piece: its project's, its workspace's, then the person's (FP14c)
 //! - diff.rs: where two fingerprints rank the same evidence differently (FP8b)
 //! - profile.rs: ranges from work the person admires, and a piece critiqued against them (FP6e)
+//! - grow.rs: a note's mark grown into its thing and tracked over its label by EdgeTAM (FP11b)
 
 pub mod diff;
+pub mod grow;
 pub mod profile;
 pub mod score;
 pub mod sheet;
