@@ -10,14 +10,39 @@ type FrameCallback = (time: number) => void;
 let queue = new Map<number, FrameCallback>();
 let next = 1;
 let ran = -1;
+/** the frame being drawn's time, for a callback run while it's held */
+let now = 0;
+let pumping = false;
+
+/** A callback asked for while the frame is held (delayRender) runs on a timer with that frame's time, as a browser's
+ *  runs while a page waits: a hold released from requestAnimationFrame (two rAFs after a ref lands) would otherwise
+ *  wait for a frame that can't start until it's released (layout-reads LR9). */
+function pumpHeld(): void {
+  // only a composition's own holds (delayRender's, named in `open`), not <R3F>'s while its scene loads
+  if (pumping || !((globalThis as { __raeaHold?: { open?: Map<number, string> } }).__raeaHold?.open?.size! > 0)) return;
+  pumping = true;
+  setTimeout(() => {
+    pumping = false;
+    const due = queue;
+    queue = new Map();
+    for (const cb of due.values()) {
+      try {
+        cb(now);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, 16);
+}
 
 /** Frame `f` at `fps` starts: the callbacks asked for before it run, once (a second draw of the same frame runs none). */
 export function frameCallbacks(f: number, fps: number): void {
+  const time = (f * 1000) / (fps > 0 ? fps : 30);
+  now = time;
   if (f === ran || queue.size === 0) return;
   ran = f;
   const due = queue;
   queue = new Map();
-  const time = (f * 1000) / (fps > 0 ? fps : 30);
   for (const cb of due.values()) {
     try {
       cb(time);
@@ -85,6 +110,7 @@ if (typeof g.requestAnimationFrame !== "function") {
   g.requestAnimationFrame = (cb: FrameCallback) => {
     const id = next++;
     queue.set(id, cb);
+    pumpHeld();
     return id;
   };
   g.cancelAnimationFrame = (id: number) => void queue.delete(id);

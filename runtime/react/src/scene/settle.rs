@@ -56,7 +56,7 @@ pub fn settle_with(app: &mut App, want: Option<i64>, secs: f64, answer: &mut cra
     // the marker as last seen (frame, done), for the refusal's message
     let mut marked = (-2i64, -2i64);
     // the frame is held (below): its marker at the frame, not done
-    let mut held = false;
+    let mut held;
     // the count before the first update: a flush is in the channel before it's counted, so one that landed before this
     // read is applied by the update below, and one after it wakes the wait. (A first pass that waited for a flush
     // before updating lost the frame's flush whenever React was quicker than this read: the wait then ran its 0.5 s
