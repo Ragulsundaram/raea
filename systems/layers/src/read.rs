@@ -13,6 +13,8 @@ pub struct Masks {
     pub w: usize,
     pub h: usize,
     pub keys: Vec<String>,
+    /// what a person would call each layer (its component, its label), beside its key
+    pub names: Vec<String>,
     pub kinds: Vec<String>,
     pub parents: Vec<Option<usize>>,
     pub frames: HashMap<i64, Vec<(u16, u16)>>,
@@ -30,7 +32,7 @@ pub fn read(path: &Path) -> Result<Masks, String> {
     let head: Value = serde_json::from_slice(b.get(12..12 + n).ok_or_else(bad)?).map_err(|_| bad())?;
     let layers = head["layers"].as_array().cloned().unwrap_or_default();
     let field = |name: &str| -> Vec<String> { layers.iter().map(|l| l[name].as_str().unwrap_or_default().to_string()).collect() };
-    let (keys, kinds) = (field("key"), field("kind"));
+    let (keys, names, kinds) = (field("key"), field("name"), field("kind"));
     let at: HashMap<&str, usize> = keys.iter().enumerate().map(|(i, k)| (k.as_str(), i)).collect();
     let parents = field("parent").iter().map(|p| at.get(p.as_str()).copied()).collect();
     let count = head["frames"].as_u64().unwrap_or(0) as i64;
@@ -46,7 +48,7 @@ pub fn read(path: &Path) -> Result<Masks, String> {
         }
         frames.insert(f, before.clone());
     }
-    Ok(Masks { w: head["mask"]["w"].as_u64().unwrap_or(0) as usize, h: head["mask"]["h"].as_u64().unwrap_or(0) as usize, keys, kinds, parents, frames })
+    Ok(Masks { w: head["mask"]["w"].as_u64().unwrap_or(0) as usize, h: head["mask"]["h"].as_u64().unwrap_or(0) as usize, keys, names, kinds, parents, frames })
 }
 
 impl Masks {

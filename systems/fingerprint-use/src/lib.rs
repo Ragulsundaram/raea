@@ -12,6 +12,7 @@
 pub mod diff;
 pub mod fixed;
 pub mod grow;
+pub mod patch;
 pub mod postmortem;
 pub mod profile;
 pub mod realness;

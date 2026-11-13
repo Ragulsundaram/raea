@@ -100,8 +100,8 @@ Each axis uses the best head it has earned:
 2. **A learned head**: logistic on the axis's own modality columns, standardised with the encoder's shipped
    statistics, plus Bradley-Terry when the axis has pairs. It takes over from the word head once it beats it on
    held-out evidence.
-3. **A patch head** (picture axes): logistic on SigLIP 2's patch tokens, trained from marks. It says *where* in the
-   frame.
+3. **A patch head** (picture axes): logistic on SigLIP 2's patch tokens, trained from local defects (FP12a) and,
+   once there are enough, marks (FP12b). It says *where* in the frame.
 
 An axis that a check measures exactly, such as dropout or loudness, reports the check, and its head only adds what
 the check can't see.

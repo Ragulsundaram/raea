@@ -58,6 +58,18 @@ pub struct Moment {
     pub band: Option<&'static str>,
     pub gating: bool,
     pub peak: f32,
+    /// where in the frame, once the axis has a patch head that points (FP12a)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub at: Option<Where>,
+}
+
+/// Where a moment's defect is: its box in the frame at time `t` (fractions, [x0, y0, x1, y1]) and the render's layers
+/// under it, most of the box first
+#[derive(Clone, Debug, Serialize)]
+pub struct Where {
+    pub t: f64,
+    pub region: [f64; 4],
+    pub layers: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -148,7 +160,7 @@ pub fn score(fp: &Fingerprint, words: Option<&Words>, trained: Option<&Trained>,
                 (Some(s), _) => {
                     moments.extend(open.take());
                     let words = ax.words.first().cloned().unwrap_or_default();
-                    open = Some(Moment { a: w.a, b: w.b, axis: ax.name.clone(), words, by: s.by, state: s.state.clone(), band: s.band, gating: s.gating, peak: s.value });
+                    open = Some(Moment { a: w.a, b: w.b, axis: ax.name.clone(), words, by: s.by, state: s.state.clone(), band: s.band, gating: s.gating, peak: s.value, at: None });
                 }
                 (None, _) => {}
             }
@@ -185,7 +197,11 @@ pub fn summary(s: &Scored) -> String {
         if s.moments.len() == 1 { "" } else { "s" }
     );
     for m in &s.moments {
-        out += &format!("  {}-{}  {}: \"{}\" ({})\n", clock(m.a), clock(m.b), m.axis, m.words, label(m));
+        let at = m.at.as_ref().map_or(String::new(), |w| {
+            let on = if w.layers.is_empty() { String::new() } else { format!(" on {}", w.layers.join(", ")) };
+            format!(", {}{on}", crate::patch::place(w.region))
+        });
+        out += &format!("  {}-{}  {}: \"{}\" ({}){at}\n", clock(m.a), clock(m.b), m.axis, m.words, label(m));
     }
     if s.moments.is_empty() {
         out += "  nothing flagged\n";

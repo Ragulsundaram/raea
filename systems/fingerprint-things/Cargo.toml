@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 license = "FSL-1.1-ALv2"
 publish = false
-description = "Fingerprint's things (docs/fingerprint.feature FP13a, FP13c): a piece's shots, its things with their depth and the ground under them, and the camera's path, from a render's layer and AOV passes or from marks followed by EdgeTAM and Depth Anything; and the geometry checks raea check reports from them"
+description = "Fingerprint's things (docs/fingerprint.feature FP13a, FP13c): a piece's shots, its things with their depth and the ground under them, and the camera's path, from a render's layer and AOV passes or from marks followed by EdgeTAM and Depth Anything; and the geometry checks raea check reports from them; and where a picture flag is (FP12a): patch heads bootstrapped from local defects, and a moment placed in the frame and its layers"
 
 [dependencies]
 # a mark followed by EdgeTAM, raea-perceive found, the percentile (grow.rs, profile.rs)
@@ -17,3 +17,5 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
 image = { version = "0.25", default-features = false, features = ["png"] }
+# the boxes local defects go in, seeded (located.rs)
+fastrand = "2"

@@ -15599,6 +15599,7 @@ name = "raea-sys-fingerprint-things"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "fastrand",
  "image",
  "raea-sys-columns",
  "raea-sys-fingerprint-use",
@@ -15612,6 +15613,7 @@ name = "raea-sys-fingerprint-use"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "fastrand",
  "image",
  "raea-sys-columns",
  "raea-sys-fingerprint",

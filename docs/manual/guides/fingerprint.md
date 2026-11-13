@@ -40,6 +40,11 @@ difference, held out by source, so it can't learn a shortcut. Each axis also has
 as a blur that was sharpened afterwards or a freeze hidden under a slow zoom. An axis that misses its disguises stays
 advice.
 
+The same run teaches picture axes where a defect sits. It blurs, punches a hole in, greys out or glows one patch of a
+frame, and learns to find the patch. An axis that finds it 85 times in 100 on renders it didn't learn from says where:
+`score` then gives the moment's place in the frame, such as "top right", and on a render with a layer pass the layers
+there, such as "on Floor", and `--sheet` boxes it on the frame.
+
 Your own reviewing teaches it the rest:
 
 ```sh
@@ -141,5 +146,5 @@ finds the media.
 ## What it can't do yet
 
 Axes judge two-second moments, so a fingerprint can't say whether a piece works as a whole, or judge story and pace
-across shots. It says when a moment is wrong, not where in the frame, until marks teach it to point. A stylised look
-or a held shot can read as a defect. And taste axes with only words never hold a post back.
+across shots. It can say where in the frame only for blur, glitches and flat, barren surfaces; glow it can only
+flag. A stylised look or a held shot can read as a defect. And taste axes with only words never hold a post back.

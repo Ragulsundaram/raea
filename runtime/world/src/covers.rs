@@ -87,7 +87,7 @@ mod tests {
         let runs = mask.iter().map(|v| (*v, 1)).collect();
         let keys = ["bg.tsx:1:1", "bg.tsx:2:3", "bg.tsx:3:3", "bg.tsx:4:3"].map(String::from).to_vec();
         // the caption (2) is inside the background (1); the band (3) and the mesh (4) are its siblings
-        Masks { w: 4, h: 1, keys, kinds: ["element", "text", "element", "mesh"].map(String::from).to_vec(), parents: vec![None, Some(0), Some(0), None], frames: HashMap::from([(7, runs)]) }
+        Masks { w: 4, h: 1, names: keys.clone(), keys, kinds: ["element", "text", "element", "mesh"].map(String::from).to_vec(), parents: vec![None, Some(0), Some(0), None], frames: HashMap::from([(7, runs)]) }
     }
 
     #[test]

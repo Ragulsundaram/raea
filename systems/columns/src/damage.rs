@@ -89,6 +89,53 @@ pub fn picture(frames: &[Rgb], kind: &str) -> Vec<Rgb> {
     }
 }
 
+/// FP0f's local defects, each in one box of the frame, with the picture axis it labels: a blurred patch, a black
+/// hole, a flat grey surface, heavy grain (corrupted, as a glitch) and a local glow. FP12's patch heads learn where.
+pub const LOCAL: [(&str, &str); 5] = [("blur_box", "blur"), ("hole", "glitch"), ("flat", "barren"), ("grain", "glitch"), ("glow_box", "glow")];
+
+/// A box in a 224 x 224 frame: its left, top and side, in pixels
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Square {
+    pub x: usize,
+    pub y: usize,
+    pub side: usize,
+}
+
+impl Square {
+    /// A random box 64-80 px a side, wholly in the frame (FP0f's)
+    pub fn random(rng: &mut fastrand::Rng) -> Square {
+        let side = rng.usize(64..=80);
+        Square { x: rng.usize(0..=SIDE - side), y: rng.usize(0..=SIDE - side), side }
+    }
+    /// The pixels inside it, as indices into a 224 x 224 frame
+    pub fn pixels(&self) -> Vec<usize> {
+        (self.y..self.y + self.side).flat_map(|y| (self.x..self.x + self.side).map(move |x| y * SIDE + x)).collect()
+    }
+}
+
+/// A frame with a local defect put into one box; the rest of the frame is untouched
+pub fn local(f: &Rgb, kind: &str, b: Square, noise: &mut Noise) -> Rgb {
+    let whole: Rgb = match kind {
+        "blur_box" => soft(f).into_raw(),
+        "glow_box" => glow(f, 0.9),
+        _ => f.clone(),
+    };
+    let inside = b.pixels();
+    let grey = (inside.iter().map(|&i| f[i * 3..i * 3 + 3].iter().map(|&c| c as f32).sum::<f32>() / 3.0).sum::<f32>() / inside.len().max(1) as f32) as u8;
+    let mut out = f.clone();
+    for &i in &inside {
+        for c in 0..3 {
+            out[i * 3 + c] = match kind {
+                "hole" => 0,
+                "flat" => grey,
+                "grain" => (f[i * 3 + c] as f32 + noise.normal() * 60.0).clamp(0.0, 255.0) as u8,
+                _ => whole[i * 3 + c],
+            };
+        }
+    }
+    out
+}
+
 /// A seeded normal source (fastrand's, Box-Muller)
 pub struct Noise(fastrand::Rng);
 

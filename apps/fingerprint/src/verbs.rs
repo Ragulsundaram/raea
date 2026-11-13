@@ -147,7 +147,8 @@ fn boot(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval, say: &mut d
     say(format!("{} windows from {} sources; measuring held out by source", made.windows, made.sources));
     let curves = bootstrap::curves(&fp, &l);
     let ws = bootstrap::word_scores(&l, &w);
-    let b = json!({"made": made, "per": per, "sources": files, "curves": curves, "words": ws});
+    let patches = raea_sys_fingerprint_things::located::bootstrap(enc, &dir.dir, &files, per, say)?;
+    let b = json!({"made": made, "per": per, "sources": files, "curves": curves, "words": ws, "patches": patches});
     retrain(&dir, &fp, &w, &l, Some(b))?;
     Ok((report_text(&dir.report().unwrap_or_default()), 0))
 }
@@ -300,6 +301,7 @@ fn scored(enc: &mut Encoders, args: &[String], cwd: &Path, eval: Eval) -> Result
     let mut s = score(&fp, Some(&w), trained.as_ref(), &c, &file.display().to_string());
     let found = checks(&file);
     arbitrate(&mut s, &fp, &found);
+    raea_sys_fingerprint_things::located::locate(enc, &file, &raea_sys_fingerprint_use::patch::load(&dir.dir), &mut s)?;
     // FP9a: each gating flag on the cut before, judged on this one, and its axis's disguises rerun on the fix
     let fixes = match flag(args, "--was") {
         Some(old) => {

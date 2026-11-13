@@ -50,13 +50,18 @@ fn pixels(frames: &[Rgb]) -> Vec<f32> {
 }
 
 impl Vision {
-    /// Each frame's pooled vector, L2-normalised: [frames][768]. (Its 196 patch tokens, "last_hidden_state", come
-    /// with FP12's heatmaps.)
+    /// Each frame's pooled vector, L2-normalised: [frames][768]
     pub fn embed(&mut self, frames: &[Rgb]) -> Result<Vec<f32>> {
+        self.tower(frames, "pooler_output")
+    }
+
+    /// The image tower's output `out` for each frame, each row L2-normalised: "pooler_output" one row a frame, or
+    /// "last_hidden_state" its 14 x 14 patch tokens row by row from the top left ([frames][196][768], FP12's patch heads)
+    pub(crate) fn tower(&mut self, frames: &[Rgb], out: &str) -> Result<Vec<f32>> {
         let mut v = Vec::new();
         for b in frames.chunks(BATCH) {
             let shape = vec![b.len() as i64, 3, SIDE as i64, SIDE as i64];
-            v.extend(run(&mut self.0, ("pixel_values", shape, Input::F32(pixels(b))), &["pooler_output"])?.remove(0));
+            v.extend(run(&mut self.0, ("pixel_values", shape, Input::F32(pixels(b))), &[out])?.remove(0));
         }
         crate::normalise(&mut v, crate::SIG);
         Ok(v)

@@ -35,7 +35,7 @@ use words::Words;
 pub const LIMITS: [&str; 5] = [
     "whether the piece works as a whole, or for its audience: heads judge 2 s moments",
     "story, pace across shots and the cut's rhythm: no axis reads more than a window",
-    "where in the frame a defect is, until marks teach patch heads (FP12)",
+    "where in the frame a defect is, on an axis whose patch head doesn't point held out (glow, and any without one: FP12a)",
     "whether a stylised look or a held shot was meant: a word head reads it as the defect",
     "taste axes with only words: always advice, never a gate",
 ];
@@ -144,6 +144,12 @@ pub fn report_text(r: &serde_json::Value) -> String {
         }
         for w in b.get("words").and_then(|c| c.as_array()).into_iter().flatten() {
             out += &format!("  words {:8} AUC {}  caught {}  cheats {}\n", w["axis"].as_str().unwrap_or(""), f(&w["auc"]), f(&w["caught"]), w["cheats"]);
+        }
+        // FP12a: how often a patch head's top patch falls in the defect's box, held out by source
+        for p in b.get("patches").and_then(|c| c.as_array()).into_iter().flatten() {
+            let kinds: Vec<String> = p["by_kind"].as_object().into_iter().flatten().map(|(k, v)| format!("{k} {}", f(v))).collect();
+            let says = if p["points"].as_bool() == Some(true) { "says where" } else { "doesn't say where" };
+            out += &format!("  where {:8} points {} ({}), {says}\n", p["axis"].as_str().unwrap_or(""), f(&p["pointing"]), kinds.join(", "));
         }
     }
     out += "can't judge:\n";

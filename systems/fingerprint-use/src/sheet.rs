@@ -1,7 +1,7 @@
 //! The sheet (FP3c, earshot's `sheet`): the whole piece in one PNG an agent or a person can read at a glance. Frames
 //! along the top (a red frame where a moment is flagged), a lane per axis (grey for advice, amber plausible, red
 //! strong, a white edge for gating), the sound's level, its spectrogram with flagged sound moments boxed, and the
-//! checks' findings as ticks. Patch heatmaps on the frames come with FP12.
+//! checks' findings as ticks. Where a patch head put a flagged moment's defect is boxed in amber on its frames (FP12a).
 
 use crate::score::{Scored, clock};
 use anyhow::Result;
@@ -99,6 +99,13 @@ pub fn sheet(s: &Scored, frames: &[Frame], pcm16: &[f32], ticks: &[Tick], modali
         let t = s.dur * (i as f64 + 0.5) / THUMBS as f64;
         if s.moments.iter().any(|m| m.a <= t && t <= m.b && modality(&m.axis).is_some_and(|m| !matches!(m, Modality::Sound | Modality::Events))) {
             outline(&mut img, x0, y, thumb - 2, thumb - 2, RED);
+        }
+        // where a patch head put the defect (FP12a), boxed in amber on the frame
+        for m in &s.moments {
+            let (Some(w), true) = (&m.at, (m.a..=m.b).contains(&t)) else { continue };
+            let (r, side) = (w.region, (thumb - 2) as f64);
+            let px = |v: f64| (v * side) as u32;
+            outline(&mut img, x0 + px(r[0]), y + px(r[1]), px(r[2] - r[0]).max(2), px(r[3] - r[1]).max(2), AMBER);
         }
     }
     y += thumb + 4;

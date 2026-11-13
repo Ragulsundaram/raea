@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 license = "FSL-1.1-ALv2"
 publish = false
-description = "Using a fingerprint (docs/fingerprint.feature FP3, FP6e, FP8b, FP14c): a piece scored per moment and drawn as a sheet, which fingerprint judges a piece, where two differ, and profiles of admired work"
+description = "Using a fingerprint (docs/fingerprint.feature FP3, FP6e, FP8b, FP12a, FP14c): a piece scored per moment and drawn as a sheet, patch heads that say where, which fingerprint judges a piece, where two differ, and profiles of admired work"
 
 [dependencies]
 # the fingerprint: its taxonomy, folder, evidence, heads and words
@@ -17,3 +17,5 @@ anyhow = "1"
 serde_json = "1"
 # the sheet (sheet.rs) is a PNG; a mark grown by EdgeTAM writes its frames and reads its mattes (grow.rs)
 image = { version = "0.25", default-features = false, features = ["png"] }
+# a patch head's held-out folds pick their frames, seeded (patch.rs)
+fastrand = "2"

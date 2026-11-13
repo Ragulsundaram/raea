@@ -140,6 +140,14 @@ impl Encoders {
         Ok((sig, frames.iter().flat_map(|f| look::look(f)).collect()))
     }
 
+    /// Each frame's 196 patch tokens, L2-normalised (siglip.rs tower): FP12's patch heads read them. An export that
+    /// gives another count (a class token first, another grid) is refused, since a patch's place would be wrong
+    pub fn patches(&mut self, frames: &[media::Rgb]) -> Result<Vec<f32>> {
+        let v = self.vision.tower(frames, "last_hidden_state")?;
+        anyhow::ensure!(v.len() == frames.len() * 196 * SIG, "SigLIP 2 gave {} patch values for {} frames, not 196 x {SIG} each", v.len(), frames.len());
+        Ok(v)
+    }
+
     /// The sound columns of mono sound at 16 and 48 kHz: CLAP per CLAP_WIN window every CLAP_HOP (one window at
     /// least), and YAMNet's when its model is here
     pub fn sound(&mut self, pcm16: &[f32], pcm48: &[f32]) -> Result<(Vec<f32>, Vec<f32>)> {
