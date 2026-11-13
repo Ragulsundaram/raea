@@ -47,11 +47,7 @@ pub(crate) fn text_doc(opt: &usvg::Options, font: &Value, text: &str, at: (f32, 
 /// fontBoundingBox{Ascent,Descent}): the text shaped as the canvas draws it, from the alignment point. Its advance and
 /// the font's ascent and descent are usvg's layout box; the ink is its glyphs' outlines. Spaces are kept, as fillText
 /// keeps them.
-pub fn metrics(args: &Value) -> Result<Value, String> {
-    Ok(metrics_in(&crate::page_options(), args))
-}
-
-fn metrics_in(opt: &usvg::Options, args: &Value) -> Value {
+pub fn metrics(opt: &usvg::Options, args: &Value) -> Value {
     let text = args["text"].as_str().unwrap_or("");
     let shape = |text: &str| {
         let doc = text_doc(opt, &args["font"], text, (0.0, 0.0), (&args["align"], &args["baseline"]), "xml:space=\"preserve\" fill=\"#fff\"", (1, 1));
@@ -64,7 +60,7 @@ fn metrics_in(opt: &usvg::Options, args: &Value) -> Value {
         // nothing usvg draws (empty, or spaces alone, which it drops): no ink, the characters' advances, and the font's
         // box from a glyph it does draw
         None => {
-            let adv = advances_in(opt, &json!({ "font": args["font"], "chars": text }));
+            let adv = advances(opt, &json!({ "font": args["font"], "chars": text }));
             let em: f64 = adv["adv"].as_array().into_iter().flatten().filter_map(Value::as_f64).sum();
             let lay = if text.is_empty() { none } else { shape("x").map_or(none, |(lay, _)| lay) };
             (lay, none, em as f32 * crate::paint::f(&args["font"]["size"]))
@@ -83,11 +79,7 @@ fn metrics_in(opt: &usvg::Options, args: &Value) -> Value {
 
 /// `canvas.advances`: {font: {family, weight, style}, chars} -> {adv: [em or null], own: [bool]}, one per character:
 /// its advance as a fraction of the font size, and whether the font's first family has it.
-pub fn advances(args: &Value) -> Result<Value, String> {
-    Ok(advances_in(&crate::page_options(), args))
-}
-
-fn advances_in(opt: &usvg::Options, args: &Value) -> Value {
+pub fn advances(opt: &usvg::Options, args: &Value) -> Value {
     let db = &opt.fontdb;
     let font = &args["font"];
     let weight = font["weight"].as_str().and_then(|w| w.parse().ok()).unwrap_or(400u16);
@@ -144,16 +136,16 @@ mod tests {
         db.load_font_data(std::fs::read("/System/Library/Fonts/Supplemental/Arial.ttf").unwrap());
         db.set_sans_serif_family("Arial");
         let opt = usvg::Options { fontdb: std::sync::Arc::new(db), ..Default::default() };
-        let r = advances_in(&opt, &json!({"font": {"family": "Arial", "weight": "400", "style": "normal"}, "chars": "im"}));
+        let r = advances(&opt, &json!({"font": {"family": "Arial", "weight": "400", "style": "normal"}, "chars": "im"}));
         let (i, m) = (r["adv"][0].as_f64().unwrap(), r["adv"][1].as_f64().unwrap());
         assert!(i < 0.3 && m > 0.8, "{r}");
         assert_eq!(r["own"], json!([true, true]));
         // a family the page doesn't have: the default stands in, and says so
-        let r = advances_in(&opt, &json!({"font": {"family": "Nope, sans-serif", "weight": "400", "style": "normal"}, "chars": "i"}));
+        let r = advances(&opt, &json!({"font": {"family": "Nope, sans-serif", "weight": "400", "style": "normal"}, "chars": "i"}));
         assert_eq!(r["own"], json!([false]));
         assert!((r["adv"][0].as_f64().unwrap() - i).abs() < 1e-9);
         // measureText: the advance is the characters' (Arial has no kerning between these), the ink the glyphs'
-        let mt = |text: &str, align: &str| metrics_in(&opt, &json!({"font": {"family": "Arial", "size": 100, "weight": "400", "style": "normal"}, "text": text, "align": align, "baseline": "alphabetic"}));
+        let mt = |text: &str, align: &str| metrics(&opt, &json!({"font": {"family": "Arial", "size": 100, "weight": "400", "style": "normal"}, "text": text, "align": align, "baseline": "alphabetic"}));
         let (x, h) = (mt("x", "left"), mt("H", "left"));
         let g = |v: &Value, k: &str| v[k].as_f64().unwrap();
         assert!((g(&mt("im", "left"), "width") - (i + m) * 100.0).abs() < 0.01, "{}", mt("im", "left"));

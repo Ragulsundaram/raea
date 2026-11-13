@@ -7,13 +7,33 @@
 pub fn register() {
     // the faces a canvas's text is shaped in: the page's (blitz-dom adds every face the composition loads)
     raea_sys_canvas::fonts(blitz_dom::util::svg_fonts);
-    raea_native::register(
-        "canvas.measure",
-        "{ font: { family: string; size: number; weight: string; style: string }; text: string; align?: string; baseline?: string }",
-        "{ width: number; actualBoundingBoxLeft: number; actualBoundingBoxRight: number; actualBoundingBoxAscent: number; actualBoundingBoxDescent: number; fontBoundingBoxAscent: number; fontBoundingBoxDescent: number }",
-        "measureText: the text shaped as the canvas draws it, in the page's fonts; its advance, ink and font box from the alignment point (docs/layout-reads.feature LR6)",
-        |a| raea_sys_canvas::metrics(a),
-    );
+    // the text natives, each laid out in the page's fonts as they are when it's called
+    let text: [(&str, &str, &str, &str, raea_sys_canvas::TextNative); 3] = [
+        (
+            "canvas.measure",
+            "{ font: { family: string; size: number; weight: string; style: string }; text: string; align?: string; baseline?: string }",
+            "{ width: number; actualBoundingBoxLeft: number; actualBoundingBoxRight: number; actualBoundingBoxAscent: number; actualBoundingBoxDescent: number; fontBoundingBoxAscent: number; fontBoundingBoxDescent: number }",
+            "measureText: the text shaped as the canvas draws it, in the page's fonts; its advance, ink and font box from the alignment point (docs/layout-reads.feature LR6)",
+            raea_sys_canvas::metrics,
+        ),
+        (
+            "canvas.svgText",
+            "{ text: string; style: Record<string, string> }",
+            "{ length: number; starts: number[] }",
+            "an svg <text>'s getComputedTextLength and getStartPositionOfChar: its words laid out by usvg, as the page draws an svg, in its computed font (font-*, letter-spacing, word-spacing); x from the text's own (docs/layout-reads.feature LR7)",
+            raea_sys_canvas::svg_text,
+        ),
+        (
+            "canvas.advances",
+            "{ font: { family: string; weight: string; style: string }; chars: string }",
+            "{ adv: (number | null)[]; own: boolean[] }",
+            "each character's advance (a fraction of the font size) in the face a canvas draws it with, and whether the font's own family has it",
+            raea_sys_canvas::advances,
+        ),
+    ];
+    for (name, args, answer, doc, f) in text {
+        raea_native::register(name, args, answer, doc, move |a| raea_sys_canvas::with_page_fonts(f, a));
+    }
     raea_native::register(
         "fonts.load",
         "{ family: string }",
@@ -33,20 +53,6 @@ pub fn register() {
             let (Some(family), Some(url)) = (a["family"].as_str(), a["url"].as_str()) else { return Err("fonts.face: a family and a url".into()) };
             Ok(serde_json::json!({ "faces": raea_sys_fonts::google::face_now(family, url) }))
         },
-    );
-    raea_native::register(
-        "canvas.svgText",
-        "{ text: string; style: Record<string, string> }",
-        "{ length: number; starts: number[] }",
-        "an svg <text>'s getComputedTextLength and getStartPositionOfChar: its words laid out by usvg, as the page draws an svg, in its computed font (font-*, letter-spacing, word-spacing); x from the text's own (docs/layout-reads.feature LR7)",
-        |a| raea_sys_canvas::svg_text(a),
-    );
-    raea_native::register(
-        "canvas.advances",
-        "{ font: { family: string; weight: string; style: string }; chars: string }",
-        "{ adv: (number | null)[]; own: boolean[] }",
-        "each character's advance (a fraction of the font size) in the face a canvas draws it with, and whether the font's own family has it",
-        |a| raea_sys_canvas::advances(a),
     );
     raea_native::register(
         "canvas.read",

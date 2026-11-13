@@ -79,7 +79,7 @@ pub fn mount(world: &mut World, w: u32, h: u32, code: &str, preamble: &[String],
             });
         });
         raea_runtime_js::calls::on_sync("canvas.read", raea_sys_canvas::read);
-        raea_runtime_js::calls::on_sync("canvas.advances", raea_sys_canvas::advances);
+        raea_runtime_js::calls::on_sync("canvas.advances", |a| raea_sys_canvas::with_page_fonts(raea_sys_canvas::advances, a));
         raea_sys_canvas::fonts(blitz_dom::util::svg_fonts);
         raea_sys_canvas::videos(|src| Some(raea_sys_page::net::page_path(src.strip_prefix("http://localhost").unwrap_or(src)).into()));
     }

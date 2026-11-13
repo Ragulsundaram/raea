@@ -30,6 +30,15 @@ mod measure;
 pub use measure::{advances, metrics};
 mod svgtext;
 pub use svgtext::svg_text;
+
+/// A text native: its answer to `args` in the given fonts.
+pub type TextNative = fn(&usvg::Options, &Value) -> Value;
+
+/// A text native's answer (`canvas.measure` is [`metrics`], `canvas.advances` [`advances`], `canvas.svgText`
+/// [`svg_text`]), laid out in the page's fonts as they are now.
+pub fn with_page_fonts(answer: TextNative, args: &Value) -> Result<Value, String> {
+    Ok(answer(&page_options(), args))
+}
 mod filter;
 mod paint;
 mod subsets;
@@ -103,8 +112,8 @@ pub fn read(args: &Value) -> Result<Value, String> {
     let props = args.as_object().ok_or("no canvas")?;
     let opt = page_options();
     let (bw, bh, px) = Replay::update(None, props, &opt).rgba();
-    let n = |k: &str| args[k].as_f64().unwrap_or(0.0) as i64;
-    let (x, y, w, h) = (n("x"), n("y"), n("w").max(0), n("h").max(0));
+    let (x, y) = (paint::f(&args["x"]) as i64, paint::f(&args["y"]) as i64);
+    let (w, h) = ((paint::f(&args["w"]) as i64).max(0), (paint::f(&args["h"]) as i64).max(0));
     if w * h > 1 << 28 {
         return Err("too large".into());
     }
